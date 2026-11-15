@@ -13,7 +13,7 @@
 
 ## `v0.1.0` — Native Desktop Shell, Local `Grisp` Multi-Worker Supervisor, Workspace Manager & Unified `Groxy AI` Host Bridge
 
-**Status:** Specification in Review ([`specifications/GROXY-DESK-SPEC-001.md`](../specifications/GROXY-DESK-SPEC-001.md))
+**Status:** Complete ([`specifications/GROXY-DESK-SPEC-001.md`](../specifications/GROXY-DESK-SPEC-001.md)) — Released `v0.1.0` (All 4 Gates Passed)
 
 Target Scope:
 - **Native Windows WebView2 + `Grex JS v1.0.0` Zero-`<div>` Workbench:** Lightweight native desktop shell paired with a `127.0.0.1:9490` Go host daemon (`CGO_ENABLED=0`), zero-FOUC Light/Dark WCAG AA (`>= 4.5:1`) theme parity, and semantic 20-element layout (`divCount === 0`).

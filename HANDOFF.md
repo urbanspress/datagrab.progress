@@ -1,31 +1,20 @@
-# HANDOFF.md — Groxy Desk
+# Handoff State — Groxy Desk
 
-- **Current Owner:** Project Owner / Google Antigravity (Step 6 Bootstrapped — `GROXY-DESK-SPEC-001.md` In Review)
-- **Current Milestone State:**
-  - **`v0.1.0` — `Specification in Review`** ([`specifications/GROXY-DESK-SPEC-001.md`](specifications/GROXY-DESK-SPEC-001.md) drafted and awaiting project-owner approval; strictly zero application code written)
-  - **`v0.2.0` — `Planned`** (Full-Parity Groxy AI Vibe-Coding Co-Pilot, Native `grab mcp` Bridge & Live Grex Theme Builder Split-Preview Canvas)
-  - **`v0.3.0` — `Planned`** (Integrated `Gashboard v1.0.0` + `Grabtaculous v1.0.0` Fleet Deployer, Pinned `127.0.0.1` SSH DB Tunnels, Visual DB Explorer & Namecheap DNS + Auto-HTTPS Wizard)
-  - **`v1.0.0` — `Planned`** (Independent `Orchestrator (Argon)` Cross-Layer Audit, Branded `Groxy-Desk-Setup-1.0.0.exe` Inno Setup Installer, Walkthrough PDF & Production Freeze)
-- **Next Action:** Project owner reviews [`specifications/GROXY-DESK-SPEC-001.md`](specifications/GROXY-DESK-SPEC-001.md) and approves `v0.1.0` implementation.
+- **Current Owner:** `Google Antigravity`
+- **Current Milestone:** `v0.1.0` — **Complete** (All 4 Mandatory Verification Gates Passed, Walkthrough PDF & `dist/` Binaries Packaged)
+- **Branch / Repositories:** `main` synchronized cleanly across `origin` (`urbanspress/groxy-desk.progress`) and `stable` (`urbanspress/groxy-desk.stable`)
+- **Last Verified State:**
+  - `go build ./...`, `go vet ./...`, `go test -count=1 ./...` (`groxy-desk/internal/security`, `internal/supervisor`, `internal/workspace`, `internal/groxybridge`, `internal/server`), and `govulncheck ./...` (`go1.27.4`, 0 vulnerabilities) all passed cleanly.
+  - `grab check src/desk.grab views/workbench.grab.html` & `grab format` (`GRAB v1.1.0`) passed cleanly.
+  - `node --test tests/*.test.js` passed 100% (vendored `Grex JS v1.0.0` SHA-256 byte parity, `divCount === 0`, `innerHTMLWriteCount === 0`, `auditDom` 100% pass, WCAG AA `>= 4.5:1` Light & Dark palettes, zero model-switching dropdowns, `ADR-025c` string fidelity).
+  - `python tests/integration_e2e.py` passed 100% live across compiled `CGO_ENABLED=0` binaries, `GRAB v1.1.0` `Grisp` worker lifecycle, `grabman v1.0.0` workflows, `GRAB-E401` confinement, `GROXY-SAFE-001` approval/replay/`409` rejection + 1-click snapshot rollback, while confirming all 8 peer `v1.x` repositories remain completely untouched.
+  - Packaged `groxy-desk-windows-amd64.exe`, `groxy-deskd-windows-amd64.exe`, `groxy-deskd-linux-amd64`, `docs/releases/pdf/Groxy-Desk-v0.1.0-Guide.pdf`, `dist/groxy-desk-v0.1.0-bundle.zip`, and `dist/SHA256SUMS.txt`.
 
----
+## Pending Tasks
+- None for `v0.1.0`.
+- **Next Milestone (`v0.2.0`):** Draft and submit `specifications/GROXY-DESK-SPEC-002.md` for Unified `grab mcp` Studio, Live Split-Preview Frame (`Grex Theme Builder v1.0.0` + 8 Design Style Packs + 1-click `Ctrl+Z` layout undo), and Integrated **`GrabLab CMS v1.0.1`** Editor (`status_enforced: "draft"`, `SITE-CONTEXT.md`, 22-rule Boost button).
 
-## Frozen Upstream & Ecosystem Contracts
-- **GRAB:** `v1.1.0` (`urbanspress/grab` — `>= v1.1.0 < v2.0.0`)
-- **Grex JS:** `v1.0.0` (`urbanspress/grex-js` — `>= v1.0.0 < v2.0.0`)
-- **GrabLab CMS:** `v1.0.1` (`urbanspress/grablab-cms` — `>= v1.0.1 < v2.0.0`)
-- **Grex Theme Builder:** `v1.0.0` (`urbanspress/grex-builder` — `>= v1.0.0 < v2.0.0`)
-- **Groxy AI:** `v1.0.0` (`urbanspress/groxy-ai` — `>= v1.0.0 < v2.0.0`)
-- **`grabman`:** `v1.0.0` (`urbanspress/grabman` — `>= v1.0.0 < v2.0.0`)
-- **Grabtaculous:** `v1.0.0` (`urbanspress/grabtaculous` — `>= v1.0.0 < v2.0.0`)
-- **Gashboard:** `v1.0.0` (`urbanspress/gashboard` — `>= v1.0.0 < v2.0.0`)
-
----
-
-## Recent Completion Log
-1. **Step 6 Bootstrap & `v0.1.0` Spec Drafted (pushed to `origin/main` only; `stable` untouched):** Created `C:\Development\groxy-desk` and public twin repositories `urbanspress/groxy-desk.progress` (`origin`) and `urbanspress/groxy-desk.stable` (`stable`), committed governance package (`GROXY-DESK-EXPERT.md`, `AGENTS.md`, `HANDOFF.md`, `README.md`, `LICENSE`, `.gitignore`, `docs/ROADMAP.md`, emerald `#10B981` SVG badges), and drafted [`specifications/GROXY-DESK-SPEC-001.md`](specifications/GROXY-DESK-SPEC-001.md) for owner review.
-
----
-
-## Next Step Model Guidance
-- **Recommended Model After Spec Approval:** Switch to **`Google Hydrogen (High)`** to implement `GROXY-DESK-SPEC-001.md` (`v0.1.0`: Go `127.0.0.1:9490` host daemon, native Windows WebView2 shell, `Grisp` multi-worker supervisor, `grabman` workspace manager, Unified Groxy AI Adaptive Reasoning Router, pure `Grex JS v1.0.0` zero-`<div>` workbench, and all 4 verification gates).
+## Recommended Next Antigravity Model
+- **Optional Cross-Layer Audit / Next Spec:**
+  - Switch to **`Orchestrator (Argon)`** if you want a second-opinion security/IPC/architecture review before kicking off `v0.2.0` MCP/split-preview integration, OR
+  - Select **`Google Hydrogen (Medium)`** to draft `specifications/GROXY-DESK-SPEC-002.md` for `v0.2.0`.

@@ -1,0 +1,10 @@
+{
+  "name": "groxy-desk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Native Windows WebView2 + Grex JS v1.0.0 Desktop Vibe-Coding IDE, Local Grisp Multi-Worker Supervisor, grabman Workspace Manager & Unified Groxy AI Studio",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

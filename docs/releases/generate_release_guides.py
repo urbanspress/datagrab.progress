@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+"""
+Generate printable HTML and Edge-rendered Walkthrough PDF guides for Groxy Desk releases.
+Usage: python docs/releases/generate_release_guides.py [0.1.0]
+"""
+import html
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent.parent
+HTML_DIR = ROOT / "docs" / "releases" / "html"
+PDF_DIR = ROOT / "docs" / "releases" / "pdf"
+
+EDGE_CANDIDATES = [
+    Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
+    Path(r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
+    Path(shutil.which("msedge") or "") if shutil.which("msedge") else None,
+    Path(shutil.which("chrome") or "") if shutil.which("chrome") else None,
+]
+
+
+def find_browser() -> Path:
+    for cand in EDGE_CANDIDATES:
+        if cand and cand.exists():
+            return cand
+    raise FileNotFoundError("Could not locate msedge.exe or chrome to render PDF.")
+
+
+def render_guide_html(version: str) -> str:
+    v = html.escape(version)
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Groxy Desk v{v} — Desktop IDE Walkthrough Guide</title>
+  <style>
+    @page {{ size: letter; margin: 0.7in; }}
+    body {{
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.55;
+      font-size: 10.5pt;
+      margin: 0;
+    }}
+    header {{
+      border-bottom: 3px solid #1d4ed8;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }}
+    h1 {{ font-size: 20pt; margin: 0 0 4px 0; color: #0f172a; }}
+    h2 {{ font-size: 13pt; margin: 18px 0 6px 0; color: #1d4ed8; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; }}
+    h3 {{ font-size: 11pt; margin: 12px 0 4px 0; color: #0f172a; }}
+    p, li {{ margin: 4px 0; }}
+    section {{ margin-bottom: 12px; }}
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 9.2pt;
+    }}
+    th, td {{
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }}
+    th {{ background: #f1f5f9; font-weight: 700; }}
+    code, pre {{
+      font-family: Consolas, "Cascadia Code", monospace;
+      background: #f1f5f9;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 9pt;
+    }}
+    pre {{ padding: 8px 10px; white-space: pre-wrap; }}
+    footer {{
+      margin-top: 24px;
+      padding-top: 10px;
+      border-top: 1px solid #cbd5e1;
+      font-size: 9pt;
+      color: #475569;
+    }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Groxy Desk v{v} — Walkthrough &amp; Architecture Guide</h1>
+    <p><strong>Release Tier:</strong> PRE-1.0 Step 6 Native Desktop IDE | <strong>Default Bind:</strong> <code>127.0.0.1:9490</code> | <strong>Built With:</strong> Go CGO-Free WebView2 + GRAB v1.1.0 + Pure Grex JS v1.0.0</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>1. Plain-English Overview</h2>
+      <p><strong>Groxy Desk</strong> is the native Windows desktop IDE built for Step 6 of the GRAB Post-1.0 Ecosystem. Opening <code>groxy-desk.exe</code> launches an authenticated loopback host daemon (<code>127.0.0.1:9490</code>) and a native Microsoft Edge WebView2 desktop window—without requiring Electron or external cloud logins.</p>
+      <ul>
+        <li><strong>Zero Model-Switching Dropdowns:</strong> <strong>Groxy AI</strong> is your sole permanent assistant across the entire IDE. Its Adaptive Reasoning Router chooses instant execution for fast checks and gated planning with rollback safety for file changes.</li>
+        <li><strong>Local Grisp Worker Control:</strong> Start, health-check, reload, inspect redacted logs for, and cleanly shut down up to 8 local <code>grab.exe</code> workers on <code>127.0.0.1:8765–8772</code>.</li>
+        <li><strong>Built-In grabman v1.0.0 Manager:</strong> Initialize projects, audit deployments with <code>grabman doctor</code>, and verify lockfiles with <code>grabman solve --verify</code> in one click.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>2. Security &amp; Confinement Boundaries</h2>
+      <table>
+        <thead>
+          <tr><th>Code</th><th>HTTP</th><th>Guarantee</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>DESK-E501</code></td><td>500</td><td>Fails closed unless bound strictly to <code>127.0.0.1</code> / loopback (blocks <code>0.0.0.0</code>, <code>::</code>, LAN IPs).</td></tr>
+          <tr><td><code>DESK-E403</code></td><td>403</td><td>Enforces constant-time <code>Authorization: Bearer</code>, <code>X-CSRF-Token</code>, and target-bound <code>approval_token</code> matching.</td></tr>
+          <tr><td><code>DESK-E409</code></td><td>409</td><td>Rejects any replay attempt of a single-use <code>approval_token</code>.</td></tr>
+          <tr><td><code>GRAB-E401</code></td><td>403</td><td>Rejects traversal (<code>..</code>), symlink/NTFS junction escapes, and sensitive files (<code>.env</code>, <code>.git</code>, <code>*.pem</code>, <code>*.key</code>, <code>id_rsa</code>, <code>id_ed25519</code>).</td></tr>
+          <tr><td><code>DESK-E503</code></td><td>503</td><td>Fails closed when an explicitly configured local Ollama endpoint is unreachable.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>3. Adaptive Reasoning Router &amp; GROXY-SAFE-001 Rollback</h2>
+      <ol>
+        <li><strong>Fast Instant Path:</strong> Deterministic 22-rule SEO/A11Y/DOM/Link audits, <code>grab check</code> + canonical <code>grab format</code> checks, <code>grabman doctor</code>, and <code>Grisp</code> worker status checks execute immediately.</li>
+        <li><strong>Deep Gated Path:</strong> Code edits or layout fixes draft a step-by-step Plan, capture a pre-mutation <strong>SHA-256 Snapshot</strong> outside the workspace, and issue a single-use target-bound <code>approval_token</code>.</li>
+        <li><strong>1-Click Snapshot Rollback:</strong> Every approved edit remains reversible to exact byte-for-byte original SHA-256 state in one click (or removes newly created files cleanly).</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>4. Pure Grex JS v1.0.0 Light &amp; Dark Workbench</h2>
+      <p>The entire browser workbench renders exclusively with the 20 semantic elements defined in <code>grex.elements.json</code>—guaranteeing <code>divCount === 0</code>, <code>innerHTMLWriteCount === 0</code>, zero <code>eval()</code>/<code>new Function()</code>, zero-FOUC theme loading, WCAG AA contrast (&ge; 4.5:1) in both Light &amp; Dark themes, and exact <code>ADR-025c</code> base-10 wire strings.</p>
+    </section>
+
+    <section>
+      <h2>5. Quickstart Commands</h2>
+      <pre>groxy-desk-windows-amd64.exe --workspace C:\\path\\to\\project
+groxy-desk-windows-amd64.exe --smoke-test --addr 127.0.0.1:0
+groxy-deskd-windows-amd64.exe --addr 127.0.0.1:9490 --workspace C:\\path\\to\\project</pre>
+    </section>
+
+    <section>
+      <h2>6. 7-Layer Ecosystem Compatibility Matrix</h2>
+      <table>
+        <thead>
+          <tr><th>Ecosystem Layer</th><th>Repository</th><th>Required Range</th><th>Touched in v{v}?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Core Language &amp; Grisp Server</td><td><code>urbanspress/grab</code></td><td><code>&gt;= v1.1.0 (&lt; v2.0.0)</code></td><td>No (Consumable CLI)</td></tr>
+          <tr><td>Reactive Frontend Runtime</td><td><code>urbanspress/grex-js</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No (Vendored v1.0.0)</td></tr>
+          <tr><td>Flagship Zero-Plugin CMS</td><td><code>urbanspress/grablab-cms</code></td><td><code>&gt;= v1.0.1 (&lt; v2.0.0)</code></td><td>No</td></tr>
+          <tr><td>Exclusive Visual Theme &amp; Studio</td><td><code>urbanspress/grex-builder</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No</td></tr>
+          <tr><td>Autonomous Design &amp; SEO Agent</td><td><code>urbanspress/groxy-ai</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No</td></tr>
+          <tr><td>Scaffolder, Fleet &amp; VPS Panel</td><td><code>grabman</code> / <code>grabtaculous</code> / <code>gashboard</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No (<code>grabman v1.0.0</code> Bridge)</td></tr>
+          <tr><td>Native Desktop Vibe-Coding IDE</td><td><code>urbanspress/groxy-desk</code></td><td><code>v{v}</code></td><td>Yes</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <p>Groxy Desk v{v} — Verified across Gate 1 (Go + govulncheck + grab check/format), Gate 2 (Pure Grex JS DOM/WCAG/ADR-025c), Gate 3 (GRAB-E401 + GROXY-SAFE-001), and Gate 4 (Live E2E).</p>
+  </footer>
+</body>
+</html>
+"""
+
+
+def main():
+    version = sys.argv[1] if len(sys.argv) > 1 else "0.1.0"
+    HTML_DIR.mkdir(parents=True, exist_ok=True)
+    PDF_DIR.mkdir(parents=True, exist_ok=True)
+
+    html_path = HTML_DIR / f"Groxy-Desk-v{version}-Guide.html"
+    pdf_path = PDF_DIR / f"Groxy-Desk-v{version}-Guide.pdf"
+
+    html_path.write_text(render_guide_html(version), encoding="utf-8")
+
+    browser = find_browser()
+    file_url = html_path.resolve().as_uri()
+    cmd = [
+        str(browser),
+        "--headless",
+        "--disable-gpu",
+        "--no-pdf-header-footer",
+        f"--print-to-pdf={pdf_path}",
+        file_url,
+    ]
+    res = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
+    if res.returncode != 0 or not pdf_path.exists() or pdf_path.stat().st_size < 5000:
+        raise RuntimeError(f"Failed rendering PDF ({res.returncode}): {res.stderr}\n{res.stdout}")
+
+    print(f"Generated {html_path}")
+    print(f"Generated {pdf_path} ({pdf_path.stat().st_size} bytes)")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,6 +1,6 @@
 # GROXY-DESK-SPEC-001: Groxy Desk `v0.1.0` — Native Desktop Shell, Local `Grisp` Supervisor, Workspace Manager & Unified `Groxy AI` Host Bridge
 
-- **Status:** Specification in Review (Awaiting Project-Owner Approval — **Zero Application Code Written**)
+- **Status:** Complete (Released as `v0.1.0` — Verified across Gates 1–4)
 - **Target Release:** `v0.1.0` (`PRE-1.0` — Step 6 Native Desktop IDE Foundation)
 - **Foundational Baselines:**
   - **GRAB:** `v1.1.0` (`urbanspress/grab` — `Grisp`, `grab serve`, `grab check`, `grab format`, `grab mcp`, `ADR-005`, `ADR-017`, `ADR-025c`)
@@ -32,24 +32,30 @@ In **`v0.1.0`**, Groxy Desk establishes the secure desktop foundation:
 ```text
 groxy-desk/
 ├── cmd/
-│   ├── groxy-desk-host/        # Go (CGO_ENABLED=0) loopback host daemon (127.0.0.1:9490)
+│   ├── groxy-deskd/            # Go (CGO_ENABLED=0) loopback host daemon (127.0.0.1:9490)
 │   └── groxy-desk/             # Lightweight native Windows WebView2 launcher
 ├── internal/
-│   ├── host/                   # Loopback HTTP server, bearer auth, X-CSRF-Token, approval_token & snapshots
-│   ├── safepath/               # GRAB-E401 workspace path confinement, symlink & secret-segment guards
+│   ├── server/                 # Loopback HTTP server, bearer auth, X-CSRF-Token & API routes
+│   ├── security/               # DESK-E501 bind validation, GRAB-E401 confinement, constant-time auth & redaction
 │   ├── supervisor/             # Grisp (grab.exe) multi-worker supervisor (127.0.0.1:8765–8772)
 │   ├── workspace/              # Structured argv wrappers for grabman init/doctor/solve & grab check/format
-│   └── groxy/                  # Unified Groxy AI Default Agent & Automatic Adaptive Reasoning Router
-├── web/
-│   ├── index.html              # Zero-FOUC Grex JS v1.0.0 workbench shell (divCount === 0)
+│   └── groxybridge/            # Unified Groxy AI Default Agent, Adaptive Reasoning Router & GROXY-SAFE-001 approvals
+├── src/
+│   └── desk.grab               # Companion GRAB v1.1.0 workbench metadata checked via grab check/format
+├── views/
+│   └── workbench.grab.html     # Zero-FOUC Grex JS v1.0.0 workbench shell (divCount === 0)
+├── public/
 │   ├── grex/                   # Vendored Grex JS v1.0.0 (SHA-256 verified against grex-js/dist/)
-│   └── desk/                   # Pure Grex JS v1.0.0 modules (workbench, supervisor, grabman, groxy-bar, theme)
-├── tests/                      # Go unit/security/integration tests + Node zero-<div>/WCAG AA/contract tests
+│   └── desk/                   # Pure Grex JS v1.0.0 modules (workbench, workspace-panel, supervisor-panel, groxy-agent, theme)
+├── tests/                      # Go unit/security/integration tests + Node zero-<div>/WCAG AA/contract tests + Python E2E
 ├── docs/
 │   ├── ROADMAP.md
-│   └── badges/
+│   ├── badges/
+│   └── releases/               # Walkthrough HTML/PDF generator & Groxy-Desk-v0.1.0-Guide.pdf
 ├── specifications/
 │   └── GROXY-DESK-SPEC-001.md
+├── scripts/
+│   └── package_release.py      # Static CGO_ENABLED=0 binary, bundle zip & SHA256SUMS builder
 ├── GROXY-DESK-EXPERT.md
 ├── AGENTS.md
 ├── HANDOFF.md
@@ -61,8 +67,8 @@ groxy-desk/
 ## 3. Loopback Host Daemon (`127.0.0.1:9490`) & Native WebView2 Bridge
 
 ### 3.1 Strict Loopback & Process Isolation (`ADR-005`, `ADR-017`)
-- **Bind Enforcement (`DESK-E501`):** `groxy-desk-host` MUST bind strictly to `127.0.0.1:9490` (or an explicit `127.0.0.1:<port>` override). `ValidateLoopbackBind` fails closed on `0.0.0.0`, `::`, `*`, or any non-loopback IP.
-- **Session Bearer + `X-CSRF-Token` (`DESK-E403`):** On startup, `groxy-desk-host` generates an in-memory 32-byte random bearer token and CSRF token, passing them to the native Windows WebView2 shell over an authenticated local handshake. All `/api/*` requests verify `Authorization: Bearer <token>` via `subtle.ConstantTimeCompare`, and all `POST` routes require `X-CSRF-Token`.
+- **Bind Enforcement (`DESK-E501`):** `groxy-deskd` MUST bind strictly to `127.0.0.1:9490` (or an explicit `127.0.0.1:<port>` override). `ValidateLoopbackBind` fails closed on `0.0.0.0`, `::`, `*`, or any non-loopback IP.
+- **Session Bearer + `X-CSRF-Token` (`DESK-E403`):** On startup, `groxy-deskd` generates an in-memory 32-byte random bearer token and CSRF token, passing them to the native Windows WebView2 shell over an authenticated local handshake. All `/api/*` requests verify `Authorization: Bearer <token>` via `subtle.ConstantTimeCompare`, and all `POST` routes require `X-CSRF-Token`.
 - **Strict Browser CSP:** All HTML responses from `127.0.0.1:9490` emit:
   - `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; frame-ancestors 'none'`
   - `X-Content-Type-Options: nosniff`
@@ -72,21 +78,24 @@ groxy-desk/
 
 | Method & Path | Auth | Contract |
 |---|---|---|
-| `GET /_health` | Loopback local | Returns `200 OK` `{ok: true, status: "ok", service: "groxy-desk-host", version: "0.1.0"}`. |
+| `GET /_health` | Loopback local | Returns `200 OK` `{ok: true, status: "ok", service: "groxy-deskd", version: "0.1.0"}`. |
 | `GET /_ready` | Loopback local | Returns `200 OK` `{ok: true, ready: true, grab_bin_ok: bool, grabman_bin_ok: bool}`. |
 | `GET /api/workspace/tree` | Bearer | Lists confined workspace files/directories (`GRAB-E401` enforced). |
 | `POST /api/workspace/read` | Bearer + CSRF | Reads a workspace file (`<= 10 MiB`, `GRAB-E401` enforced). |
 | `POST /api/workspace/check` | Bearer + CSRF | Runs `grab check` and `grab format --check` on target `.grab`/`.grab.html` files. |
+| `POST /api/grabman/init/plan` | Bearer + CSRF | Validates scaffold options (`GRAB-E401`) and issues a target-bound `approval_token`. |
 | `POST /api/grabman/init` | Bearer + CSRF + `approval_token` | Scaffolds a project via `grabman init --dir <confined> --profile <app\|cms-stack\|ai-stack> --json`. |
 | `POST /api/grabman/doctor` | Bearer + CSRF | Runs read-only `grabman doctor --dir <confined> --json` and returns plain-English findings. |
 | `POST /api/grabman/solve-verify` | Bearer + CSRF | Runs read-only `grabman solve --verify --dir <confined> --json`. |
 | `GET /api/grisp/workers` | Bearer | Lists active local `Grisp` workers, ports (`127.0.0.1:8765–8772`), `/_health`, and `/_ready` states. |
 | `POST /api/grisp/start` | Bearer + CSRF | Starts a local `Grisp` (`grab serve`) worker on an available port in `127.0.0.1:8765–8772`. |
-| `POST /api/grisp/reload` | Bearer + CSRF | Triggers atomic reload / `SIGHUP` on a running worker and verifies `/_ready === 200`. |
+| `POST /api/grisp/reload` | Bearer + CSRF | Runs `grab check` preflight, triggers atomic reload on a running worker, and verifies `/_ready === 200`. |
 | `POST /api/grisp/stop` | Bearer + CSRF | Gracefully drains (`30s` max) and stops the target `Grisp` worker. |
 | `GET /api/grisp/logs` | Bearer | Returns bounded, secret-redacted stdout/stderr ring-buffer entries for a worker. |
 | `POST /api/groxy/ask` | Bearer + CSRF | Submits a prompt to the Unified **Groxy AI** Default Agent & Adaptive Reasoning Router. |
 | `POST /api/groxy/approvals/apply` | Bearer + CSRF + `approval_token` | Applies an approved file/scaffold plan after capturing a SHA-256 Pre-Mutation Snapshot (`403`/`409` on mismatch/replay). |
+| `GET /api/groxy/snapshots` | Bearer | Lists recorded SHA-256 Pre-Mutation Snapshots with restore state. |
+| `POST /api/groxy/snapshots/restore` | Bearer + CSRF + `approval_token` | Restores a file to its exact Pre-Mutation Snapshot bytes in 1 click (`403`/`409` on mismatch/replay). |
 | `GET /api/preferences/theme` | Bearer | Returns active theme (`"light"` \| `"dark"`). |
 | `POST /api/preferences/theme` | Bearer + CSRF | Persists Light/Dark theme preference cleanly. |
 
@@ -98,7 +107,7 @@ groxy-desk/
 - **Single Permanent Identity:** The IDE sidebar and command bar present **Groxy AI** as the sole, unified assistant (`"Ask Groxy AI..."`). No model-picker `<select>` or provider dropdown is ever rendered in the workbench UI.
 - **Local-First Execution:** By default, **Groxy AI** routes to local **Ollama** / **OpenCode** endpoints on `127.0.0.1` (zero mandatory cloud API fees). Optional user-supplied API keys live strictly in host environment variables or AES-256-GCM encrypted local config (`DESK-E503` on provider timeout/unavailability).
 
-### 4.2 Deterministic Adaptive Reasoning Router (`internal/groxy/router.go`)
+### 4.2 Deterministic Adaptive Reasoning Router (`internal/groxybridge/router.go`)
 Every request to `POST /api/groxy/ask` is classified deterministically into one of two internal execution tiers without user intervention:
 
 | Internal Tier | Triggering Task Classes | Execution Behavior |
@@ -158,10 +167,10 @@ Every request to `POST /api/groxy/ask` is classified deterministically into one 
 Implementation of `v0.1.0` is NOT complete until all **four** verification gates pass at `100%`:
 
 1. **Gate 1 — Go Host Daemon & Supervisor Suite:**
-   - `go build ./...`, `go vet ./...`, `go test -count=1 ./...`, and `govulncheck ./...` (`0` errors, `0` vulnerabilities) covering `internal/host`, `internal/safepath`, `internal/supervisor`, `internal/workspace`, and `internal/groxy`.
+   - `go build ./...`, `go vet ./...`, `go test -count=1 ./...`, and `govulncheck ./...` (`0` errors, `0` vulnerabilities) covering `internal/server`, `internal/security`, `internal/supervisor`, `internal/workspace`, and `internal/groxybridge`.
 2. **Gate 2 — Pure `Grex JS v1.0.0` Zero-`<div>` & WCAG AA DOM Suite:**
    - `node --test tests/*.test.js` verifying `divCount === 0`, `innerHTMLWriteCount === 0`, zero `eval()` / unsafe URLs, zero model-switching dropdowns in the Groxy AI sidebar, Light & Dark `computeContrastRatio() >= 4.5:1`, `100%` `auditAccessibility()`, and `ADR-025c` base-10 wire preservation.
 3. **Gate 3 — Security, Confinement & Approval Gate Suite:**
    - Automated tests proving non-loopback bind rejection (`DESK-E501`), `GRAB-E401` path/symlink/sensitive-file blocking, `403 DESK-E403` on missing/mismatched CSRF or `approval_token`, `409 DESK-E409` on replay, and zero shell-string interpolation (`sh -c` / `cmd /c`).
 4. **Gate 4 — Cross-Layer Integration Suite:**
-   - End-to-end test launching `groxy-desk-host` on `127.0.0.1:9490`, scaffolding a workspace via `grabman v1.0.0` (`init` -> `doctor` -> `solve --verify`), starting a live `GRAB v1.1.0` `Grisp` worker (`/_health` + `/_ready === 200`), executing a Unified `Groxy AI` Adaptive Router request + `approval_token` write + Pre-Mutation Snapshot verification, and cleanly shutting down all workers.
+   - End-to-end test launching `groxy-deskd` on `127.0.0.1:9490`, scaffolding a workspace via `grabman v1.0.0` (`init` -> `doctor` -> `solve --verify`), starting a live `GRAB v1.1.0` `Grisp` worker (`/_health` + `/_ready === 200`), executing a Unified `Groxy AI` Adaptive Router request + `approval_token` write + Pre-Mutation Snapshot verification & 1-click rollback, and cleanly shutting down all workers.

@@ -287,6 +287,18 @@ func (m *Manager) StartOllama(ctx context.Context, req OllamaStartRequest) (map[
 	}, nil
 }
 
+// Shutdown terminates any local loopback Ollama subprocess started by this Manager.
+func (m *Manager) Shutdown() {
+	m.mu.Lock()
+	cmd := m.ollamaCmd
+	m.ollamaCmd = nil
+	m.mu.Unlock()
+	if cmd != nil && cmd.Process != nil {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+	}
+}
+
 func buildAuthorArtifacts(req InitPlanRequest, relDir string) (map[string]string, map[string]string, auditor.SchemaOrgPreview, error) {
 	bookTitle := firstNonEmpty(strings.TrimSpace(req.BookTitle), "Untitled Novel")
 	authorName := firstNonEmpty(strings.TrimSpace(req.AuthorName), "Independent Author")

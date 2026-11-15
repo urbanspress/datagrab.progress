@@ -258,10 +258,13 @@ func (s *Server) Session() SessionCredentials {
 	}
 }
 
-// Shutdown drains managed Grisp workers, closes active SSH DB tunnels, and stops the HTTP server.
+// Shutdown drains managed Grisp workers, closes active SSH DB tunnels, stops spawned Author runtimes, and stops the HTTP server.
 func (s *Server) Shutdown(ctx context.Context) error {
 	if s.dbStudio != nil {
 		s.dbStudio.CloseAll()
+	}
+	if s.authorMgr != nil {
+		s.authorMgr.Shutdown()
 	}
 	supErr := s.supervisorMgr.ShutdownAll(ctx)
 	srvErr := s.httpServer.Shutdown(ctx)

@@ -315,16 +315,14 @@ func (m *Manager) PlanDNS(ctx context.Context, req DNSPlanRequest) (map[string]a
 	}, nil
 }
 
-// ApplyDNS verifies single-use approval_token and email preservation (422 DESK-E303) before calling setHosts.
+// ApplyDNS verifies email preservation (422 DESK-E303) before consuming single-use approval_token and calling setHosts.
 func (m *Manager) ApplyDNS(ctx context.Context, req DNSApplyRequest) (map[string]any, error) {
 	fqdn, _, sld, tld, _, err := parseDomainParts(req.Domain, req.RootDomain, req.Subdomain)
 	if err != nil {
 		return nil, err
 	}
-	targetKey := "dns:" + fqdn
-	appr, err := m.approvals.ConsumeToken(req.ApprovalToken, groxybridge.ActionDNSApply, targetKey)
-	if err != nil {
-		return nil, err
+	if strings.TrimSpace(req.ApprovalToken) == "" {
+		return nil, security.NewError(security.CodeDeskE403, 403, "missing approval_token", nil)
 	}
 
 	creds, err := m.decryptVault()
@@ -344,6 +342,12 @@ func (m *Manager) ApplyDNS(ctx context.Context, req DNSApplyRequest) (map[string
 	preservedCount, emailErr := VerifyEmailRecordsPreserved(existing, req.ProposedRecords)
 	if emailErr != nil {
 		return nil, emailErr
+	}
+
+	targetKey := "dns:" + fqdn
+	appr, err := m.approvals.ConsumeToken(req.ApprovalToken, groxybridge.ActionDNSApply, targetKey)
+	if err != nil {
+		return nil, err
 	}
 	if err := m.namecheapSetHosts(ctx, creds, sld, tld, req.ProposedRecords); err != nil {
 		return nil, err
@@ -559,7 +563,7 @@ func isProtectedEmailOrServiceRecord(r HostRecord) bool {
 	t := strings.ToUpper(strings.TrimSpace(r.Type))
 	n := strings.ToLower(strings.TrimSpace(r.Name))
 	switch t {
-	case "MX", "TXT", "CAA", "SRV", "NS":
+	case "MX", "TXT", "SPF", "DKIM", "DMARC", "CAA", "SRV", "NS":
 		return true
 	case "CNAME":
 		return strings.Contains(n, "_domainkey") || strings.Contains(n, "autodiscover") || strings.Contains(n, "mail") || strings.Contains(n, "_dmarc")
@@ -655,8 +659,14 @@ func buildEmailSafeDNSPlan(existing []HostRecord, sub string, req DNSPlanRequest
 func stripEmailRecords(in []HostRecord) []HostRecord {
 	out := make([]HostRecord, 0, len(in))
 	for _, r := range in {
-		if strings.EqualFold(r.Type, "MX") {
+		switch strings.ToUpper(strings.TrimSpace(r.Type)) {
+		case "MX", "TXT", "SPF", "DKIM", "DMARC", "CAA", "SRV", "NS":
 			continue
+		case "CNAME":
+			n := strings.ToLower(strings.TrimSpace(r.Name))
+			if strings.Contains(n, "_domainkey") || strings.Contains(n, "autodiscover") || strings.Contains(n, "mail") || strings.Contains(n, "_dmarc") {
+				continue
+			}
 		}
 		out = append(out, r)
 	}

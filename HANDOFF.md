@@ -1,10 +1,17 @@
 # HANDOFF.md — Groxy Desk
 
 ## Current Status
-- **Current Milestone:** `v0.3.0` — **Complete & Verified Across Gates 1–4** ([`specifications/GROXY-DESK-SPEC-003.md`](specifications/GROXY-DESK-SPEC-003.md) | [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v0.3.0-Guide.pdf))
-- **Next Milestone Target:** **Pre-`v1.0.0` Cross-Layer Audit -> `v1.0.0` GA & Branded Inno Setup Installer (`Groxy-Desk-Setup-1.0.0.exe`)**
-- **Branch / Repositories:** `main` (`origin` `https://github.com/urbanspress/groxy-desk.progress.git` & `stable` `https://github.com/urbanspress/groxy-desk.stable.git`, synchronized on tag `v0.3.0`)
-- **Current Owner:** Project Owner (for Model Switch) -> **`Orchestrator (Argon)`**
+- **Current Milestone:** `v0.3.0` Complete ([`specifications/GROXY-DESK-SPEC-003.md`](specifications/GROXY-DESK-SPEC-003.md)) | **Pre-`v1.0.0` 7-Layer Audit Complete & `GROXY-DESK-SPEC-100.md` in Review** ([`specifications/GROXY-DESK-SPEC-100.md`](specifications/GROXY-DESK-SPEC-100.md))
+- **Next Milestone Target:** **`v1.0.0` Production Freeze & Branded Inno Setup Installer (`Groxy-Desk-Setup-1.0.0.exe`)** (awaiting project-owner approval of `specifications/GROXY-DESK-SPEC-100.md`)
+- **Branch / Repositories:** `main` (`origin` `https://github.com/urbanspress/groxy-desk.progress.git` ahead with audit hardening + `GROXY-DESK-SPEC-100.md`; `stable` `https://github.com/urbanspress/groxy-desk.stable.git` untouched on `v0.3.0`)
+- **Current Owner:** Project Owner (for `GROXY-DESK-SPEC-100.md` Approval) -> **`Google Hydrogen (High)`** (for `v1.0.0` Implementation)
+
+## Completed in Pre-`v1.0.0` Audit & Planning
+- Completed Pre-`v1.0.0` 7-layer cross-layer security, IPC (`GrexPreviewBridge`), SSH pinning/tunnels, DB isolation, Namecheap DNS/HTTPS, Author Mode, Pure `Grex JS v1.0.0` DOM/WCAG AA (`>= 4.5:1`), `ADR-025c`, zero model-dropdown, and `GROXY-SAFE-001` audit with zero frozen upstream `v1.x` application code modifications.
+- Landed two audit-hardening remediations: wired `(*author.Manager).Shutdown()` into `(*server.Server).Shutdown()` (`internal/author/author.go`, `internal/server/server.go`) for clean Ollama child process teardown, and enforced pre-token `DESK-E303` email record verification + explicit `SPF`/`DKIM`/`DMARC` protection in `ApplyDNS` (`internal/dns/dns.go`, `internal/dns/dns_test.go`).
+- Re-verified Gates 1–4 at `100%` pass (`go build ./...`, `go vet ./...`, `go test -count=1 ./...` across all 11 tested packages, `govulncheck ./...` `0` vulnerabilities, `grab check` + `grab format` parity, `node --test tests/*.test.js` `10/10` pass, and `python tests/integration_e2e.py`).
+- Drafted [`specifications/GROXY-DESK-SPEC-100.md`](specifications/GROXY-DESK-SPEC-100.md) freezing `v1.0.0` daemon routes (`55` paths / `57` route handlers), `13` `grab mcp` tools, error codes, version-bump inventory, and branded Inno Setup `.exe` installer contract (`installer/groxy-desk.iss` -> `dist/Groxy-Desk-Setup-1.0.0.exe`).
+- Locked backwards-compatible "Author Mode" roadmap entries (`docs/ROADMAP.md` & `HANDOFF.md` only) on `origin/main` in `grablab-cms` (`v1.4.0`) and `groxy-ai` (`v1.7.0`).
 
 ## Completed in `v0.3.0`
 - Implemented Step 5 Fleet & `Grabtaculous` Bridge (`internal/fleet/`, `public/desk/fleet-panel.js`), `known_hosts` pinned `SHA256:...` SSH (`403 DESK-E405`), encrypted node registry (`v1:...`), `grabman doctor` / `solve --verify` / `Site DNA` (`422 DESK-E302`), `--read-only` non-root `@sha256` deployments, single-use `approval_token`, and SHA-256 Pre-Deploy Snapshot (`snap_deploy_*`) rollback.
@@ -15,7 +22,8 @@
 - Generated `docs/releases/pdf/Groxy-Desk-v0.3.0-Guide.pdf`, `dist/` static `CGO_ENABLED=0` binaries + `groxy-desk-v0.3.0-bundle.zip` + `SHA256SUMS.txt`, and published synchronized `v0.3.0` releases on `origin` and `stable`.
 
 ## Pending Next Steps
-- **Pre-`v1.0.0` Cross-Layer Audit & `v1.0.0` GA Packaging:** Perform final cross-layer security, SSH pinning, SQLite/tunnel isolation, Pure `Grex JS v1.0.0` DOM, `ADR-025c`, and `GROXY-SAFE-001` audit prior to drafting `specifications/GROXY-DESK-SPEC-004.md` (if needed for GA installer) and tagging `Groxy Desk v1.0.0` + building `Groxy-Desk-Setup-1.0.0.exe`.
+- **Await Owner Approval of [`specifications/GROXY-DESK-SPEC-100.md`](specifications/GROXY-DESK-SPEC-100.md):** Do not bump runtime/package versions to `1.0.0`, build `Groxy-Desk-Setup-1.0.0.exe`, or push tags/releases to `stable` until the project owner approves `GROXY-DESK-SPEC-100.md`.
+- **Implement `v1.0.0` Freeze & Inno Setup Packaging (After Approval):** Bump versions (`server.go`, `mcpbridge.go`, `package.json`, `src/desk.grab`, `views/workbench.grab.html`, `public/desk/workbench.js`, tests, `docs/badges/release-v1.0.0.svg`, `README.md`), add `v1.0.0` walkthrough PDF generation, author `installer/groxy-desk.iss` (`Groxy-Desk-Setup-1.0.0.exe` via Inno Setup 6 `ISCC.exe`), re-verify Gates 1–4, and synchronize `v1.0.0` releases across `origin` and `stable`.
 
 ## Recommended Next Model (`AGENTS.md` 4-Tier Routing)
-- **Switch to `Orchestrator (Argon)`:** Recommended next to run our final independent **Pre-`v1.0.0` Cross-Layer Audit** across all `Groxy Desk v0.3.0` security, SSH pinning, DB isolation, Pure `Grex JS v1.0.0` DOM, and upstream `v1.x` contracts before tagging **`Groxy Desk v1.0.0`**.
+- **Switch to `Google Hydrogen (High)`:** Recommended next to implement the `v1.0.0` version freeze, walkthrough PDF, and Inno Setup installer (`installer/groxy-desk.iss` -> `Groxy-Desk-Setup-1.0.0.exe`) cleanly once `specifications/GROXY-DESK-SPEC-100.md` is approved.

@@ -113,6 +113,37 @@ func TestDNSPlanEmailPreservationPreflightAndHTTPSApply(t *testing.T) {
 	}
 
 	proposed := plan["proposed_records"].([]HostRecord)
+
+	// Verify explicit SPF/DKIM/DMARC types are protected and stripped cleanly in simulation mode
+	for _, recType := range []string{"SPF", "DKIM", "DMARC"} {
+		rec := HostRecord{Name: "@", Type: recType, Address: "v=test", TTL: "1800"}
+		if !isProtectedEmailOrServiceRecord(rec) {
+			t.Fatalf("expected explicit %s record type to be protected", recType)
+		}
+		if len(stripEmailRecords([]HostRecord{rec})) != 0 {
+			t.Fatalf("expected stripEmailRecords to drop %s record during simulation", recType)
+		}
+	}
+
+	// Tampered ApplyDNS payload omitting an email record MUST fail 422 DESK-E303 prior to consuming approval_token
+	tampered := make([]HostRecord, 0, len(proposed))
+	for _, rec := range proposed {
+		if !strings.EqualFold(rec.Type, "MX") {
+			tampered = append(tampered, rec)
+		}
+	}
+	_, tamperedErr := mgr.ApplyDNS(context.Background(), DNSApplyRequest{
+		Domain:          "example.org",
+		ApprovalToken:   plan["approval_token"].(string),
+		ProposedRecords: tampered,
+	})
+	if tamperedErr == nil || security.ErrorCode(tamperedErr, "") != security.CodeDeskE303 || security.ErrorStatus(tamperedErr, 0) != 422 {
+		t.Fatalf("expected 422 DESK-E303 on tampered ApplyDNS payload, got %v", tamperedErr)
+	}
+	if setHostsBody != "" {
+		t.Fatalf("setHosts must not be called when tampered payload fails 422 DESK-E303")
+	}
+
 	applyRes, err := mgr.ApplyDNS(context.Background(), DNSApplyRequest{
 		Domain:          "example.org",
 		ApprovalToken:   plan["approval_token"].(string),

@@ -149,6 +149,35 @@ export function createGroxySidebarNode(store, actions) {
                   onClick: () => submitPrompt("Run grab check and format"),
                 },
               },
+              {
+                type: "Button",
+                id: "desk-groxy-boost-btn",
+                attrs: { id: "desk-groxy-boost-btn" },
+                className: "desk-btn-primary",
+                props: {
+                  type: "button",
+                  text: "Let Groxy Boost This (Deep)",
+                  onClick: async () => {
+                    if (typeof actions.proposeBoost !== "function") return;
+                    const target = String(store.activePath.peek() || "views/workbench.grab.html");
+                    groxyStatus.set(`Running Deep Boost analysis for "${target}"...`);
+                    try {
+                      const res = await actions.proposeBoost({
+                        target_path: target,
+                        style_pack: store.selectedStylePack ? store.selectedStylePack.peek() : "emerald-editorial",
+                      });
+                      const d = res && res.proposal ? res.proposal.projected_delta : null;
+                      groxyStatus.set(
+                        d
+                          ? `Boost ready: ${d.before_score} (${d.before_grade}) -> ${d.after_score} (${d.after_grade}) [${d.delta}]`
+                          : "Boost proposal ready in Scorecard panel."
+                      );
+                    } catch (err) {
+                      groxyStatus.set(err && err.message ? err.message : "Boost failed.");
+                    }
+                  },
+                },
+              },
             ],
           },
           {

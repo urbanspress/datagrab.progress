@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"groxy-desk/internal/groxybridge"
+	"groxy-desk/internal/mcpbridge"
 	"groxy-desk/internal/security"
 	"groxy-desk/internal/supervisor"
 	"groxy-desk/internal/workspace"
@@ -65,6 +66,7 @@ type Server struct {
 	supervisorMgr *supervisor.Manager
 	approvals     *groxybridge.ApprovalManager
 	groxy         *groxybridge.Bridge
+	mcp           *mcpbridge.Bridge
 	viewsFS       fs.FS
 	publicFS      fs.FS
 	httpServer    *http.Server
@@ -139,6 +141,10 @@ func New(cfg Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	mcpBridge, err := mcpbridge.New(wsMgr.Root(), grabBin, absState, apprMgr, redactor)
+	if err != nil {
+		return nil, err
+	}
 
 	if cfg.ViewsFS == nil {
 		cfg.ViewsFS = os.DirFS(filepath.Join(wsMgr.Root(), "views"))
@@ -159,6 +165,7 @@ func New(cfg Config) (*Server, error) {
 		supervisorMgr: supMgr,
 		approvals:     apprMgr,
 		groxy:         bridge,
+		mcp:           mcpBridge,
 		viewsFS:       cfg.ViewsFS,
 		publicFS:      cfg.PublicFS,
 	}
@@ -264,10 +271,20 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /api/groxy/approvals/apply", s.authCSRF(http.HandlerFunc(s.handleGroxyApply)))
 	mux.Handle("GET /api/groxy/snapshots", s.authCSRF(http.HandlerFunc(s.handleListSnapshots)))
 	mux.Handle("POST /api/groxy/snapshots/restore", s.authCSRF(http.HandlerFunc(s.handleRestoreSnapshot)))
+
+	// v0.2.0 Unified MCP Studio, Split-Preview, 22-Rule Auditor & "Let Groxy Boost This" endpoints.
+	mux.Handle("GET /api/mcp/tools", s.authCSRF(http.HandlerFunc(s.handleMCPTools)))
+	mux.Handle("POST /api/mcp/call", s.authCSRF(http.HandlerFunc(s.handleMCPCall)))
+	mux.Handle("GET /api/studio/design-system", s.authCSRF(http.HandlerFunc(s.handleStudioDesignSystem)))
+	mux.Handle("POST /api/studio/synthesize", s.authCSRF(http.HandlerFunc(s.handleStudioSynthesize)))
+	mux.Handle("POST /api/studio/layout/apply", s.authCSRF(http.HandlerFunc(s.handleStudioLayoutApply)))
+	mux.Handle("POST /api/groxy/audit", s.authCSRF(http.HandlerFunc(s.handleGroxyAuditV2)))
+	mux.Handle("POST /api/groxy/boost", s.authCSRF(http.HandlerFunc(s.handleGroxyBoost)))
+	mux.Handle("POST /api/groxy/boost/approve", s.authCSRF(http.HandlerFunc(s.handleGroxyBoostApprove)))
 }
 
 func (s *Server) securityHeadersMiddleware(next http.Handler) http.Handler {
-	const csp = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
+	const csp = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:*; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
 		h.Set("Content-Security-Policy", csp)
@@ -309,7 +326,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, map[string]any{
 		"status":       "ok",
 		"service":      "groxy-desk",
-		"version":      "0.1.0",
+		"version":      "0.2.0",
 		"bind":         s.Addr(),
 		"worker_count": strconv.Itoa(len(workers)),
 	})

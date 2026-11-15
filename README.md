@@ -3,14 +3,19 @@
 ![Built with GRAB v1.1.0](docs/badges/built-with-grab.svg)
 ![Powered by Grex JS v1.0.0](docs/badges/powered-by-grex-js.svg)
 ![GRAB Ecosystem Step 6 — Groxy Desk](docs/badges/ecosystem-step-6.svg)
-![Release v0.1.0](docs/badges/release-v0.1.0.svg)
+![Release v0.2.0](docs/badges/release-v0.2.0.svg)
 
 **Groxy Desk** is the native desktop vibe-coding IDE, local `Grisp` (`grab.exe`) multi-worker supervisor, `grabman v1.0.0` workspace manager, and Unified **`Groxy AI`** Adaptive Reasoning studio for **Step 6 of the Post-1.0 GRAB Ecosystem**.
 
-- **Current Status:** `v0.1.0` — **Complete** (See [`CHANGELOG.md`](CHANGELOG.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), and the [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v0.1.0-Guide.pdf))
+- **Current Status:** `v0.2.0` — **Complete** (See [`CHANGELOG.md`](CHANGELOG.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), and the [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v0.2.0-Guide.pdf))
 - **Built Strictly Upon Frozen Baselines:** `GRAB v1.1.0`, `Grex JS v1.0.0`, `GrabLab CMS v1.0.1`, `Grex Theme Builder v1.0.0`, `Groxy AI v1.0.0`, `grabman v1.0.0`, `Grabtaculous v1.0.0`, and `Gashboard v1.0.0` (all 8 peer `v1.x` repositories remain untouched).
 
 ---
+
+## Key Features (`v0.2.0`)
+- **Unified 13-Tool `grab mcp` Bridge:** Core GRAB `v1.1.0` stdio tools (`grab_check`, `grab_format`, `grab_inspect_routes`, `grab_inspect_schema`, `grab_scaffold`), GrabLab CMS `v1.0.1` draft/layout tools (`status_enforced: "draft"`, `422/-32602` validation), and Grex Theme Builder `v1.0.0` layout endpoints (`actor: "groxy-ai"`, 1-click `Ctrl+Z` undo parity).
+- **Live Split-Preview Canvas & Origin-Checked Bridge:** Center `Code` / `Split` / `Visual & Scorecard` switcher connected to local `Grisp` workers via `GrexPreviewBridge` (`grex-preview-v1`, rejecting `"*"` and non-loopback origins) with `Base` / `Tablet (768px)` / `Mobile (375px)` viewports.
+- **8 Style Packs × 5 Blueprints & 22-Rule Booster:** Synthesize WCAG AA Light & Dark zero-`<div>` layouts across all `40` Style Pack combinations enriched with `GRAB-DESIGN-SYSTEM.md` + `SITE-CONTEXT.md`, inspect the 4-pillar SEO/WCAG/DOM/Link scorecard, and run 🚀 `"Let Groxy Boost This"` side-by-side diffs with `DESK-E403`/`DESK-E409` single-use tokens and 1-click Pre-Mutation Snapshot rollback.
 
 ## Key Features (`v0.1.0`)
 
@@ -63,5 +68,5 @@ node --test tests/*.test.js
 python tests/integration_e2e.py
 
 # Build dist binaries, PDF walkthrough guide, bundle zip, and SHA256SUMS.txt
-python scripts/package_release.py --version 0.1.0
+python scripts/package_release.py --version 0.2.0
 ```

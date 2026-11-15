@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Gate 4 Cross-Layer End-to-End Integration Suite for Groxy Desk v0.1.0.
-Verifies compiled binaries + GRAB v1.1.0 + Grex JS v1.0.0 + grabman v1.0.0 + Unified Groxy AI.
+Gate 4 Cross-Layer End-to-End Integration Suite for Groxy Desk v0.2.0.
+Verifies compiled binaries + GRAB v1.1.0 + Grex JS v1.0.0 + GrabLab CMS v1.0.1 + Grex Builder v1.0.0 + grabman v1.0.0 + Unified Groxy AI.
 """
 import hashlib
 import json
@@ -11,10 +11,12 @@ import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -164,7 +166,7 @@ def main():
 
             # Verify /_health, /_ready, /, and static bundle
             st, hdrs, raw_health = http_req("GET", f"{base_url}/_health")
-            assert st == 200, f"/_health failed: {st} {raw_health}"
+            assert st == 200 and json.loads(raw_health)["version"] == "0.2.0", f"/_health failed: {st} {raw_health}"
             assert hdrs.get("X-Frame-Options") == "DENY"
             assert hdrs.get("X-Content-Type-Options") == "nosniff"
             assert "script-src 'self'" in hdrs.get("Content-Security-Policy", "")
@@ -182,7 +184,13 @@ def main():
             assert session["csrf_token"] not in root_html
             assert "<div" not in root_html.lower()
 
-            for asset in ("/public/grex/grex.js", "/public/grex/grex.elements.json", "/public/desk/workbench.js"):
+            for asset in (
+                "/public/grex/grex.js",
+                "/public/grex/grex.elements.json",
+                "/public/desk/workbench.js",
+                "/public/desk/studio-panel.js",
+                "/public/desk/scorecard-panel.js",
+            ):
                 st, _, _ = http_req("GET", f"{base_url}{asset}")
                 assert st == 200, f"Missing embedded asset {asset}: {st}"
 
@@ -374,6 +382,228 @@ def main():
             assert st == 200
             st, _, dark_html = http_req("GET", f"{base_url}/")
             assert st == 200 and 'data-grex-theme="dark"' in dark_html
+
+            # 11. v0.2.0 Core grab mcp, Loopback GrabLab CMS Draft + 422, Grex Builder applyAiLayout, 22-Rule Scorecard & Boost
+            print("[Gate 4] Testing v0.2.0 grab mcp, CMS draft, Theme Builder, and Let Groxy Boost This lifecycle...")
+            st, _, raw_tools = http_req("GET", f"{base_url}/api/mcp/tools", headers=auth_headers)
+            tools_obj = json.loads(raw_tools)
+            assert st == 200 and len(tools_obj["tools"]) == 13 and tools_obj["model_switching_allowed"] is False
+
+            # Core GRAB v1.1.0 MCP read-only calls
+            for tname, targs in (
+                ("grab_check", {"file": "src/desk.grab"}),
+                ("grab_format", {"file": "src/desk.grab"}),
+                ("grab_inspect_routes", {"file": "src/desk.grab"}),
+                ("grab_inspect_schema", {}),
+            ):
+                st, _, raw_mcp = http_req("POST", f"{base_url}/api/mcp/call", headers=auth_headers, body={"tool": tname, "arguments": targs})
+                mcp_obj = json.loads(raw_mcp)
+                assert st == 200 and mcp_obj["read_only"] is True and mcp_obj["allow_write_flag"] is False, raw_mcp
+
+            # Start local loopback simulated GrabLab CMS v1.0.1 + Grex Builder v1.0.0 worker on 127.0.0.1:0
+            cms_records = []
+
+            class LoopbackWorkerHandler(BaseHTTPRequestHandler):
+                def log_message(self, fmt, *args):
+                    return
+
+                def do_GET(self):
+                    if self.path == "/api/design-system.md":
+                        md = "# GRAB-DESIGN-SYSTEM.md\n- --grex-bg: #ffffff\n- --grex-text: #0f172a\n- --grex-primary: #047857\n- Classes: .hero, .card, .btn-primary\n"
+                        self.send_response(200)
+                        self.send_header("Content-Type", "text/markdown; charset=utf-8")
+                        self.end_headers()
+                        self.wfile.write(md.encode("utf-8"))
+                        return
+                    self.send_response(404)
+                    self.end_headers()
+
+                def do_POST(self):
+                    length = int(self.headers.get("Content-Length", "0"))
+                    payload = json.loads(self.rfile.read(length).decode("utf-8") or "{}")
+                    if self.path == "/api/mcp/tools/create_entry_draft":
+                        args = payload.get("arguments", {})
+                        cms_records.append(args)
+                        self.send_response(201)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        self.wfile.write(json.dumps({
+                            "status_enforced": "draft",
+                            "entry": {"id": "77", "slug": args.get("slug"), "status": args.get("status")},
+                        }).encode("utf-8"))
+                        return
+                    if self.path == "/api/mcp/tools/list_content_types":
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"content_types": [{"slug": "post"}, {"slug": "page"}]}).encode("utf-8"))
+                        return
+                    if self.path == "/api/mcp/layout":
+                        assert payload.get("actor") == "groxy-ai"
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        self.wfile.write(json.dumps({
+                            "ok": True,
+                            "actor": "groxy-ai",
+                            "slot": payload.get("slot", "main"),
+                            "command": {
+                                "type": "applyAiLayout",
+                                "actor": "groxy-ai",
+                                "slot": payload.get("slot", "main"),
+                                "inverse": {"_restore": True, "slot": payload.get("slot", "main")},
+                            },
+                        }).encode("utf-8"))
+                        return
+                    self.send_response(404)
+                    self.end_headers()
+
+            peer_srv = ThreadingHTTPServer(("127.0.0.1", 0), LoopbackWorkerHandler)
+            peer_port = peer_srv.server_address[1]
+            peer_url = f"http://127.0.0.1:{peer_port}"
+            peer_thread = threading.Thread(target=peer_srv.serve_forever, daemon=True)
+            peer_thread.start()
+            try:
+                # Non-loopback host rejected DESK-E501
+                st, _, raw_ssrf = http_req(
+                    "POST",
+                    f"{base_url}/api/mcp/call",
+                    headers=auth_headers,
+                    body={"tool": "list_content_types", "cms_url": "http://example.com:8080"},
+                )
+                assert st in (403, 500) and json.loads(raw_ssrf)["error"]["code"] == "DESK-E501", raw_ssrf
+
+                # Studio Design System + Synthesize (exact ADR-025c price="49.95")
+                st, _, raw_ds = http_req("GET", f"{base_url}/api/studio/design-system?studio_url={urllib.parse.quote(peer_url)}", headers=auth_headers)
+                assert st == 200 and json.loads(raw_ds)["combination_count"] == "40"
+
+                st, _, raw_syn = http_req(
+                    "POST",
+                    f"{base_url}/api/studio/synthesize",
+                    headers=auth_headers,
+                    body={
+                        "style_pack": "emerald-editorial",
+                        "blueprint": "pricing_grid",
+                        "title": "E2E Semantic Pricing Layout",
+                        "custom_fields": {"price": "49.95", "sku": "10055"},
+                    },
+                )
+                syn_obj = json.loads(raw_syn)
+                assert st == 200 and syn_obj["contrast"]["meets_wcag_aa"] is True
+                assert syn_obj["scorecard"]["overall_grade"] in ("A", "A+")
+                assert syn_obj["custom_fields"]["price"] == "49.95"
+
+                # Invalid div tree on update_entry_layout -> 422 / -32602
+                st, _, raw_bad_tree = http_req(
+                    "POST",
+                    f"{base_url}/api/mcp/call",
+                    headers=auth_headers,
+                    body={
+                        "tool": "update_entry_layout",
+                        "cms_url": peer_url,
+                        "arguments": {"entry_id": "77", "layout": {"element": "Section", "tag": "div"}},
+                    },
+                )
+                assert st == 422 and json.loads(raw_bad_tree)["mcp_error"]["code"] == -32602
+
+                # GrabLab CMS create_entry_draft even when requesting published -> forces draft
+                draft_args = {
+                    "content_type": "post",
+                    "slug": "e2e-semantic-draft",
+                    "title": "E2E Semantic Draft",
+                    "status": "published",
+                    "grex_layout": syn_obj["grex_layout"],
+                }
+                st, _, raw_dp = http_req(
+                    "POST",
+                    f"{base_url}/api/mcp/call",
+                    headers=auth_headers,
+                    body={"tool": "create_entry_draft", "cms_url": peer_url, "arguments": draft_args, "prepare": True},
+                )
+                draft_tok = json.loads(raw_dp)["approval_token"]
+                st, _, raw_da = http_req(
+                    "POST",
+                    f"{base_url}/api/mcp/call",
+                    headers=auth_headers,
+                    body={"tool": "create_entry_draft", "cms_url": peer_url, "arguments": draft_args, "approval_token": draft_tok},
+                )
+                assert st == 200 and json.loads(raw_da)["status_enforced"] == "draft" and cms_records[0]["status"] == "draft"
+
+                # Studio Layout Apply -> applyAiLayout + Ctrl+Z undo inverse + 409 replay rejection
+                st, _, raw_sp = http_req(
+                    "POST",
+                    f"{base_url}/api/studio/layout/apply",
+                    headers=auth_headers,
+                    body={"slot": "main", "studio_url": peer_url, "grex_layout": syn_obj["grex_layout"], "prepare": True},
+                )
+                studio_tok = json.loads(raw_sp)["approval_token"]
+                st, _, raw_sa = http_req(
+                    "POST",
+                    f"{base_url}/api/studio/layout/apply",
+                    headers=auth_headers,
+                    body={"slot": "main", "studio_url": peer_url, "grex_layout": syn_obj["grex_layout"], "approval_token": studio_tok},
+                )
+                sa_obj = json.loads(raw_sa)
+                assert st == 200 and sa_obj["command"]["type"] == "applyAiLayout" and sa_obj["command"]["actor"] == "groxy-ai"
+                st, _, raw_sr = http_req(
+                    "POST",
+                    f"{base_url}/api/studio/layout/apply",
+                    headers=auth_headers,
+                    body={"slot": "main", "studio_url": peer_url, "grex_layout": syn_obj["grex_layout"], "approval_token": studio_tok},
+                )
+                assert st == 409 and json.loads(raw_sr)["error"]["code"] == "DESK-E409"
+
+                # 22-Rule Audit (F) -> Let Groxy Boost This -> Approve (A/A+) -> Replay 409 -> Snapshot Rollback (exact SHA)
+                boost_file = ws_dir / "views" / "boost_e2e.grab.html"
+                boost_file.write_text(
+                    '<html><head><title>Bad</title></head><body><div onclick="x()"><a href="javascript:void(0)">click here</a><img src="/a.png" /><h1>A</h1><h4>Skip</h4></div></body></html>',
+                    encoding="utf-8",
+                )
+                boost_orig_sha = sha256_hex(boost_file)
+
+                st, _, raw_au = http_req("POST", f"{base_url}/api/groxy/audit", headers=auth_headers, body={"target_path": "views/boost_e2e.grab.html"})
+                assert st == 200 and json.loads(raw_au)["overall_grade"] == "F" and json.loads(raw_au)["publish_safe"] is False
+
+                st, _, raw_bp = http_req(
+                    "POST",
+                    f"{base_url}/api/groxy/boost",
+                    headers=auth_headers,
+                    body={"target_path": "views/boost_e2e.grab.html", "style_pack": "emerald-editorial"},
+                )
+                bp_obj = json.loads(raw_bp)
+                assert st == 200 and bp_obj["proposal"]["projected_delta"]["before_grade"] == "F"
+                assert bp_obj["proposal"]["projected_delta"]["after_grade"] in ("A", "A+")
+                boost_tok = bp_obj["approval_token"]
+                boost_snap_id = bp_obj["snapshot"]["snapshot_id"]
+
+                st, _, raw_ba = http_req(
+                    "POST",
+                    f"{base_url}/api/groxy/boost/approve",
+                    headers=auth_headers,
+                    body={"approval_token": boost_tok, "target_path": "views/boost_e2e.grab.html"},
+                )
+                assert st == 200 and json.loads(raw_ba)["ok"] is True
+                assert "<div" not in boost_file.read_text(encoding="utf-8").lower()
+
+                st, _, raw_br = http_req(
+                    "POST",
+                    f"{base_url}/api/groxy/boost/approve",
+                    headers=auth_headers,
+                    body={"approval_token": boost_tok, "target_path": "views/boost_e2e.grab.html"},
+                )
+                assert st == 409 and json.loads(raw_br)["error"]["code"] == "DESK-E409"
+
+                st, _, raw_brst = http_req(
+                    "POST",
+                    f"{base_url}/api/groxy/snapshots/restore",
+                    headers=auth_headers,
+                    body={"snapshot_id": boost_snap_id},
+                )
+                assert st == 200 and json.loads(raw_brst)["restored_sha256"] == boost_orig_sha
+                assert sha256_hex(boost_file) == boost_orig_sha
+            finally:
+                peer_srv.shutdown()
+                peer_srv.server_close()
 
             print("[Gate 4] All E2E assertions passed; terminating host daemon cleanly...")
         finally:

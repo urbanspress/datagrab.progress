@@ -2,14 +2,14 @@ use json
 use server
 
 # ==============================================================================
-# Groxy Desk v0.1.0 — Companion GRAB Contract Manifest
+# Groxy Desk v0.2.0 — Companion GRAB Contract Manifest
 # Verifies template bindings & health route schema against GRAB v1.1.0.
 # ==============================================================================
 
 set initial_theme to "light"
 
 route "GET" "/_health"
-  give back server.json using 200, record {ok: yes, status: "ok", service: "groxy-desk", version: "0.1.0", bind: "127.0.0.1"}
+  give back server.json using 200, record {ok: yes, status: "ok", service: "groxy-desk", version: "0.2.0", bind: "127.0.0.1"}
 end
 
 route "GET" "/"

@@ -25,7 +25,7 @@ Target Scope:
 
 ## `v0.2.0` — Full-Parity `Groxy AI` Vibe-Coding Co-Pilot, Native `grab mcp` Bridge & Live `Grex` Split-Preview Canvas
 
-**Status:** Planned
+**Status:** Complete ([`specifications/GROXY-DESK-SPEC-002.md`](../specifications/GROXY-DESK-SPEC-002.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v0.2.0-Guide.pdf)) — Released as `v0.2.0`
 
 Target Scope:
 - **Full `grab mcp` Tool Parity:** Native execution of Core GRAB (`grab_check`, `grab_format`, `grab_inspect_routes`, `grab_inspect_schema`, `grab_scaffold`), GrabLab CMS (`list_content_types`, `query_entries`, `create_entry_draft` with `status_enforced: "draft"`, `update_entry_layout`, `list_media`, `list_menus`), and Grex Theme Builder (`GET /api/design-system.md`, `POST /api/mcp/layout` with `actor: "groxy-ai"`).

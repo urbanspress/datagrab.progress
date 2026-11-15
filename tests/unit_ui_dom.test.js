@@ -94,6 +94,8 @@ test("Static view and all public/desk modules forbid <div>, innerHTML, eval, and
     path.join(repoRoot, "public", "desk", "workspace-panel.js"),
     path.join(repoRoot, "public", "desk", "supervisor-panel.js"),
     path.join(repoRoot, "public", "desk", "groxy-agent.js"),
+    path.join(repoRoot, "public", "desk", "studio-panel.js"),
+    path.join(repoRoot, "public", "desk", "scorecard-panel.js"),
     path.join(repoRoot, "public", "desk", "workbench.js"),
   ];
 

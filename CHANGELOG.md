@@ -4,6 +4,38 @@ All notable releases of **Groxy Desk** (Step 6 of the GRAB Post-1.0 Ecosystem) a
 
 ---
 
+## `v0.2.0` — 2026-11-15
+
+### Release Type & Affected Layers
+- **Release Version & SemVer Tier:** `v0.2.0` (`PRE-1.0` — Step 6 Full-Parity `grab mcp` Studio, Split-Preview Canvas & 22-Rule Booster)
+- **Affected Layer(s):** `Groxy Desk` (`urbanspress/groxy-desk`)
+- **Neighboring Layer Upgrade Required?** `No — 100% drop-in compatible`
+
+| Ecosystem Layer | Repository | Required Version Range | Touched in This Release? | Neighbor Upgrade Required? |
+|---|---|---|---|---|
+| **Core Language, Bytecode VM & Grisp Server** | `urbanspress/grab` | `>= v1.1.0 (< v2.0.0)` | `No` | `No` |
+| **Reactive Frontend Runtime & 20-Element Library** | `urbanspress/grex-js` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Flagship Zero-Plugin CMS** | `urbanspress/grablab-cms` | `>= v1.0.1 (< v2.0.0)` | `No` | `No` |
+| **Exclusive `mode: "visual"` Theme & Studio** | `urbanspress/grex-builder` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Autonomous Design, Content & SEO Agent** | `urbanspress/groxy-ai` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Scaffolder, Orchestrator & Discreet VPS Panel** | `urbanspress/grabman`, `urbanspress/grabtaculous`, `urbanspress/gashboard` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v0.1.0` | `Yes` | `No` |
+
+### Added
+- **Unified 13-Tool `grab mcp` Studio & Loopback Ecosystem Bridge (`internal/mcpbridge/`, `internal/server/v020_handlers.go`):**
+  - Core GRAB `v1.1.0` stdio JSON-RPC 2.0 client (`grab mcp --workspace <root>`) exposing `grab_check`, `grab_format`, `grab_inspect_routes`, `grab_inspect_schema`, and `grab_scaffold` via structured `argv` slices (`exec.CommandContext`), strict `GRAB-E401` path/symlink/secret confinement, and read-only default (`--allow-write` gated strictly behind consumed `GROXY-SAFE-001` approval tokens).
+  - GrabLab CMS `v1.0.1` loopback HTTP MCP client enforcing `DESK-E501` (rejecting non-loopback URLs), mandatory `status_enforced: "draft"` on `create_entry_draft`, and `HTTP 422 / JSON-RPC -32602` validation errors on invalid semantic/WCAG trees in `update_entry_layout`.
+  - Grex Theme Builder `v1.0.0` studio proxy bridging `GET /api/design-system.md`, `SITE-CONTEXT.md`, and `POST /api/mcp/layout` with `actor: "groxy-ai"` and `applyAiLayout` `Ctrl+Z` command-stack inverse undo.
+- **22-Rule Deterministic Auditor, 8 Style Packs & 🚀 `"Let Groxy Boost This"` Diff Engine (`internal/auditor/`, `internal/groxybridge/`):**
+  - Evaluates all 4 equal-weight pillars (`on_page_seo`, `content_a11y`, `performance_dom`, `linking_readiness` — weight `"25"` each), enforces hard `F` on `<div>`, inline scripts, or inline `on*` event attributes, generates XSS-escaped `schema.org` JSON-LD previews, and preserves `ADR-025c` base-10 numeric wire strings.
+  - Synthesizes WCAG AA Light/Dark (`>= 4.5:1`) zero-`<div>` layouts across all `8 Style Packs × 5 Blueprints` (`40` combinations) and powers 1-click `"Let Groxy Boost This"` remediation with before/after diffs, Pre-Mutation SHA-256 Snapshots, single-use target-bound `approval_token` (`403 DESK-E403` / `409 DESK-E409`), and 1-click rollback.
+- **Interactive Split-Preview Workbench & Origin-Checked Bridge (`public/desk/studio-panel.js`, `public/desk/scorecard-panel.js`, `public/desk/workbench.js`, `public/desk/api-client.js`):**
+  - Adds center workbench switcher (`Code` / `Split` / `Visual & Scorecard`), `Base` / `Tablet (768px)` / `Mobile (375px)` viewports, `GrexPreviewBridge` (`PREVIEW_CHANNEL = "grex-preview-v1"`) with strict loopback `allowedOrigins` enforcement (rejecting wildcard `"*"`), and full Pure `Grex JS v1.0.0` Light/Dark parity (`divCount === 0`, `innerHTMLWriteCount === 0`, zero `eval()`/`new Function()`, zero model-switching dropdowns).
+- **Walkthrough Guide & Verification (`docs/releases/pdf/Groxy-Desk-v0.2.0-Guide.pdf`):**
+  - Verified across Gate 1 (`go vet`, `go build`, `go test -count=1 ./...`, `govulncheck ./...`, `grab check`, canonical `grab format` parity), Gate 2 (`node --test tests/*.test.js`), Gate 3 (`GRAB-E401`, `DESK-E501`, `DESK-E403`, `DESK-E409`, `422/-32602`, `status_enforced: "draft"`, snapshot rollback), and Gate 4 (`python tests/integration_e2e.py`).
+
+---
+
 ## `v0.1.0` — 2026-11-15
 
 ### Release Type & Affected Layers

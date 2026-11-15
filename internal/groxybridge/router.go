@@ -193,6 +193,10 @@ func ClassifyPrompt(prompt string, hasProposed bool) Classification {
 
 func classifyFastAction(lower string) string {
 	switch {
+	case strings.Contains(lower, "design system") || strings.Contains(lower, "design-system") || strings.Contains(lower, "style pack"):
+		return "studio_design_system"
+	case strings.Contains(lower, "content type") || strings.Contains(lower, "media") || strings.Contains(lower, "menu") || strings.Contains(lower, "query"):
+		return "cms_inspect"
 	case strings.Contains(lower, "doctor") || strings.Contains(lower, "lockfile") || strings.Contains(lower, "grabman"):
 		return "grabman_doctor"
 	case strings.Contains(lower, "worker") || strings.Contains(lower, "grisp") || strings.Contains(lower, "health") || strings.Contains(lower, "ready"):

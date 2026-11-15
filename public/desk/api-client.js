@@ -116,5 +116,22 @@ export function createDeskApiClient(options = {}) {
       request("POST", "/api/groxy/snapshots/restore", {
         snapshot_id: snapshotId,
       }),
+    mcpTools: () => request("GET", "/api/mcp/tools"),
+    mcpCall: (payload) => request("POST", "/api/mcp/call", payload),
+    studioDesignSystem: (studioUrl = "") =>
+      request(
+        "GET",
+        studioUrl
+          ? `/api/studio/design-system?studio_url=${encodeURIComponent(studioUrl)}`
+          : "/api/studio/design-system"
+      ),
+    studioSynthesize: (payload) =>
+      request("POST", "/api/studio/synthesize", payload),
+    studioLayoutApply: (payload) =>
+      request("POST", "/api/studio/layout/apply", payload),
+    groxyAudit: (payload) => request("POST", "/api/groxy/audit", payload),
+    groxyBoost: (payload) => request("POST", "/api/groxy/boost", payload),
+    groxyBoostApprove: (payload) =>
+      request("POST", "/api/groxy/boost/approve", payload),
   };
 }

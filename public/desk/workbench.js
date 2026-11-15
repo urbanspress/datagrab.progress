@@ -1,13 +1,39 @@
 /**
- * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v0.1.0.
- * Zero wrapper div containers, zero raw HTML DOM writes, zero unsafe script calls, sole Groxy AI identity.
+ * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v0.2.0.
+ * Zero wrapper elements, zero raw DOM writes, zero unsafe script calls, sole Groxy AI identity.
  */
-import { ForEach, renderNode, signal } from "../grex/grex.js";
+import { ForEach, effect, renderNode, signal } from "../grex/grex.js";
 import { createDeskApiClient } from "./api-client.js";
 import { createGroxySidebarNode } from "./groxy-agent.js";
+import { createScorecardPanelNode } from "./scorecard-panel.js";
+import {
+  buildAllowedPreviewOrigins,
+  createStudioPanelNode,
+  createStudioPreviewBridge,
+  renderPreviewTree,
+} from "./studio-panel.js";
 import { createSupervisorPanelNode } from "./supervisor-panel.js";
 import { applyDeskTheme, resolveInitialTheme } from "./theme.js";
 import { createWorkspacePanelNode } from "./workspace-panel.js";
+
+const DEFAULT_STYLE_PACKS = [
+  { id: "emerald-editorial", label: "Emerald Editorial" },
+  { id: "obsidian-tech", label: "Obsidian Developer Studio" },
+  { id: "warm-commerce", label: "Warm Precision Commerce" },
+  { id: "swiss-minimal", label: "Swiss Grid Minimal" },
+  { id: "local-service-trust", label: "Local Service Trust" },
+  { id: "creative-studio-bold", label: "Creative Studio Bold" },
+  { id: "creator-academy", label: "Creator Academy" },
+  { id: "wellness-organic", label: "Wellness Organic" },
+];
+
+const DEFAULT_BLUEPRINTS = [
+  { id: "full_landing_page", label: "Full Landing Page" },
+  { id: "hero_section", label: "Hero Section" },
+  { id: "pricing_grid", label: "Pricing Grid (GrabDecimal)" },
+  { id: "faq_accordion", label: "FAQ Accordion" },
+  { id: "foreach_showcase", label: "ForEach Content Showcase" },
+];
 
 export function mountGroxyDeskWorkbench(rootEl, options = {}) {
   const doc = options.document || globalThis.document;
@@ -39,6 +65,18 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     activeLogsText: signal("Select a worker and click View Logs."),
     snapshots: signal(options.initialSnapshots || []),
     groxyResponse: signal(options.initialGroxyResponse || null),
+    workbenchMode: signal(options.initialMode || "split"),
+    previewViewport: signal("base"),
+    stylePacks: signal(DEFAULT_STYLE_PACKS),
+    blueprints: signal(DEFAULT_BLUEPRINTS),
+    selectedStylePack: signal("emerald-editorial"),
+    selectedBlueprint: signal("full_landing_page"),
+    synthesizedLayout: signal(null),
+    undoStack: signal([]),
+    scorecardReport: signal(null),
+    boostProposal: signal(null),
+    mcpTools: signal([]),
+    mcpLastOutput: signal("Unified grab mcp, GrabLab CMS, and Grex Builder outputs appear here."),
   };
 
   async function refreshTree(dir = ".") {
@@ -104,6 +142,8 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       refreshTree(".").catch(() => []),
       refreshWorkers().catch(() => []),
       refreshSnapshots().catch(() => []),
+      actions.loadMcpTools().catch(() => []),
+      actions.loadStudioCatalog().catch(() => null),
     ]);
   }
 
@@ -159,6 +199,89 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
         refreshTree(".").catch(() => []),
         refreshSnapshots().catch(() => []),
       ]);
+      return res;
+    },
+    loadMcpTools: async () => {
+      if (typeof apiClient.mcpTools !== "function" || !apiClient.hasSession()) return [];
+      const data = await apiClient.mcpTools();
+      const list = Array.isArray(data.tools) ? data.tools : [];
+      store.mcpTools.set(list);
+      return list;
+    },
+    callMcpTool: async (payload) => {
+      const res = await apiClient.mcpCall(payload);
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    loadStudioCatalog: async (studioUrl = "") => {
+      if (typeof apiClient.studioDesignSystem !== "function" || !apiClient.hasSession()) return null;
+      const cat = await apiClient.studioDesignSystem(studioUrl);
+      if (Array.isArray(cat.style_packs) && cat.style_packs.length > 0) {
+        store.stylePacks.set(cat.style_packs);
+      }
+      if (Array.isArray(cat.blueprints) && cat.blueprints.length > 0) {
+        store.blueprints.set(cat.blueprints);
+      }
+      return cat;
+    },
+    synthesizeStudio: async (payload) => {
+      const res = await apiClient.studioSynthesize(payload);
+      if (res && res.grex_layout) {
+        store.synthesizedLayout.set(res.grex_layout);
+      }
+      if (res && res.scorecard) {
+        store.scorecardReport.set(res.scorecard);
+      }
+      return res;
+    },
+    applyStudioLayout: async (payload) => {
+      const res = await apiClient.studioLayoutApply(payload);
+      if (res && res.command && res.command.type === "applyAiLayout") {
+        const cur = store.undoStack.peek() || [];
+        store.undoStack.set([...cur, res.command]);
+      }
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    undoStudioLayout: () => {
+      const stack = store.undoStack.peek() || [];
+      if (stack.length === 0) return false;
+      const top = stack[stack.length - 1];
+      store.undoStack.set(stack.slice(0, -1));
+      if (top && Object.prototype.hasOwnProperty.call(top, "before")) {
+        store.synthesizedLayout.set(top.before || null);
+      }
+      return true;
+    },
+    runV2Audit: async (payload) => {
+      const rep = await apiClient.groxyAudit(payload);
+      store.scorecardReport.set(rep);
+      return rep;
+    },
+    proposeBoost: async (payload) => {
+      const res = await apiClient.groxyBoost(payload);
+      store.boostProposal.set(res);
+      if (res && res.proposal && res.proposal.before_report) {
+        store.scorecardReport.set(res.proposal.before_report);
+      }
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    approveBoost: async (payload) => {
+      const res = await apiClient.groxyBoostApprove(payload);
+      const boost = store.boostProposal.peek();
+      if (boost && boost.proposal) {
+        if (boost.proposal.after_report) {
+          store.scorecardReport.set(boost.proposal.after_report);
+        }
+        if (boost.proposal.proposed_layout) {
+          store.synthesizedLayout.set(boost.proposal.proposed_layout);
+        }
+      }
+      if (res && res.target_path && !String(res.target_path).includes(":")) {
+        await openFile(res.target_path).catch(() => null);
+      }
+      await refreshSnapshots().catch(() => []);
       return res;
     },
   };
@@ -300,6 +423,8 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                   },
                 ],
               },
+              createStudioPanelNode(store, actions, doc),
+              createScorecardPanelNode(store, actions, doc),
               createSupervisorPanelNode(store, actions, doc),
               {
                 type: "Card",
@@ -391,7 +516,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
             type: "Text",
             tag: "p",
             props: {
-              text: "Groxy Desk v0.1.0 — Pure Grex JS v1.0.0 | Zero Wrapper Divs | Unified Groxy AI",
+              text: "Groxy Desk v0.2.0 — Pure Grex JS v1.0.0 | Zero Wrapper Elements | Unified Groxy AI",
             },
           },
         ],
@@ -404,6 +529,46 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     rootEl.removeChild(rootEl.firstChild);
   }
   rootEl.appendChild(rendered.element);
+
+  const previewHostEl =
+    rendered.element && typeof rendered.element.querySelector === "function"
+      ? rendered.element.querySelector("#desk-preview-surface")
+      : null;
+  const stopPreviewEffect = effect(() => {
+    const layoutNode = store.synthesizedLayout.get();
+    if (previewHostEl && layoutNode) {
+      renderPreviewTree(previewHostEl, layoutNode, doc);
+    }
+  });
+
+  let previewBridge = null;
+  try {
+    previewBridge = createStudioPreviewBridge({
+      allowedOrigins: buildAllowedPreviewOrigins(options.baseUrl || "", store.workers.peek()),
+      targetWindow: options.window || globalThis.window,
+      root: doc,
+      signals: {
+        activeFileContent: store.activeFileContent,
+        previewViewport: store.previewViewport,
+        checkDiagnostics: store.checkDiagnostics,
+      },
+    });
+    previewBridge.start();
+  } catch {
+    previewBridge = null;
+  }
+
+  let onUndoKeydown = null;
+  if (doc && typeof doc.addEventListener === "function") {
+    onUndoKeydown = (ev) => {
+      if ((ev.ctrlKey || ev.metaKey) && String(ev.key || "").toLowerCase() === "z" && !ev.shiftKey) {
+        if (actions.undoStudioLayout()) {
+          if (typeof ev.preventDefault === "function") ev.preventDefault();
+        }
+      }
+    };
+    doc.addEventListener("keydown", onUndoKeydown);
+  }
 
   applyDeskTheme(store.themeMode.peek(), doc, null).catch(() => {});
 
@@ -443,10 +608,18 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     store,
     actions,
     apiClient,
+    previewBridge,
     hydrateWorkspace,
     toggleTheme,
     element: rendered.element,
     dispose() {
+      stopPreviewEffect();
+      if (previewBridge) {
+        previewBridge.dispose();
+      }
+      if (doc && onUndoKeydown && typeof doc.removeEventListener === "function") {
+        doc.removeEventListener("keydown", onUndoKeydown);
+      }
       if (
         webview &&
         onWebViewMsg &&

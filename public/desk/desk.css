@@ -273,3 +273,90 @@ a:focus-visible {
 .desk-footer p {
   margin: 0;
 }
+
+.desk-mode-hidden {
+  display: none;
+}
+
+.desk-mode-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.desk-studio-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.desk-status-banner {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--grex-border);
+  background-color: var(--grex-bg);
+  color: var(--grex-text);
+  font-size: 0.85rem;
+}
+
+.desk-preview-frame {
+  border: 1px solid var(--grex-border);
+  border-radius: 8px;
+  padding: 12px;
+  background-color: var(--grex-bg);
+  color: var(--grex-text);
+  margin: 0 auto;
+  width: 100%;
+  transition: max-width 150ms ease;
+}
+
+.desk-preview-frame.viewport-base {
+  max-width: 100%;
+}
+
+.desk-preview-frame.viewport-tablet {
+  max-width: 768px;
+}
+
+.desk-preview-frame.viewport-mobile {
+  max-width: 375px;
+}
+
+.desk-preview-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px dashed var(--grex-border);
+}
+
+.desk-score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.desk-pillar-card {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--grex-border);
+  background-color: var(--grex-bg);
+  color: var(--grex-text);
+}
+
+.desk-pillar-card h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.88rem;
+  color: var(--grex-text);
+}
+
+.desk-diff-row {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--grex-border);
+  background-color: var(--grex-bg);
+  color: var(--grex-text);
+}

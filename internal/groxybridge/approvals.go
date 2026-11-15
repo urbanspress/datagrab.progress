@@ -19,6 +19,12 @@ const (
 	ActionApplyMutation = "apply_mutation"
 	// ActionGrabmanInit identifies an approval token bound to initializing a grabman workspace.
 	ActionGrabmanInit = "grabman_init"
+	// ActionMcpWrite identifies an approval token bound to an MCP or CMS write invocation.
+	ActionMcpWrite = "mcp_write"
+	// ActionStudioLayoutApply identifies an approval token bound to dispatching a studio Grex layout.
+	ActionStudioLayoutApply = "studio_layout_apply"
+	// ActionBoostApprove identifies an approval token bound to applying a Boost remediation diff.
+	ActionBoostApprove = "boost_approve"
 
 	defaultApprovalTTL = 15 * time.Minute
 )
@@ -30,6 +36,7 @@ type SnapshotRecord struct {
 	SnapshotID   string `json:"snapshot_id"`
 	TargetPath   string `json:"target_path"`
 	Existed      bool   `json:"existed"`
+	Virtual      bool   `json:"virtual,omitempty"`
 	BeforeSHA256 string `json:"before_sha256"`
 	ByteLength   string `json:"byte_length"`
 	CreatedAt    string `json:"created_at"`
@@ -71,12 +78,13 @@ type ApplyResult struct {
 
 // RestoreResult summarizes a 1-click snapshot rollback operation.
 type RestoreResult struct {
-	OK             bool           `json:"ok"`
-	SnapshotID     string         `json:"snapshot_id"`
-	TargetPath     string         `json:"target_path"`
-	RestoredExisted bool          `json:"restored_existed"`
-	RestoredSHA256 string         `json:"restored_sha256"`
-	Snapshot       SnapshotRecord `json:"snapshot"`
+	OK              bool           `json:"ok"`
+	SnapshotID      string         `json:"snapshot_id"`
+	TargetPath      string         `json:"target_path"`
+	RestoredExisted bool           `json:"restored_existed"`
+	RestoredSHA256  string         `json:"restored_sha256"`
+	RestoredContent string         `json:"restored_content,omitempty"`
+	Snapshot        SnapshotRecord `json:"snapshot"`
 }
 
 // ApprovalManager enforces GROXY-SAFE-001 single-use target-bound approvals and pre-mutation SHA-256 snapshots.
@@ -213,8 +221,82 @@ func (m *ApprovalManager) persistSnapshotLocked(rec SnapshotRecord, content []by
 	return nil
 }
 
+// CreateVirtualSnapshot persists a SHA-256 snapshot for non-disk targets (e.g., studio slots or CMS entries).
+func (m *ApprovalManager) CreateVirtualSnapshot(targetKey, beforeContent string) (SnapshotRecord, error) {
+	norm := normalizeTarget(targetKey)
+	if norm == "" || norm == "." {
+		norm = "studio:inline"
+	}
+	raw := []byte(beforeContent)
+	randHex, err := security.RandomTokenHex(16)
+	if err != nil {
+		return SnapshotRecord{}, security.NewError(security.CodeDeskE101, 500, "failed to generate snapshot id", err)
+	}
+	snapID := "snap-" + randHex
+	rec := SnapshotRecord{
+		SnapshotID:   snapID,
+		TargetPath:   norm,
+		Existed:      true,
+		Virtual:      true,
+		BeforeSHA256: security.SHA256Hex(raw),
+		ByteLength:   strconv.Itoa(len(raw)),
+		CreatedAt:    time.Now().UTC().Format(time.RFC3339Nano),
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.persistSnapshotLocked(rec, raw); err != nil {
+		return SnapshotRecord{}, err
+	}
+	copyRec := rec
+	m.snapshots[snapID] = &copyRec
+	return rec, nil
+}
+
 // IssueMutationToken captures a pre-mutation snapshot and mints a target-bound single-use token.
 func (m *ApprovalManager) IssueMutationToken(workspaceRoot, targetPath, proposedContent string) (ApprovalRecord, SnapshotRecord, string, error) {
+	return m.issueMutationTokenForAction(ActionApplyMutation, workspaceRoot, targetPath, proposedContent)
+}
+
+// IssueBoostToken captures a disk or virtual snapshot and mints a single-use ActionBoostApprove token.
+func (m *ApprovalManager) IssueBoostToken(workspaceRoot, targetPath, proposedContent, fallbackBeforeContent string) (ApprovalRecord, SnapshotRecord, string, error) {
+	trimmed := strings.TrimSpace(targetPath)
+	if trimmed == "" || strings.HasPrefix(trimmed, "studio:") || strings.HasPrefix(trimmed, "cms:") || strings.HasPrefix(trimmed, "inline:") {
+		key := trimmed
+		if key == "" {
+			key = "inline:boost"
+		}
+		snap, err := m.CreateVirtualSnapshot(key, fallbackBeforeContent)
+		if err != nil {
+			return ApprovalRecord{}, SnapshotRecord{}, "", err
+		}
+		rawToken, err := security.RandomTokenHex(24)
+		if err != nil {
+			return ApprovalRecord{}, SnapshotRecord{}, "", security.NewError(security.CodeDeskE101, 500, "failed to mint boost approval token", err)
+		}
+		token := "groxy-appr-" + rawToken
+		m.redactor.Register(token)
+		now := time.Now().UTC()
+		rec := &ApprovalRecord{
+			Token:           token,
+			Action:          ActionBoostApprove,
+			TargetPath:      snap.TargetPath,
+			ProposedSHA256:  security.SHA256Hex([]byte(proposedContent)),
+			ProposedContent: proposedContent,
+			HasProposed:     true,
+			SnapshotID:      snap.SnapshotID,
+			CreatedAt:       now,
+			ExpiresAt:       now.Add(defaultApprovalTTL),
+		}
+		m.mu.Lock()
+		m.tokens[token] = rec
+		m.mu.Unlock()
+		return *rec, snap, fallbackBeforeContent, nil
+	}
+	return m.issueMutationTokenForAction(ActionBoostApprove, workspaceRoot, trimmed, proposedContent)
+}
+
+func (m *ApprovalManager) issueMutationTokenForAction(action, workspaceRoot, targetPath, proposedContent string) (ApprovalRecord, SnapshotRecord, string, error) {
 	snap, currentContent, err := m.CreateSnapshot(workspaceRoot, targetPath)
 	if err != nil {
 		return ApprovalRecord{}, SnapshotRecord{}, "", err
@@ -230,7 +312,7 @@ func (m *ApprovalManager) IssueMutationToken(workspaceRoot, targetPath, proposed
 	now := time.Now().UTC()
 	rec := &ApprovalRecord{
 		Token:           token,
-		Action:          ActionApplyMutation,
+		Action:          action,
 		TargetPath:      snap.TargetPath,
 		ProposedSHA256:  security.SHA256Hex([]byte(proposedContent)),
 		ProposedContent: proposedContent,
@@ -319,12 +401,48 @@ func (m *ApprovalManager) ConsumeToken(token, expectedAction, expectedTarget str
 
 // ApplyMutation verifies workspace confinement and single-use approval, writes atomically, and returns snapshot metadata.
 func (m *ApprovalManager) ApplyMutation(workspaceRoot string, req ApplyRequest) (ApplyResult, error) {
+	return m.ApplyMutationForAction(workspaceRoot, ActionApplyMutation, req)
+}
+
+// ApplyMutationForAction applies a file or virtual mutation gated by expectedAction + GROXY-SAFE-001 token.
+func (m *ApprovalManager) ApplyMutationForAction(workspaceRoot, expectedAction string, req ApplyRequest) (ApplyResult, error) {
+	trimmedTarget := strings.TrimSpace(req.TargetPath)
+	isVirtual := strings.HasPrefix(trimmedTarget, "studio:") || strings.HasPrefix(trimmedTarget, "cms:") || strings.HasPrefix(trimmedTarget, "inline:")
+	if isVirtual {
+		norm := normalizeTarget(trimmedTarget)
+		rec, err := m.ConsumeToken(req.ApprovalToken, expectedAction, norm)
+		if err != nil {
+			return ApplyResult{}, err
+		}
+		finalContent := rec.ProposedContent
+		if req.Content != nil {
+			finalContent = *req.Content
+		} else if !rec.HasProposed {
+			return ApplyResult{}, security.NewError(security.CodeDeskE101, 400, "mutation content is required", nil)
+		}
+		m.mu.Lock()
+		snapRec, ok := m.snapshots[rec.SnapshotID]
+		var snapCopy SnapshotRecord
+		if ok {
+			snapCopy = *snapRec
+		}
+		m.mu.Unlock()
+		return ApplyResult{
+			OK:            true,
+			TargetPath:    norm,
+			SnapshotID:    rec.SnapshotID,
+			AppliedSHA256: security.SHA256Hex([]byte(finalContent)),
+			ByteLength:    strconv.Itoa(len(finalContent)),
+			Snapshot:      snapCopy,
+		}, nil
+	}
+
 	absTarget, relTarget, err := security.ConfineWorkspacePath(workspaceRoot, req.TargetPath)
 	if err != nil {
 		return ApplyResult{}, err
 	}
 
-	rec, err := m.ConsumeToken(req.ApprovalToken, ActionApplyMutation, relTarget)
+	rec, err := m.ConsumeToken(req.ApprovalToken, expectedAction, relTarget)
 	if err != nil {
 		return ApplyResult{}, err
 	}
@@ -393,6 +511,35 @@ func (m *ApprovalManager) RestoreSnapshot(workspaceRoot, snapshotID string) (Res
 	}
 	snap := *snapPtr
 	m.mu.Unlock()
+
+	if snap.Virtual {
+		dataPath := filepath.Join(m.snapshotDir, snap.SnapshotID+".bak")
+		origBytes, err := os.ReadFile(dataPath)
+		if err != nil {
+			return RestoreResult{}, security.NewError(security.CodeDeskE101, 500, "failed to read virtual snapshot backup bytes", err)
+		}
+		restoredSHA := security.SHA256Hex(origBytes)
+		if restoredSHA != snap.BeforeSHA256 {
+			return RestoreResult{}, security.NewError(security.CodeDeskE101, 500, "virtual snapshot backup checksum mismatch", nil)
+		}
+		m.mu.Lock()
+		if cur, exists := m.snapshots[id]; exists {
+			cur.Restored = true
+			cur.RestoredAt = time.Now().UTC().Format(time.RFC3339Nano)
+			_ = m.persistSnapshotLocked(*cur, origBytes)
+			snap = *cur
+		}
+		m.mu.Unlock()
+		return RestoreResult{
+			OK:              true,
+			SnapshotID:      snap.SnapshotID,
+			TargetPath:      snap.TargetPath,
+			RestoredExisted: true,
+			RestoredSHA256:  restoredSHA,
+			RestoredContent: string(origBytes),
+			Snapshot:        snap,
+		}, nil
+	}
 
 	absTarget, relTarget, err := security.ConfineWorkspacePath(workspaceRoot, snap.TargetPath)
 	if err != nil {

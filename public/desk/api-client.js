@@ -133,5 +133,51 @@ export function createDeskApiClient(options = {}) {
     groxyBoost: (payload) => request("POST", "/api/groxy/boost", payload),
     groxyBoostApprove: (payload) =>
       request("POST", "/api/groxy/boost/approve", payload),
+    // v0.3.0 Step 5 Fleet, DB Studio, Namecheap DNS/HTTPS & Author Mode endpoints
+    fleetNodes: () => request("GET", "/api/fleet/nodes"),
+    fleetVerifyNode: (payload) =>
+      request("POST", "/api/fleet/nodes/verify", payload),
+    fleetValidateDNA: (payload) =>
+      request("POST", "/api/fleet/dna/validate", payload),
+    fleetDeployPlan: (payload) =>
+      request("POST", "/api/fleet/deploy/plan", payload),
+    fleetDeployApply: (payload) =>
+      request("POST", "/api/fleet/deploy/apply", payload),
+    fleetRestoreSnapshot: (payload) =>
+      request("POST", "/api/fleet/snapshots/restore", payload),
+    dbTunnels: () => request("GET", "/api/db/tunnels"),
+    dbTunnelOpen: (payload) =>
+      request("POST", "/api/db/tunnels/open", payload),
+    dbTunnelClose: (payload) =>
+      request("POST", "/api/db/tunnels/close", payload),
+    dbSchema: (target) => request("POST", "/api/db/schema", target),
+    dbRows: (payload) => request("POST", "/api/db/rows", payload),
+    dbQuery: (payload) => request("POST", "/api/db/query", payload),
+    dbMutatePlan: (payload) => request("POST", "/api/db/mutate/plan", payload),
+    dbMutateApply: (payload) => request("POST", "/api/db/mutate/apply", payload),
+    dbRestoreSnapshot: (payload) =>
+      request("POST", "/api/db/snapshots/restore", payload),
+    dnsVaultStatus: () => request("GET", "/api/dns/vault"),
+    dnsVaultSave: (payload) => request("POST", "/api/dns/vault/save", payload),
+    dnsPlan: (payload) => request("POST", "/api/dns/plan", payload),
+    dnsApply: (payload) => request("POST", "/api/dns/apply", payload),
+    httpsPreflight: (payload) =>
+      request("POST", "/api/dns/https/preflight", payload),
+    httpsApply: (payload) => request("POST", "/api/dns/https/apply", payload),
+    dnsRestoreSnapshot: (payload) =>
+      request("POST", "/api/dns/snapshots/restore", payload),
+    authorInitPlan: (payload) =>
+      request("POST", "/api/author/init/plan", payload),
+    authorInitApply: (payload) =>
+      request("POST", "/api/author/init/apply", payload),
+    authorOllamaStatus: (url = "") =>
+      request(
+        "GET",
+        url
+          ? `/api/author/ollama/status?url=${encodeURIComponent(url)}`
+          : "/api/author/ollama/status"
+      ),
+    authorOllamaStart: (payload = {}) =>
+      request("POST", "/api/author/ollama/start", payload),
   };
 }

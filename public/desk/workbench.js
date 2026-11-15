@@ -1,9 +1,13 @@
 /**
- * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v0.2.0.
+ * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v0.3.0.
  * Zero wrapper elements, zero raw DOM writes, zero unsafe script calls, sole Groxy AI identity.
  */
 import { ForEach, effect, renderNode, signal } from "../grex/grex.js";
 import { createDeskApiClient } from "./api-client.js";
+import { createAuthorPanelNode } from "./author-panel.js";
+import { createDBStudioPanelNode } from "./db-studio-panel.js";
+import { createDNSPanelNode } from "./dns-panel.js";
+import { createFleetPanelNode } from "./fleet-panel.js";
 import { createGroxySidebarNode } from "./groxy-agent.js";
 import { createScorecardPanelNode } from "./scorecard-panel.js";
 import {
@@ -77,6 +81,15 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     boostProposal: signal(null),
     mcpTools: signal([]),
     mcpLastOutput: signal("Unified grab mcp, GrabLab CMS, and Grex Builder outputs appear here."),
+    fleetNodes: signal([]),
+    fleetDeployPlan: signal(null),
+    dbTunnels: signal([]),
+    dbRowsList: signal([]),
+    dbMutatePlan: signal(null),
+    dnsPlan: signal(null),
+    httpsPlan: signal(null),
+    authorPlan: signal(null),
+    ollamaStatus: signal(null),
   };
 
   async function refreshTree(dir = ".") {
@@ -144,6 +157,9 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       refreshSnapshots().catch(() => []),
       actions.loadMcpTools().catch(() => []),
       actions.loadStudioCatalog().catch(() => null),
+      actions.loadFleetNodes().catch(() => []),
+      actions.loadDBTunnels().catch(() => []),
+      actions.authorOllamaStatus().catch(() => null),
     ]);
   }
 
@@ -282,6 +298,114 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
         await openFile(res.target_path).catch(() => null);
       }
       await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    loadFleetNodes: async () => {
+      if (typeof apiClient.fleetNodes !== "function" || !apiClient.hasSession()) return [];
+      const data = await apiClient.fleetNodes();
+      const list = Array.isArray(data.nodes) ? data.nodes : [];
+      store.fleetNodes.set(list);
+      return list;
+    },
+    fleetVerifyNode: async (payload) => {
+      const res = await apiClient.fleetVerifyNode(payload);
+      await actions.loadFleetNodes().catch(() => []);
+      return res;
+    },
+    fleetValidateDNA: (payload) => apiClient.fleetValidateDNA(payload),
+    fleetDeployPlan: async (payload) => {
+      const res = await apiClient.fleetDeployPlan(payload);
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    fleetDeployApply: async (payload) => {
+      const res = await apiClient.fleetDeployApply(payload);
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    fleetRestoreSnapshot: async (payload) => {
+      const res = await apiClient.fleetRestoreSnapshot(payload);
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    loadDBTunnels: async () => {
+      if (typeof apiClient.dbTunnels !== "function" || !apiClient.hasSession()) return [];
+      const data = await apiClient.dbTunnels();
+      const list = Array.isArray(data.tunnels) ? data.tunnels : [];
+      store.dbTunnels.set(list);
+      return list;
+    },
+    dbTunnelOpen: async (payload) => {
+      const res = await apiClient.dbTunnelOpen(payload);
+      await actions.loadDBTunnels().catch(() => []);
+      return res;
+    },
+    dbTunnelClose: async (payload) => {
+      const res = await apiClient.dbTunnelClose(payload);
+      await actions.loadDBTunnels().catch(() => []);
+      return res;
+    },
+    dbSchema: (target) => apiClient.dbSchema(target),
+    dbRows: async (payload) => {
+      const res = await apiClient.dbRows(payload);
+      if (res && Array.isArray(res.rows)) store.dbRowsList.set(res.rows);
+      return res;
+    },
+    dbQuery: async (payload) => {
+      const res = await apiClient.dbQuery(payload);
+      if (res && Array.isArray(res.rows)) store.dbRowsList.set(res.rows);
+      return res;
+    },
+    dbMutatePlan: async (payload) => {
+      const res = await apiClient.dbMutatePlan(payload);
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    dbMutateApply: async (payload) => {
+      const res = await apiClient.dbMutateApply(payload);
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    dnsVaultSave: (payload) => apiClient.dnsVaultSave(payload),
+    dnsPlan: async (payload) => {
+      const res = await apiClient.dnsPlan(payload);
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    dnsApply: async (payload) => {
+      const res = await apiClient.dnsApply(payload);
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    httpsPreflight: async (payload) => {
+      const res = await apiClient.httpsPreflight(payload);
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    httpsApply: async (payload) => {
+      const res = await apiClient.httpsApply(payload);
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    authorInitPlan: async (payload) => {
+      const res = await apiClient.authorInitPlan(payload);
+      await refreshSnapshots().catch(() => []);
+      return res;
+    },
+    authorInitApply: async (payload) => {
+      const res = await apiClient.authorInitApply(payload);
+      await Promise.all([refreshTree(".").catch(() => []), refreshSnapshots().catch(() => [])]);
+      return res;
+    },
+    authorOllamaStatus: async (url = "") => {
+      if (typeof apiClient.authorOllamaStatus !== "function" || !apiClient.hasSession()) return null;
+      const st = await apiClient.authorOllamaStatus(url);
+      store.ollamaStatus.set(st);
+      return st;
+    },
+    authorOllamaStart: async (payload = {}) => {
+      const res = await apiClient.authorOllamaStart(payload);
+      await actions.authorOllamaStatus().catch(() => null);
       return res;
     },
   };
@@ -426,6 +550,10 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
               createStudioPanelNode(store, actions, doc),
               createScorecardPanelNode(store, actions, doc),
               createSupervisorPanelNode(store, actions, doc),
+              createFleetPanelNode(store, actions, doc),
+              createDBStudioPanelNode(store, actions, doc),
+              createDNSPanelNode(store, actions, doc),
+              createAuthorPanelNode(store, actions, doc),
               {
                 type: "Card",
                 tag: "section",
@@ -516,7 +644,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
             type: "Text",
             tag: "p",
             props: {
-              text: "Groxy Desk v0.2.0 — Pure Grex JS v1.0.0 | Zero Wrapper Elements | Unified Groxy AI",
+              text: "Groxy Desk v0.3.0 — Pure Grex JS v1.0.0 | Zero Wrapper Elements | Unified Groxy AI",
             },
           },
         ],

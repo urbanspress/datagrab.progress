@@ -25,11 +25,25 @@ const (
 	ActionStudioLayoutApply = "studio_layout_apply"
 	// ActionBoostApprove identifies an approval token bound to applying a Boost remediation diff.
 	ActionBoostApprove = "boost_approve"
+	// ActionFleetDeploy identifies an approval token bound to a Step 5 Grabtaculous deployment/rollout.
+	ActionFleetDeploy = "fleet_deploy"
+	// ActionFleetRollback identifies an approval token bound to rolling back a Step 5 fleet deployment.
+	ActionFleetRollback = "fleet_rollback"
+	// ActionDBMutate identifies an approval token bound to an explicit DB write/DDL/SQL mutation.
+	ActionDBMutate = "db_mutate"
+	// ActionDBRestore identifies an approval token bound to restoring a Pre-Mutation DB snapshot.
+	ActionDBRestore = "db_restore"
+	// ActionDNSApply identifies an approval token bound to applying a Namecheap DNS change set.
+	ActionDNSApply = "dns_apply"
+	// ActionHTTPSApply identifies an approval token bound to applying edge Auto-HTTPS configuration.
+	ActionHTTPSApply = "https_apply"
+	// ActionAuthorInit identifies an approval token bound to initializing local Author Mode schemas/files.
+	ActionAuthorInit = "author_init"
 
 	defaultApprovalTTL = 15 * time.Minute
 )
 
-var validSnapshotIDPattern = regexp.MustCompile(`^snap-[a-f0-9]{16,64}$`)
+var validSnapshotIDPattern = regexp.MustCompile(`^snap(?:-[a-f0-9]{16,64}|_(?:deploy|db|dns|author)_[a-f0-9]{16,64})$`)
 
 // SnapshotRecord records an immutable pre-mutation SHA-256 backup of a workspace target.
 type SnapshotRecord struct {
@@ -223,6 +237,12 @@ func (m *ApprovalManager) persistSnapshotLocked(rec SnapshotRecord, content []by
 
 // CreateVirtualSnapshot persists a SHA-256 snapshot for non-disk targets (e.g., studio slots or CMS entries).
 func (m *ApprovalManager) CreateVirtualSnapshot(targetKey, beforeContent string) (SnapshotRecord, error) {
+	return m.CreatePrefixedVirtualSnapshot("snap-", targetKey, beforeContent)
+}
+
+// CreatePrefixedVirtualSnapshot persists a SHA-256 virtual snapshot using an allowed subsystem prefix
+// ("snap-", "snap_deploy_", "snap_db_", "snap_dns_", or "snap_author_").
+func (m *ApprovalManager) CreatePrefixedVirtualSnapshot(prefix, targetKey, beforeContent string) (SnapshotRecord, error) {
 	norm := normalizeTarget(targetKey)
 	if norm == "" || norm == "." {
 		norm = "studio:inline"
@@ -232,7 +252,10 @@ func (m *ApprovalManager) CreateVirtualSnapshot(targetKey, beforeContent string)
 	if err != nil {
 		return SnapshotRecord{}, security.NewError(security.CodeDeskE101, 500, "failed to generate snapshot id", err)
 	}
-	snapID := "snap-" + randHex
+	snapID := prefix + randHex
+	if !validSnapshotIDPattern.MatchString(snapID) {
+		snapID = "snap-" + randHex
+	}
 	rec := SnapshotRecord{
 		SnapshotID:   snapID,
 		TargetPath:   norm,
@@ -331,6 +354,11 @@ func (m *ApprovalManager) issueMutationTokenForAction(action, workspaceRoot, tar
 
 // IssueActionToken mints a single-use approval token scoped to an action and target path (e.g., grabman init).
 func (m *ApprovalManager) IssueActionToken(action, targetPath string) (ApprovalRecord, error) {
+	return m.IssueSnapshotBoundToken(action, targetPath, "")
+}
+
+// IssueSnapshotBoundToken mints a single-use target-bound approval token associated with a Pre-Action Snapshot ID.
+func (m *ApprovalManager) IssueSnapshotBoundToken(action, targetPath, snapshotID string) (ApprovalRecord, error) {
 	normTarget := normalizeTarget(targetPath)
 	if strings.TrimSpace(action) == "" {
 		return ApprovalRecord{}, security.NewError(security.CodeDeskE101, 400, "approval action cannot be empty", nil)
@@ -347,6 +375,7 @@ func (m *ApprovalManager) IssueActionToken(action, targetPath string) (ApprovalR
 		Token:      token,
 		Action:     action,
 		TargetPath: normTarget,
+		SnapshotID: strings.TrimSpace(snapshotID),
 		CreatedAt:  now,
 		ExpiresAt:  now.Add(defaultApprovalTTL),
 	}

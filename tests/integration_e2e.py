@@ -166,7 +166,7 @@ def main():
 
             # Verify /_health, /_ready, /, and static bundle
             st, hdrs, raw_health = http_req("GET", f"{base_url}/_health")
-            assert st == 200 and json.loads(raw_health)["version"] == "0.2.0", f"/_health failed: {st} {raw_health}"
+            assert st == 200 and json.loads(raw_health)["version"] == "0.3.0", f"/_health failed: {st} {raw_health}"
             assert hdrs.get("X-Frame-Options") == "DENY"
             assert hdrs.get("X-Content-Type-Options") == "nosniff"
             assert "script-src 'self'" in hdrs.get("Content-Security-Policy", "")
@@ -190,6 +190,10 @@ def main():
                 "/public/desk/workbench.js",
                 "/public/desk/studio-panel.js",
                 "/public/desk/scorecard-panel.js",
+                "/public/desk/fleet-panel.js",
+                "/public/desk/db-studio-panel.js",
+                "/public/desk/dns-panel.js",
+                "/public/desk/author-panel.js",
             ):
                 st, _, _ = http_req("GET", f"{base_url}{asset}")
                 assert st == 200, f"Missing embedded asset {asset}: {st}"
@@ -604,6 +608,228 @@ def main():
             finally:
                 peer_srv.shutdown()
                 peer_srv.server_close()
+
+            # 8. v0.3.0 End-to-End Integration: Fleet, SSH Tunnel + SQLite DB Explorer, Namecheap DNS/HTTPS, Author Mode & Ollama
+            print("[Gate 4] Testing v0.3.0 Fleet, SSH Tunnel + DB Explorer, Namecheap DNS/HTTPS & Author Mode...")
+            import sqlite3
+            import socket
+            from urllib.parse import parse_qs
+
+            daemon_calls = {"deploy": 0, "rollout": 0, "rollback": 0, "set_hosts": 0}
+
+            class MockInfraHandler(BaseHTTPRequestHandler):
+                def do_GET(self):
+                    if self.path in ("/_health", "/_ready"):
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        self.wfile.write(b'{"ok":true,"service":"grabtaculousd"}')
+                        return
+                    if self.path == "/api/tags":
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        self.wfile.write(b'{"models":[{"name":"qwen2.5-coder:7b"}]}')
+                        return
+                    self.send_response(404)
+                    self.end_headers()
+
+                def do_POST(self):
+                    length = int(self.headers.get("Content-Length", "0"))
+                    body = self.rfile.read(length).decode("utf-8", errors="replace")
+                    if self.path in ("/v1/deploy", "/v1/rollout", "/v1/rollback"):
+                        key = self.path.split("/")[-1]
+                        daemon_calls[key] += 1
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        self.wfile.write(b'{"ok":true,"status":"complete"}')
+                        return
+                    if self.path == "/namecheap":
+                        form = parse_qs(body)
+                        cmd = form.get("Command", [""])[0]
+                        if cmd == "namecheap.domains.dns.getHosts":
+                            xml_resp = (
+                                '<?xml version="1.0"?><ApiResponse Status="OK"><Errors/>'
+                                '<CommandResponse Type="namecheap.domains.dns.getHosts">'
+                                '<DomainDNSGetHostsResult Domain="example.org">'
+                                '<host HostId="1" Name="@" Type="A" Address="192.0.2.10" TTL="300"/>'
+                                '<host HostId="2" Name="@" Type="MX" Address="mx1.fastmail.com." MXPref="10" TTL="1800"/>'
+                                '<host HostId="3" Name="@" Type="TXT" Address="v=spf1 include:spf.messagingengine.com ~all" TTL="1800"/>'
+                                '</DomainDNSGetHostsResult></CommandResponse></ApiResponse>'
+                            ).encode("utf-8")
+                        else:
+                            daemon_calls["set_hosts"] += 1
+                            assert "mx1.fastmail.com." in body
+                            xml_resp = b'<?xml version="1.0"?><ApiResponse Status="OK"><Errors/><CommandResponse Type="namecheap.domains.dns.setHosts"><DomainDNSSetHostsResult Domain="example.org" IsSuccess="true"/></CommandResponse></ApiResponse>'
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/xml")
+                        self.end_headers()
+                        self.wfile.write(xml_resp)
+                        return
+                    self.send_response(404)
+                    self.end_headers()
+
+                def log_message(self, format, *args):
+                    pass
+
+            infra_srv = ThreadingHTTPServer(("127.0.0.1", 0), MockInfraHandler)
+            infra_url = f"http://127.0.0.1:{infra_srv.server_address[1]}"
+            threading.Thread(target=infra_srv.serve_forever, daemon=True).start()
+
+            echo_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            echo_sock.bind(("127.0.0.1", 0))
+            echo_sock.listen(4)
+            echo_stop = threading.Event()
+
+            def run_echo():
+                echo_sock.settimeout(0.2)
+                while not echo_stop.is_set():
+                    try:
+                        conn, _ = echo_sock.accept()
+                    except OSError:
+                        continue
+                    with conn:
+                        data = conn.recv(64)
+                        if data:
+                            conn.sendall(data)
+
+            threading.Thread(target=run_echo, daemon=True).start()
+
+            try:
+                fp_good = "SHA256:u4wF3L1N8n0vM9kP2xR5tQ7yW8zB3cV6eD1aG4jK9sM"
+                fp_bad = "SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
+                # Fleet SSH pin enforcement + Site DNA + Plan/Apply/Replay/Rollback
+                st, _, raw = http_req(
+                    "POST", f"{base_url}/api/fleet/nodes/verify", headers=auth_headers,
+                    body={"node_id": "prod-1", "host": "127.0.0.1", "port": "22", "pinned_fingerprint": fp_good, "presented_fingerprint": fp_bad},
+                )
+                assert st == 403 and json.loads(raw)["error"]["code"] == "DESK-E405"
+
+                st, _, raw = http_req(
+                    "POST", f"{base_url}/api/fleet/nodes/verify", headers=auth_headers,
+                    body={"node_id": "prod-1", "host": "127.0.0.1", "port": "22", "pinned_fingerprint": fp_good, "presented_fingerprint": fp_good, "control_url": infra_url, "control_token": "tok-e2e-1", "require_daemon_health": True},
+                )
+                assert st == 200 and json.loads(raw)["ssh_pin_verified"] is True
+
+                st, _, raw = http_req(
+                    "POST", f"{base_url}/api/fleet/dna/validate", headers=auth_headers,
+                    body={"raw_json": '{"schema_version":"groxy-site-dna-v0.4.0","html":"<div>bad</div>"}'},
+                )
+                assert st == 422 and json.loads(raw)["error"]["code"] == "DESK-E302"
+
+                st, _, raw_fp = http_req(
+                    "POST", f"{base_url}/api/fleet/deploy/plan", headers=auth_headers,
+                    body={"node_id": "prod-1", "app_name": "cms-e2e", "blueprint_id": "grablab-cms-sqlite", "site_dna_raw": '{"schema_version":"groxy-site-dna-v0.4.0","site_name":"OK"}'},
+                )
+                fp_obj = json.loads(raw_fp)
+                assert st == 200 and fp_obj["snapshot"]["snapshot_id"].startswith("snap_deploy_")
+                fl_tok = fp_obj["approval_token"]
+
+                st, _, raw_fa = http_req(
+                    "POST", f"{base_url}/api/fleet/deploy/apply", headers=auth_headers,
+                    body={"node_id": "prod-1", "app_name": "cms-e2e", "approval_token": fl_tok, "require_daemon": True},
+                )
+                assert st == 200 and json.loads(raw_fa)["daemon_dispatched"] is True
+                assert daemon_calls["deploy"] == 1 and daemon_calls["rollout"] == 1
+
+                st, _, raw_frp = http_req(
+                    "POST", f"{base_url}/api/fleet/deploy/apply", headers=auth_headers,
+                    body={"node_id": "prod-1", "app_name": "cms-e2e", "approval_token": fl_tok},
+                )
+                assert st == 409 and json.loads(raw_frp)["error"]["code"] == "DESK-E409"
+
+                st, _, raw_frb = http_req(
+                    "POST", f"{base_url}/api/fleet/snapshots/restore", headers=auth_headers,
+                    body={"snapshot_id": fp_obj["snapshot"]["snapshot_id"], "control_url": infra_url, "control_token": "tok-e2e-1"},
+                )
+                assert st == 200 and daemon_calls["rollback"] == 1
+
+                # Loopback SSH DB Tunnel TCP forwarding + Close
+                echo_port = str(echo_sock.getsockname()[1])
+                st, _, raw_to = http_req(
+                    "POST", f"{base_url}/api/db/tunnels/open", headers=auth_headers,
+                    body={"engine": "postgres", "pinned_fingerprint": fp_good, "presented_fingerprint": fp_good, "remote_db_host": "127.0.0.1", "remote_db_port": echo_port, "transport": "loopback_test"},
+                )
+                assert st == 200
+                tun_obj = json.loads(raw_to)["tunnel"]
+                t_host, t_port = tun_obj["local_bind_addr"].split(":")
+                with socket.create_connection((t_host, int(t_port)), timeout=3) as s_cli:
+                    s_cli.sendall(b"GROXY-E2E-TUNNEL")
+                    assert s_cli.recv(16) == b"GROXY-E2E-TUNNEL"
+                st, _, _ = http_req("POST", f"{base_url}/api/db/tunnels/close", headers=auth_headers, body={"tunnel_id": tun_obj["tunnel_id"]})
+                assert st == 200
+
+                # DB Studio SQLite confinement, ADR-025c rows, DESK-E406, mutation + restore
+                e2e_db = ws_dir / "data" / "e2e_books.db"
+                e2e_db.parent.mkdir(parents=True, exist_ok=True)
+                conn = sqlite3.connect(str(e2e_db))
+                try:
+                    conn.execute("CREATE TABLE books (id INTEGER PRIMARY KEY, isbn TEXT, price TEXT, word_count INTEGER)")
+                    conn.execute("INSERT INTO books VALUES (1, '9780143127550', '19.99', 9007199254740993)")
+                    conn.commit()
+                finally:
+                    conn.close()
+
+                db_target = {"engine": "sqlite", "sqlite_path": "data/e2e_books.db"}
+                st, _, raw_rows = http_req("POST", f"{base_url}/api/db/rows", headers=auth_headers, body={"target": db_target, "table": "books", "page": "1", "limit": "50"})
+                rows_obj = json.loads(raw_rows)
+                assert st == 200 and rows_obj["rows"][0]["word_count"] == "9007199254740993" and rows_obj["rows"][0]["price"] == "19.99"
+
+                st, _, raw_ro = http_req("POST", f"{base_url}/api/db/query", headers=auth_headers, body={"target": db_target, "sql": "DELETE FROM books"})
+                assert st == 403 and json.loads(raw_ro)["error"]["code"] == "DESK-E406"
+
+                st, _, raw_dp = http_req("POST", f"{base_url}/api/db/mutate/plan", headers=auth_headers, body={"target": db_target, "sql": "UPDATE books SET price='24.00' WHERE id=1;"})
+                dp_obj = json.loads(raw_dp)
+                assert st == 200 and dp_obj["snapshot"]["snapshot_id"].startswith("snap_db_")
+                st, _, _ = http_req("POST", f"{base_url}/api/db/mutate/apply", headers=auth_headers, body={"target": db_target, "sql": "UPDATE books SET price='24.00' WHERE id=1;", "approval_token": dp_obj["approval_token"]})
+                assert st == 200
+                st, _, _ = http_req("POST", f"{base_url}/api/db/snapshots/restore", headers=auth_headers, body={"target": db_target, "snapshot_id": dp_obj["snapshot"]["snapshot_id"]})
+                assert st == 200
+                st, _, raw_rows2 = http_req("POST", f"{base_url}/api/db/rows", headers=auth_headers, body={"target": db_target, "table": "books", "page": "1", "limit": "50"})
+                assert json.loads(raw_rows2)["rows"][0]["price"] == "19.99"
+
+                # Namecheap Vault + MX-safe Plan + Apply + DNS Propagation Preflight (422 DESK-E304) + Auto-HTTPS + Rollback
+                st, _, raw_vs = http_req("POST", f"{base_url}/api/dns/vault/save", headers=auth_headers, body={"api_user": "e2e", "api_key": "nc-key-e2e-4321", "client_ip": "198.51.100.1", "endpoint_override": f"{infra_url}/namecheap"})
+                assert st == 200 and "nc-key-e2e-4321" not in raw_vs and json.loads(raw_vs)["api_key_masked"] == "nc_****...4321"
+
+                st, _, raw_drop = http_req("POST", f"{base_url}/api/dns/plan", headers=auth_headers, body={"domain": "example.org", "target_ip": "203.0.113.55", "simulated_drop_mx": True})
+                assert st == 422 and json.loads(raw_drop)["error"]["code"] == "DESK-E303"
+
+                st, _, raw_dnsp = http_req("POST", f"{base_url}/api/dns/plan", headers=auth_headers, body={"domain": "example.org", "target_ip": "203.0.113.55", "configure_www": True})
+                dnsp_obj = json.loads(raw_dnsp)
+                assert st == 200 and dnsp_obj["preserved_email_count"] == "2"
+
+                st, _, _ = http_req("POST", f"{base_url}/api/dns/apply", headers=auth_headers, body={"domain": "example.org", "approval_token": dnsp_obj["approval_token"], "proposed_records": dnsp_obj["proposed_records"]})
+                assert st == 200 and daemon_calls["set_hosts"] == 1
+
+                st, _, raw_hp_bad = http_req("POST", f"{base_url}/api/dns/https/preflight", headers=auth_headers, body={"domain": "example.org", "expected_ip": "203.0.113.55", "edge_proxy": "caddy", "upstream_port": "8765", "observed_ips": ["192.0.2.10"]})
+                assert st == 422 and json.loads(raw_hp_bad)["error"]["code"] == "DESK-E304"
+
+                st, _, raw_hp_ok = http_req("POST", f"{base_url}/api/dns/https/preflight", headers=auth_headers, body={"domain": "example.org", "expected_ip": "203.0.113.55", "edge_proxy": "caddy", "upstream_port": "8765", "observed_ips": ["203.0.113.55"]})
+                hp_ok = json.loads(raw_hp_ok)
+                assert st == 200 and hp_ok["propagated"] is True
+                st, _, raw_ha = http_req("POST", f"{base_url}/api/dns/https/apply", headers=auth_headers, body={"domain": "example.org", "expected_ip": "203.0.113.55", "edge_proxy": "caddy", "upstream_port": "8765", "approval_token": hp_ok["approval_token"], "observed_ips": ["203.0.113.55"]})
+                assert st == 200 and "reverse_proxy 127.0.0.1:8765" in json.loads(raw_ha)["rendered_config"]
+
+                # Author Mode Plan + Apply + Loopback Ollama check
+                st, _, raw_ap = http_req("POST", f"{base_url}/api/author/init/plan", headers=auth_headers, body={"target_subdir": "e2e-author", "book_title": "Glass Citadel", "author_name": "Ada", "isbn_13": "9780143127550", "price_usd": "19.99", "word_count": "9007199254740993"})
+                ap_obj = json.loads(raw_ap)
+                assert st == 200 and '"@type":"Book"' in ap_obj["schema_org_jsonld"] and "<div" not in ap_obj["preview_landing_html"].lower()
+
+                st, _, raw_aa = http_req("POST", f"{base_url}/api/author/init/apply", headers=auth_headers, body={"target_subdir": "e2e-author", "book_title": "Glass Citadel", "author_name": "Ada", "isbn_13": "9780143127550", "price_usd": "19.99", "word_count": "9007199254740993", "approval_token": ap_obj["approval_token"]})
+                assert st == 200 and json.loads(raw_aa)["status_enforced"] == "draft"
+                assert (ws_dir / "e2e-author" / "SITE-CONTEXT.md").exists()
+
+                st, _, raw_ol = http_req("GET", f"{base_url}/api/author/ollama/status?url={infra_url}", headers=auth_headers)
+                ol_obj = json.loads(raw_ol)
+                assert st == 200 and ol_obj["running"] is True and ol_obj["model_switching_allowed"] is False
+            finally:
+                echo_stop.set()
+                echo_sock.close()
+                infra_srv.shutdown()
+                infra_srv.server_close()
 
             print("[Gate 4] All E2E assertions passed; terminating host daemon cleanly...")
         finally:

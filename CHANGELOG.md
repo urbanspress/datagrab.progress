@@ -4,6 +4,40 @@ All notable releases of **Groxy Desk** (Step 6 of the GRAB Post-1.0 Ecosystem) a
 
 ---
 
+## `v0.3.0` — 2026-11-15
+
+### Release Type & Affected Layers
+- **Release Version & SemVer Tier:** `v0.3.0` (`PRE-1.0 v0.3.0` — Step 6 Integrated Fleet, SSH Database Explorer, Namecheap DNS/Auto-HTTPS & Local Author Mode)
+- **Affected Layer(s):** `Groxy Desk` (`urbanspress/groxy-desk`)
+- **Neighboring Layer Upgrade Required?** `No — 100% drop-in compatible`
+
+| Ecosystem Layer | Repository | Required Version Range | Touched in This Release? | Neighbor Upgrade Required? |
+|---|---|---|---|---|
+| **Core Language, Bytecode VM & Grisp Server** | `urbanspress/grab` | `>= v1.1.0 (< v2.0.0)` | `No` | `No` |
+| **Reactive Frontend Runtime & 20-Element Library** | `urbanspress/grex-js` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Flagship Zero-Plugin CMS** | `urbanspress/grablab-cms` | `>= v1.0.1 (< v2.0.0)` | `No` | `No` |
+| **Exclusive `mode: "visual"` Theme & Studio** | `urbanspress/grex-builder` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Autonomous Design, Content & SEO Agent** | `urbanspress/groxy-ai` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Scaffolder, Orchestrator & Discreet VPS Panel** | `urbanspress/grabman`, `urbanspress/grabtaculous`, `urbanspress/gashboard` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v0.1.0` | `Yes` | `No` |
+
+### Highlights
+- **Step 5 Fleet & `Grabtaculous` Bridge (`internal/fleet/`, `public/desk/fleet-panel.js`):**
+  - Connects over `known_hosts`-pinned SSH (`SHA256:...` fingerprint verification — `403 DESK-E405` on mismatch, zero `InsecureIgnoreHostKey`, zero public VPS admin portals) to remote `grabtaculousd` (`127.0.0.1:9440`).
+  - Integrates `grabman` (`doctor`, `solve --verify`, `Site DNA` validation `422 DESK-E302`) and curated `--read-only` non-root `@sha256` deployments behind target-bound single-use `approval_token` + `X-CSRF-Token` (`GROXY-SAFE-001`) and automatic SHA-256 Pre-Deploy Snapshot (`snap_deploy_*`) rollback.
+- **Pinned `127.0.0.1` SSH Database Tunnels & Visual DB Explorer (`internal/dbstudio/`, `public/desk/db-studio-panel.js`):**
+  - Manages up to 8 concurrent `127.0.0.1:15432–15439` SSH tunnels (`409 DESK-E409`) for PostgreSQL & MariaDB plus workspace-confined local SQLite (`GRAB-E401`).
+  - Implements schema/table inspection, bounded `<= 100` row pagination preserving exact `ADR-025c` base-10 wire strings, strict read-only `SELECT`/`EXPLAIN` queries (`403 DESK-E406` on unapproved writes), and `snap_db_*` gated writes/imports + 1-click rollback.
+- **Encrypted Namecheap Vault & Domain -> DNS -> Auto-HTTPS Wizard (`internal/dns/`, `public/desk/dns-panel.js`):**
+  - Encrypts Namecheap API keys/credentials at rest via `use crypto` `AES-256-GCM` (`v1:...`) with masked status responses (`nc_****...4321`).
+  - Validates DNS record diffs to preserve existing `MX`/`TXT`/`SPF`/`DKIM`/`DMARC`/`CAA`/`SRV` email records byte-identical (`422 DESK-E303`), checks live DNS propagation before ACME issuance (`422 DESK-E304`), and configures Caddy, Nginx + Certbot, or Cloudflare Tunnel Auto-HTTPS to `127.0.0.1:8765–8772` with `snap_dns_*` rollback.
+- **1-Click Local "Author Mode" & Optional Open-Weights Model Launcher (`internal/author/`, `public/desk/author-panel.js`):**
+  - Scaffolds local **GrabLab CMS + Groxy AI** author workspaces (`Book`, `Chapter`, `CharacterBible`, `WorldLore` schemas, `status_enforced: "draft"`, `SITE-CONTEXT.md`, XSS-safe `schema.org/Book` JSON-LD with exact `ADR-025c` strings) alongside a loopback `127.0.0.1:11434` Ollama status check/launcher (zero required external fees, zero model-switching dropdowns).
+- **Pure `Grex JS v1.0.0` UI Parity & Verification (`docs/releases/pdf/Groxy-Desk-v0.3.0-Guide.pdf`):**
+  - `100%` pass across Gate 1 (`go build`, `go vet`, `go test -count=1 ./...` across all 11 test packages, `govulncheck ./...` `0` vulnerabilities, `grab check` + canonical `grab format` parity), Gate 2 (`node --test tests/*.test.js` `10/10` pass — `divCount === 0`, `innerHTMLWriteCount === 0`, Light & Dark WCAG AA `>= 4.5:1`), Gate 3, and Gate 4 (`.\dist\groxy-desk-windows-amd64.exe --smoke-test` + `python tests/integration_e2e.py`) while leaving all 8 peer `v1.x` repositories completely untouched.
+
+---
+
 ## `v0.2.0` — 2026-11-15
 
 ### Release Type & Affected Layers

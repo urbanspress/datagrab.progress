@@ -3,14 +3,20 @@
 ![Built with GRAB v1.1.0](docs/badges/built-with-grab.svg)
 ![Powered by Grex JS v1.0.0](docs/badges/powered-by-grex-js.svg)
 ![GRAB Ecosystem Step 6 — Groxy Desk](docs/badges/ecosystem-step-6.svg)
-![Release v0.2.0](docs/badges/release-v0.2.0.svg)
+![Release v0.3.0](docs/badges/release-v0.3.0.svg)
 
-**Groxy Desk** is the native desktop vibe-coding IDE, local `Grisp` (`grab.exe`) multi-worker supervisor, `grabman v1.0.0` workspace manager, and Unified **`Groxy AI`** Adaptive Reasoning studio for **Step 6 of the Post-1.0 GRAB Ecosystem**.
+**Groxy Desk** is the native desktop vibe-coding IDE, local `Grisp` (`grab.exe`) multi-worker supervisor, `grabman v1.0.0` workspace manager, Unified **`Groxy AI`** Adaptive Reasoning studio, and Step 5 Fleet / DB Explorer / DNS / Author Workbench for **Step 6 of the Post-1.0 GRAB Ecosystem**.
 
-- **Current Status:** `v0.2.0` — **Complete** (See [`CHANGELOG.md`](CHANGELOG.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), and the [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v0.2.0-Guide.pdf))
+- **Current Status:** `v0.3.0` — **Complete** (See [`CHANGELOG.md`](CHANGELOG.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), and the [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v0.3.0-Guide.pdf))
 - **Built Strictly Upon Frozen Baselines:** `GRAB v1.1.0`, `Grex JS v1.0.0`, `GrabLab CMS v1.0.1`, `Grex Theme Builder v1.0.0`, `Groxy AI v1.0.0`, `grabman v1.0.0`, `Grabtaculous v1.0.0`, and `Gashboard v1.0.0` (all 8 peer `v1.x` repositories remain untouched).
 
 ---
+
+## Key Features (`v0.3.0`)
+- **Step 5 Fleet & `grabtaculous` Bridge (`internal/fleet/`):** Connects over `known_hosts`-pinned SSH (`SHA256:...` fingerprint verification — `403 DESK-E405` on mismatch, zero `InsecureIgnoreHostKey`, zero public VPS admin portals) to remote `grabtaculousd` (`127.0.0.1:9440`), integrates `grabman` (`doctor`, `solve --verify`, `Site DNA` validation `422 DESK-E302`), and enforces `--read-only` non-root `@sha256` deployments behind single-use `approval_token` + SHA-256 Pre-Deploy Snapshot (`snap_deploy_*`) rollback.
+- **Encrypted `127.0.0.1` SSH Database Tunnels & Visual DB Explorer (`internal/dbstudio/`):** Manages up to 8 concurrent `127.0.0.1:15432–15439` SSH tunnels (`409 DESK-E409`) for PostgreSQL/MariaDB plus confined local SQLite (`GRAB-E401`), paginated browsing (`<= 100` rows/page) with exact `ADR-025c` base-10 wire strings, strict read-only SQL default (`403 DESK-E406` on writes), and Pre-Mutation Snapshot (`snap_db_*`) gated writes/rollbacks.
+- **Namecheap `AES-256-GCM` Vault & Domain -> DNS -> Auto-HTTPS Wizard (`internal/dns/`):** Encrypts Namecheap API credentials at rest (`v1:...`), blocks edits that drop or modify `MX`/`TXT`/`SPF`/`DKIM`/`DMARC`/`CAA`/`SRV` email records (`422 DESK-E303`), checks live DNS propagation (`422 DESK-E304`) before ACME, and configures Caddy, Nginx + Certbot, or Cloudflare Tunnel Auto-HTTPS to `127.0.0.1:8765–8772` with 1-click snapshot rollback.
+- **1-Click Local "Author Mode" & Optional Open-Weights Model Launcher (`internal/author/`):** Initializes a local **GrabLab CMS + Groxy AI** workspace pre-configured for **Author Mode** (`Book`, `Chapter`, `CharacterBible`, `WorldLore`, `status_enforced: "draft"`, `SITE-CONTEXT.md`, XSS-safe `schema.org/Book` JSON-LD) alongside a `127.0.0.1:11434` Ollama status check/launcher (zero required cloud fees, zero model-switching dropdowns).
 
 ## Key Features (`v0.2.0`)
 - **Unified 13-Tool `grab mcp` Bridge:** Core GRAB `v1.1.0` stdio tools (`grab_check`, `grab_format`, `grab_inspect_routes`, `grab_inspect_schema`, `grab_scaffold`), GrabLab CMS `v1.0.1` draft/layout tools (`status_enforced: "draft"`, `422/-32602` validation), and Grex Theme Builder `v1.0.0` layout endpoints (`actor: "groxy-ai"`, 1-click `Ctrl+Z` undo parity).
@@ -68,5 +74,5 @@ node --test tests/*.test.js
 python tests/integration_e2e.py
 
 # Build dist binaries, PDF walkthrough guide, bundle zip, and SHA256SUMS.txt
-python scripts/package_release.py --version 0.2.0
+python scripts/package_release.py --version 0.3.0
 ```

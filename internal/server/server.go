@@ -17,6 +17,10 @@ import (
 	"sync"
 	"time"
 
+	"groxy-desk/internal/author"
+	"groxy-desk/internal/dbstudio"
+	"groxy-desk/internal/dns"
+	"groxy-desk/internal/fleet"
 	"groxy-desk/internal/groxybridge"
 	"groxy-desk/internal/mcpbridge"
 	"groxy-desk/internal/security"
@@ -67,6 +71,10 @@ type Server struct {
 	approvals     *groxybridge.ApprovalManager
 	groxy         *groxybridge.Bridge
 	mcp           *mcpbridge.Bridge
+	fleetMgr      *fleet.Manager
+	dbStudio      *dbstudio.Manager
+	dnsMgr        *dns.Manager
+	authorMgr     *author.Manager
 	viewsFS       fs.FS
 	publicFS      fs.FS
 	httpServer    *http.Server
@@ -145,6 +153,21 @@ func New(cfg Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	fleetMgr, err := fleet.NewManager(absState, wsMgr.Root(), wsMgr, apprMgr, redactor)
+	if err != nil {
+		return nil, err
+	}
+	dbStudio := dbstudio.NewManager(wsMgr.Root(), apprMgr, redactor)
+	dnsMgr, err := dns.NewManager(absState, apprMgr, redactor)
+	if err != nil {
+		dbStudio.CloseAll()
+		return nil, err
+	}
+	authorMgr, err := author.NewManager(wsMgr.Root(), cfg.OllamaURL, apprMgr, redactor)
+	if err != nil {
+		dbStudio.CloseAll()
+		return nil, err
+	}
 
 	if cfg.ViewsFS == nil {
 		cfg.ViewsFS = os.DirFS(filepath.Join(wsMgr.Root(), "views"))
@@ -166,6 +189,10 @@ func New(cfg Config) (*Server, error) {
 		approvals:     apprMgr,
 		groxy:         bridge,
 		mcp:           mcpBridge,
+		fleetMgr:      fleetMgr,
+		dbStudio:      dbStudio,
+		dnsMgr:        dnsMgr,
+		authorMgr:     authorMgr,
 		viewsFS:       cfg.ViewsFS,
 		publicFS:      cfg.PublicFS,
 	}
@@ -231,8 +258,11 @@ func (s *Server) Session() SessionCredentials {
 	}
 }
 
-// Shutdown drains managed Grisp workers first and then gracefully stops the HTTP server.
+// Shutdown drains managed Grisp workers, closes active SSH DB tunnels, and stops the HTTP server.
 func (s *Server) Shutdown(ctx context.Context) error {
+	if s.dbStudio != nil {
+		s.dbStudio.CloseAll()
+	}
 	supErr := s.supervisorMgr.ShutdownAll(ctx)
 	srvErr := s.httpServer.Shutdown(ctx)
 	if supErr != nil {
@@ -281,6 +311,9 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /api/groxy/audit", s.authCSRF(http.HandlerFunc(s.handleGroxyAuditV2)))
 	mux.Handle("POST /api/groxy/boost", s.authCSRF(http.HandlerFunc(s.handleGroxyBoost)))
 	mux.Handle("POST /api/groxy/boost/approve", s.authCSRF(http.HandlerFunc(s.handleGroxyBoostApprove)))
+
+	// v0.3.0 Step 5 Fleet, Pinned SSH DB Tunnels + Explorer, Namecheap DNS/HTTPS & Author Mode endpoints.
+	s.registerV030Routes(mux)
 }
 
 func (s *Server) securityHeadersMiddleware(next http.Handler) http.Handler {
@@ -326,7 +359,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, map[string]any{
 		"status":       "ok",
 		"service":      "groxy-desk",
-		"version":      "0.2.0",
+		"version":      "0.3.0",
 		"bind":         s.Addr(),
 		"worker_count": strconv.Itoa(len(workers)),
 	})

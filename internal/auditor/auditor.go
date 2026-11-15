@@ -732,6 +732,8 @@ func BuildSchemaOrgPreview(contentType, title, desc, canonicalURL string, custom
 	ct := strings.ToLower(strings.TrimSpace(contentType))
 	schemaType := "WebPage"
 	switch {
+	case ct == "book" || ct == "chapter":
+		schemaType = "Book"
 	case ct == "product" || hasPriceField(customFields):
 		schemaType = "Product"
 	case ct == "post" || ct == "article" || ct == "guide":
@@ -748,6 +750,30 @@ func BuildSchemaOrgPreview(contentType, title, desc, canonicalURL string, custom
 	}
 	if focusKW != "" {
 		payload["keywords"] = focusKW
+	}
+	if schemaType == "Book" {
+		if authorName := strings.TrimSpace(customFields["author"]); authorName != "" {
+			payload["author"] = map[string]any{
+				"@type": "Person",
+				"name":  authorName,
+			}
+		}
+		if isbn := firstNonEmpty(customFields["isbn_13"], customFields["isbn"]); isbn != "" {
+			payload["isbn"] = isbn
+		}
+		if genre := strings.TrimSpace(customFields["genre"]); genre != "" {
+			payload["genre"] = genre
+		}
+		if wc := strings.TrimSpace(customFields["word_count"]); security.IsExactIntString(wc) {
+			payload["wordCount"] = wc
+		}
+		if price := firstNonEmpty(customFields["price_usd"], customFields["price"]); security.IsExactDecimalString(price) || security.IsExactIntString(price) {
+			payload["offers"] = map[string]any{
+				"@type":         "Offer",
+				"price":         price,
+				"priceCurrency": firstNonEmpty(customFields["currency"], "USD"),
+			}
+		}
 	}
 	if schemaType == "Product" {
 		price := firstNonEmpty(customFields["price"], customFields["amount"], "49.00")

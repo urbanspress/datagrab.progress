@@ -36,7 +36,7 @@ Target Scope:
 
 ## `v0.3.0` — Integrated `Gashboard` + `Grabtaculous` Fleet Deployer, Pinned SSH DB Tunnels, Visual DB Explorer, Namecheap DNS + Auto-HTTPS & 1-Click Local Author Mode
 
-**Status:** Approved target; specification in review ([`specifications/GROXY-DESK-SPEC-003.md`](../specifications/GROXY-DESK-SPEC-003.md))
+**Status:** Complete ([`specifications/GROXY-DESK-SPEC-003.md`](../specifications/GROXY-DESK-SPEC-003.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v0.3.0-Guide.pdf)) — Released as `v0.3.0`
 
 Target Scope:
 - **Step 5 Fleet & `Grabtaculous` Bridge (`internal/fleet/`):** `known_hosts`-pinned SSH (`SHA256:...` fingerprint verification, zero `InsecureIgnoreHostKey`) to remote `grabtaculousd` (`127.0.0.1:9440`), `grabman` (`doctor`, `solve --verify`, `dna validate`/`diff`), 1-click `--read-only` Marketplace stack deployments, `groxy-site-dna-v0.4.0` fleet rollouts, and atomic SHA-256 Pre-Deploy Snapshot rollbacks.

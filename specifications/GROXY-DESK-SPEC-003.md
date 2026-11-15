@@ -1,6 +1,6 @@
 # GROXY-DESK-SPEC-003: Groxy Desk `v0.3.0` — Step 5 Fleet Orchestration, Encrypted SSH DB Tunnels, Built-In Visual DB Explorer, Namecheap DNS/Auto-HTTPS & 1-Click Local Author Mode
 
-- **Status:** Approved target; specification in review (Awaiting explicit project-owner approval before writing `v0.3.0` application code)
+- **Status:** Complete (Implemented, Verified Across Gates 1–4, and Released in `v0.3.0`)
 - **Target Release:** `v0.3.0` (`PRE-1.0` — Step 6 Integrated Infrastructure, Database, DNS & Author Studio)
 - **Foundational Baselines:**
   - **Groxy Desk:** `v0.2.0` ([`GROXY-DESK-SPEC-001.md`](GROXY-DESK-SPEC-001.md), [`GROXY-DESK-SPEC-002.md`](GROXY-DESK-SPEC-002.md) — `groxy-deskd` `127.0.0.1:9490`, WebView2 shell, `Grisp` multi-worker supervisor, `grab mcp` studio, Split-Preview canvas, 22-rule auditor & 🚀 `"Let Groxy Boost This"`)

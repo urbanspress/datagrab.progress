@@ -31,7 +31,68 @@ def find_browser() -> Path:
 
 def render_guide_html(version: str) -> str:
     v = html.escape(version)
-    if version.startswith("0.1."):
+    if version.startswith("0.3."):
+        body_sections = f"""
+  <header>
+    <h1>Groxy Desk v{v} — Step 5 Fleet, Visual DB Studio, Namecheap DNS/HTTPS &amp; Author Mode Guide</h1>
+    <p><strong>Release Tier:</strong> PRE-1.0 Step 6 Integrated Infrastructure &amp; Author Studio | <strong>Default Bind:</strong> <code>127.0.0.1:9490</code> | <strong>Built With:</strong> Go CGO-Free WebView2 + GRAB v1.1.0 + Pure Grex JS v1.0.0</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>1. Plain-English Overview of What's New in v{v}</h2>
+      <p><strong>Groxy Desk v{v}</strong> adds full Step 5 production orchestration, encrypted database management, domain-to-HTTPS automation, and 1-click Local Author Mode directly inside the native desktop workbench—with zero cloud gatekeeping and zero modifications to any frozen <code>v1.x</code> peer repository.</p>
+      <ul>
+        <li><strong>Step 5 Fleet &amp; Grabtaculous Bridge (<code>internal/fleet/</code>):</strong> Connects over <code>known_hosts</code>-pinned SSH (<code>SHA256:...</code> fingerprint check — <code>403 DESK-E405</code> on mismatch) to loopback <code>grabtaculousd</code> (<code>127.0.0.1:9440</code>), validates <code>groxy-site-dna-v0.4.0</code> (<code>422 DESK-E302</code>), enforces <code>--read-only</code> non-root containers (pinned <code>@sha256</code> digests), and requires single-use <code>approval_token</code> + SHA-256 Pre-Deploy Snapshots (<code>snap_deploy_*</code>) for rollouts and 1-click rollbacks.</li>
+        <li><strong>Encrypted 127.0.0.1 SSH DB Tunnels &amp; Visual DB Explorer (<code>internal/dbstudio/</code>):</strong> Opens up to 8 concurrent <code>127.0.0.1:15432–15439</code> SSH tunnels for PostgreSQL/MariaDB or confined SQLite (<code>GRAB-E401</code>), browses bounded pages (&le; 100 rows) with exact <code>ADR-025c</code> base-10 wire strings, runs strict read-only <code>SELECT</code>/<code>EXPLAIN</code> queries (<code>403 DESK-E406</code> on writes), and gates writes behind Pre-Mutation Snapshots (<code>snap_db_*</code>) + 1-click restore.</li>
+        <li><strong>Namecheap AES-256-GCM DNS Vault &amp; Auto-HTTPS Wizard (<code>internal/dns/</code>):</strong> Encrypts API keys at rest (<code>v1:...</code>), updates web records while preserving <code>MX</code>/<code>TXT</code>/<code>SPF</code>/<code>DKIM</code>/<code>DMARC</code> records 100% byte-identical (<code>422 DESK-E303</code>), blocks ACME issuance until DNS propagation converges (<code>422 DESK-E304</code>), and generates Caddy, Nginx+Certbot, or Cloudflare Tunnel configs to <code>127.0.0.1:8765–8772</code>.</li>
+        <li><strong>1-Click Local Author Mode &amp; Zero-Fee Ollama Runtime (<code>internal/author/</code>):</strong> Scaffolds <code>Book</code>, <code>Chapter</code>, <code>CharacterBible</code>, and <code>WorldLore</code> schemas (<code>status_enforced: "draft"</code>), <code>SITE-CONTEXT.md</code> continuity, zero-<code>&lt;div&gt;</code> landing markup, and XSS-safe <code>schema.org/Book</code> JSON-LD alongside a local loopback Ollama launcher (<code>127.0.0.1:11434</code>, zero model-switching dropdowns).</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>2. Security Error Codes Added / Enforced in v{v}</h2>
+      <table>
+        <thead>
+          <tr><th>Code</th><th>HTTP</th><th>Protection Guarantee</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>DESK-E405</code></td><td>403</td><td>Rejects missing or mismatched SSH host key <code>SHA256:...</code> pins (zero <code>InsecureIgnoreHostKey</code>).</td></tr>
+          <tr><td><code>DESK-E406</code></td><td>403</td><td>Blocks write/DDL or multi-statement SQL inside Read-Only DB Query mode.</td></tr>
+          <tr><td><code>DESK-E302</code></td><td>422</td><td>Rejects wrapper <code>&lt;div&gt;</code>, XSS payloads, WCAG AA contrast &lt; 4.5:1, or IEEE-754 float drift in <code>Site DNA</code>.</td></tr>
+          <tr><td><code>DESK-E303</code></td><td>422</td><td>Aborts Namecheap DNS plans if any <code>MX</code>/<code>TXT</code>/<code>SPF</code>/<code>DKIM</code>/<code>CAA</code>/<code>SRV</code> record would be dropped or altered.</td></tr>
+          <tr><td><code>DESK-E304</code></td><td>422</td><td>Blocks Auto-HTTPS / Let's Encrypt issuance until DNS resolves to the target VPS IP.</td></tr>
+          <tr><td><code>GRAB-E401</code> / <code>DESK-E501</code></td><td>403 / 422</td><td>Confines workspace SQLite/migration/Author files and blocks non-loopback control planes or SSRF endpoints.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>3. Quickstart &amp; Verification</h2>
+      <pre>groxy-desk-windows-amd64.exe --workspace C:\\path\\to\\project
+groxy-desk-windows-amd64.exe --smoke-test --addr 127.0.0.1:0
+groxy-deskd-windows-amd64.exe --addr 127.0.0.1:9490 --workspace C:\\path\\to\\project</pre>
+    </section>
+
+    <section>
+      <h2>4. 7-Layer Ecosystem Compatibility Matrix</h2>
+      <table>
+        <thead>
+          <tr><th>Ecosystem Layer</th><th>Repository</th><th>Required Range</th><th>Repo Modified?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Core Language &amp; Grisp Server</td><td><code>urbanspress/grab</code></td><td><code>&gt;= v1.1.0 (&lt; v2.0.0)</code></td><td>No (Consumable CLI &amp; <code>grab mcp</code>)</td></tr>
+          <tr><td>Reactive Frontend Runtime</td><td><code>urbanspress/grex-js</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No (Vendored SHA-256 Parity)</td></tr>
+          <tr><td>Flagship Zero-Plugin CMS</td><td><code>urbanspress/grablab-cms</code></td><td><code>&gt;= v1.0.1 (&lt; v2.0.0)</code></td><td>No (Author &amp; Draft Bridge)</td></tr>
+          <tr><td>Exclusive Visual Theme &amp; Studio</td><td><code>urbanspress/grex-builder</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No (Loopback Studio Bridge)</td></tr>
+          <tr><td>Autonomous Design &amp; SEO Agent</td><td><code>urbanspress/groxy-ai</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No (Adaptive Router &amp; Boost)</td></tr>
+          <tr><td>Scaffolder, Orchestrator &amp; VPS Panel</td><td><code>grabman</code> / <code>grabtaculous</code> / <code>gashboard</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No (Bridged via Step 5 Contracts)</td></tr>
+          <tr><td>Native Desktop Vibe-Coding IDE</td><td><code>urbanspress/groxy-desk</code></td><td><code>v{v}</code></td><td>Yes (Step 6 v{v} Release)</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>"""
+    elif version.startswith("0.2."):
         body_sections = f"""
   <header>
     <h1>Groxy Desk v{v} — Walkthrough &amp; Architecture Guide</h1>

@@ -23,7 +23,12 @@ const (
 	CodeDeskE101 = "DESK-E101"
 	CodeDeskE201 = "DESK-E201"
 	CodeDeskE301 = "DESK-E301"
+	CodeDeskE302 = "DESK-E302"
+	CodeDeskE303 = "DESK-E303"
+	CodeDeskE304 = "DESK-E304"
 	CodeDeskE403 = "DESK-E403"
+	CodeDeskE405 = "DESK-E405"
+	CodeDeskE406 = "DESK-E406"
 	CodeDeskE409 = "DESK-E409"
 	CodeDeskE501 = "DESK-E501"
 	CodeDeskE502 = "DESK-E502"
@@ -373,8 +378,8 @@ type SecretRedactor struct {
 var (
 	reAuthBearer = regexp.MustCompile(`(?i)(authorization\s*:\s*bearer\s+)([^\s"']+)`)
 	reBearer     = regexp.MustCompile(`(?i)(\bbearer\s+)([A-Za-z0-9._\-+/=]{8,})`)
-	reAEAD       = regexp.MustCompile(`\bv1:[A-Za-z0-9+/=_-]{8,}`)
-	reKeyAssign  = regexp.MustCompile(`(?i)\b(MASTER_KEY|GRAB_MASTER_KEY|GROXY_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|GEMINI_API_KEY|API_KEY|SECRET_KEY|PASSWORD|AUTH_TOKEN|CSRF_TOKEN)\s*([:=])\s*([^\s"';]+)`)
+	reAEAD       = regexp.MustCompile(`\bv1:[A-Za-z0-9+/=_-]{8,}(?::[A-Za-z0-9+/=_-]{8,})?`)
+	reKeyAssign  = regexp.MustCompile(`(?i)\b(MASTER_KEY|GRAB_MASTER_KEY|GROXY_DESK_MASTER_KEY|GROXY_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|GEMINI_API_KEY|NAMECHEAP_API_KEY|API_KEY|SECRET_KEY|PASSWORD|DB_PASSWORD|AUTH_TOKEN|CSRF_TOKEN)\s*([:=])\s*([^\s"';]+)`)
 	reSKToken    = regexp.MustCompile(`\bsk-[A-Za-z0-9_-]{12,}`)
 )
 

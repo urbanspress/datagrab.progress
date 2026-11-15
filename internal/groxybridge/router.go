@@ -171,6 +171,7 @@ func ClassifyPrompt(prompt string, hasProposed bool) Classification {
 		"fix", "remediate", "refactor", "patch", "edit", "write", "modify",
 		"create", "generate", "build", "convert", "rewrite", "apply",
 		"plan", "multi-step", "boost", "redesign", "update ", "add ", "remove ",
+		"deploy", "rollout", "migrate", "dns", "https", "author mode", "book", "chapter",
 	}
 	for _, kw := range deepKeywords {
 		if strings.Contains(lower, kw) {
@@ -193,6 +194,10 @@ func ClassifyPrompt(prompt string, hasProposed bool) Classification {
 
 func classifyFastAction(lower string) string {
 	switch {
+	case strings.Contains(lower, "author") || strings.Contains(lower, "manuscript") || strings.Contains(lower, "character bible") || strings.Contains(lower, "ollama"):
+		return "author_mode_inspect"
+	case strings.Contains(lower, "fleet") || strings.Contains(lower, "grabtaculous") || strings.Contains(lower, "site dna") || strings.Contains(lower, "dns") || strings.Contains(lower, "tunnel"):
+		return "fleet_infra_inspect"
 	case strings.Contains(lower, "design system") || strings.Contains(lower, "design-system") || strings.Contains(lower, "style pack"):
 		return "studio_design_system"
 	case strings.Contains(lower, "content type") || strings.Contains(lower, "media") || strings.Contains(lower, "menu") || strings.Contains(lower, "query"):

@@ -96,6 +96,10 @@ test("Static view and all public/desk modules forbid <div>, innerHTML, eval, and
     path.join(repoRoot, "public", "desk", "groxy-agent.js"),
     path.join(repoRoot, "public", "desk", "studio-panel.js"),
     path.join(repoRoot, "public", "desk", "scorecard-panel.js"),
+    path.join(repoRoot, "public", "desk", "fleet-panel.js"),
+    path.join(repoRoot, "public", "desk", "db-studio-panel.js"),
+    path.join(repoRoot, "public", "desk", "dns-panel.js"),
+    path.join(repoRoot, "public", "desk", "author-panel.js"),
     path.join(repoRoot, "public", "desk", "workbench.js"),
   ];
 
@@ -277,6 +281,13 @@ test("Mounted Pure Grex JS workbench satisfies zero-<div>, zero-innerHTML, WCAG 
     /select\s+model|gpt-|claude-|gemini-/i.test(groxySidebar.textContent),
     false,
     "Groxy AI sidebar must not advertise external model-switching pickers"
+  );
+  const authorPanel = root.querySelector("#desk-author-panel");
+  assert.ok(authorPanel, "Author Mode panel missing");
+  assert.equal(
+    authorPanel.querySelectorAll("select").length,
+    0,
+    "Author Mode / Ollama panel must contain ZERO model-switching <select> dropdowns"
   );
 
   // 4. ADR-025c base-10 numeric wire string preservation (no float truncation on >2^53 IDs)

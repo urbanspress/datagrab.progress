@@ -1,0 +1,54 @@
+# Groxy Desk Roadmap
+
+**Repositories:** `urbanspress/groxy-desk.progress` (active development) / `urbanspress/groxy-desk.stable` (verified releases)  
+**Foundational Baselines:** **GRAB `v1.1.0`**, **Grex JS `v1.0.0`**, **GrabLab CMS `v1.0.1`**, **Grex Theme Builder `v1.0.0`**, **Groxy AI `v1.0.0`**, **`grabman v1.0.0`**, **Grabtaculous `v1.0.0`**, and **Gashboard `v1.0.0`**
+
+**Status Labels:**
+- **Specification in Review** — Specification drafted and awaiting explicit project-owner approval before any Go, GRAB, C/Win32, or JS application code is written.
+- **Approved** — Authorized by the project owner for implementation.
+- **Complete** — Implemented, all 4 verification gates passing `100%`, walkthrough PDF generated, and synchronized to `origin` + `stable`.
+- **Planned** — Future milestone awaiting prior milestone completion and spec drafting.
+
+---
+
+## `v0.1.0` — Native Desktop Shell, Local `Grisp` Multi-Worker Supervisor, Workspace Manager & Unified `Groxy AI` Host Bridge
+
+**Status:** Specification in Review ([`specifications/GROXY-DESK-SPEC-001.md`](../specifications/GROXY-DESK-SPEC-001.md))
+
+Target Scope:
+- **Native Windows WebView2 + `Grex JS v1.0.0` Zero-`<div>` Workbench:** Lightweight native desktop shell paired with a `127.0.0.1:9490` Go host daemon (`CGO_ENABLED=0`), zero-FOUC Light/Dark WCAG AA (`>= 4.5:1`) theme parity, and semantic 20-element layout (`divCount === 0`).
+- **Local `Grisp` (`grab.exe`) Multi-Worker Supervisor:** 1-click start, stop, and atomic `--reload` for local GRAB / GrabLab / Grex sites on private loopback ports (`127.0.0.1:8765–8772`) with live `/_health` and `/_ready` telemetry and structured log streaming.
+- **Workspace Project Manager (`grabman v1.0.0`):** Integrated UI for `grabman init`, `grabman doctor`, and `grabman solve --verify` with `GRAB-E401` path confinement and plain-English diagnostics.
+- **Unified `Groxy AI` Default Agent Bar & Adaptive Reasoning Router:** Single permanent built-in agent identity (zero model-switching dropdowns) automatically routing instant daily checks vs. deep multi-step reasoning locally via Ollama/OpenCode or optional encrypted provider keys.
+
+---
+
+## `v0.2.0` — Full-Parity `Groxy AI` Vibe-Coding Co-Pilot, Native `grab mcp` Bridge & Live `Grex` Split-Preview Canvas
+
+**Status:** Planned
+
+Target Scope:
+- **Full `grab mcp` Tool Parity:** Native execution of Core GRAB (`grab_check`, `grab_format`, `grab_inspect_routes`, `grab_inspect_schema`, `grab_scaffold`), GrabLab CMS (`list_content_types`, `query_entries`, `create_entry_draft` with `status_enforced: "draft"`, `update_entry_layout`, `list_media`, `list_menus`), and Grex Theme Builder (`GET /api/design-system.md`, `POST /api/mcp/layout` with `actor: "groxy-ai"`).
+- **22-Rule Scorecard & 🚀 `"Let Groxy Boost This"`:** Embedded 4-pillar SEO/WCAG/DOM/Link audit (`A+`–`F` / `0–100`), side-by-side remediation diffs, `SITE-CONTEXT.md` internal linking & `schema.org` JSON-LD generation, media `alt`-text enrichment, and all 8 Design Style Packs (40 blueprint combinations).
+- **Live Split-Screen `Grex` Preview Canvas:** Real-time code/visual split pane with 1-click `Ctrl+Z` (`applyAiLayout`) command-stack undo parity and `GROXY-SAFE-001` target-bound approval tokens.
+
+---
+
+## `v0.3.0` — Integrated `Gashboard` + `Grabtaculous` Fleet Deployer, Pinned SSH DB Tunnels, Visual DB Explorer & Namecheap DNS + Auto-HTTPS
+
+**Status:** Planned
+
+Target Scope:
+- **Pinned `127.0.0.1` SSH Database Tunnels & Visual DB Explorer:** Built-in `known_hosts`-pinned loopback SSH tunnels (`<= 8` concurrent) and read-only-default phpMyAdmin-style schema/row explorer (`<= 100` rows/page, `ADR-025c` exact base-10 wire strings, Pre-Mutation Snapshots).
+- **Namecheap DNS + Auto-HTTPS Wizard:** Email-safe (`MX`/`TXT`/`SPF`/`DKIM`-preserving) DNS updates, `422` ACME propagation preflight, and Caddy/Nginx/Cloudflare Tunnel wiring.
+- **1-Click Marketplace & `Site DNA` Sync:** Import/export `groxy-site-dna-v0.4.0`, validate `grabman.lock`, deploy `--read-only` **Grabtaculous** stacks, and trigger 1-click Pre-Deploy Snapshot rollbacks.
+
+---
+
+## `v1.0.0` — Independent `Orchestrator (Argon)` Cross-Layer Audit, Branded Inno Setup Installer & Production Freeze
+
+**Status:** Planned
+
+Target Scope:
+- Independent pre-`v1.0.0` cross-layer security, IPC, DOM/WCAG AA, `ADR-025c`, and `GROXY-SAFE-001` audit (`Orchestrator (Argon)`).
+- Branded flicker-free Inno Setup Windows installer (`Groxy-Desk-Setup-1.0.0.exe`), `SHA256SUMS.txt`, plain-English walkthrough PDF (`docs/releases/pdf/Groxy-Desk-v1.0.0-Guide.pdf`), and synchronized `v1.0.0` promotion to `origin` and `stable`.

@@ -34,14 +34,15 @@ Target Scope:
 
 ---
 
-## `v0.3.0` — Integrated `Gashboard` + `Grabtaculous` Fleet Deployer, Pinned SSH DB Tunnels, Visual DB Explorer & Namecheap DNS + Auto-HTTPS
+## `v0.3.0` — Integrated `Gashboard` + `Grabtaculous` Fleet Deployer, Pinned SSH DB Tunnels, Visual DB Explorer, Namecheap DNS + Auto-HTTPS & 1-Click Local Author Mode
 
-**Status:** Planned
+**Status:** Approved target; specification in review ([`specifications/GROXY-DESK-SPEC-003.md`](../specifications/GROXY-DESK-SPEC-003.md))
 
 Target Scope:
-- **Pinned `127.0.0.1` SSH Database Tunnels & Visual DB Explorer:** Built-in `known_hosts`-pinned loopback SSH tunnels (`<= 8` concurrent) and read-only-default phpMyAdmin-style schema/row explorer (`<= 100` rows/page, `ADR-025c` exact base-10 wire strings, Pre-Mutation Snapshots).
-- **Namecheap DNS + Auto-HTTPS Wizard:** Email-safe (`MX`/`TXT`/`SPF`/`DKIM`-preserving) DNS updates, `422` ACME propagation preflight, and Caddy/Nginx/Cloudflare Tunnel wiring.
-- **1-Click Marketplace & `Site DNA` Sync:** Import/export `groxy-site-dna-v0.4.0`, validate `grabman.lock`, deploy `--read-only` **Grabtaculous** stacks, and trigger 1-click Pre-Deploy Snapshot rollbacks.
+- **Step 5 Fleet & `Grabtaculous` Bridge (`internal/fleet/`):** `known_hosts`-pinned SSH (`SHA256:...` fingerprint verification, zero `InsecureIgnoreHostKey`) to remote `grabtaculousd` (`127.0.0.1:9440`), `grabman` (`doctor`, `solve --verify`, `dna validate`/`diff`), 1-click `--read-only` Marketplace stack deployments, `groxy-site-dna-v0.4.0` fleet rollouts, and atomic SHA-256 Pre-Deploy Snapshot rollbacks.
+- **Pinned `127.0.0.1` SSH Database Tunnels & Visual DB Explorer (`internal/dbstudio/`):** Built-in `known_hosts`-pinned loopback SSH tunnels (`<= 8` concurrent on `127.0.0.1:15432–15439`) + confined local SQLite (`GRAB-E401`), read-only-default schema/row explorer (`<= 100` rows/page, `ADR-025c` exact base-10 wire strings), and `GROXY-SAFE-001` single-use `approval_token` + Pre-Mutation Snapshots for any write/DDL/SQL import.
+- **Encrypted Namecheap DNS Vault & Auto-HTTPS Wizard (`internal/dns/`):** `use crypto` `AES-256-GCM` (`v1:...`) credential vault, email-safe (`MX`/`TXT`/`SPF`/`DKIM`-preserving) DNS updates, `422` ACME propagation preflight (protecting Let's Encrypt rate limits), and Caddy / Nginx+Certbot / Cloudflare Tunnel wiring with 1-click rollback.
+- **1-Click Local "Author Mode" & Optional Open-Weights Model Launcher (`internal/author/`):** 1-click local setup card initializing **GrabLab CMS + Groxy AI** for **Author Mode** (`Book`, `Chapter`, `CharacterBible`, `WorldLore` schemas + `schema.org/Book` JSON-LD preview) alongside an optional local Ollama open-weights status check/launcher (zero required external API fees, zero model-switching dropdowns).
 
 ---
 

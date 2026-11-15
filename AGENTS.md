@@ -66,12 +66,13 @@
 | **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v0.1.0` | `Yes` | `No` |
 ````
 
-### Mandatory Milestone Snapshot Rule
-- **Ecosystem Snapshot Sync:** At the end of every milestone (before closing the milestone or pushing release promotions), every agent MUST run:
+### Mandatory Milestone Snapshot & Codex Handoff Rule
+- **Ecosystem Snapshot & Codex Handoff Sync:** At the end of every milestone (before closing the milestone, handing off between agents, or pushing release promotions), every agent MUST run:
   ```powershell
   powershell -ExecutionPolicy Bypass -File C:\Development\GRAB\scripts\sync-notebook-sources.ps1
+  powershell -ExecutionPolicy Bypass -File C:\Development\GRAB\scripts\generate-codex-handoff.ps1
   ```
-  so `C:\Development\ECOSYSTEM-SNAPSHOT.md` always reflects the latest Git branches, commits, tags, `AGENTS.md`, `*-EXPERT.md`, `HANDOFF.md`, `docs\ROADMAP.md`, and `specifications\*.md` across all discovered `C:\Development\*` repositories.
+  so `C:\Development\ECOSYSTEM-SNAPSHOT.md` and `C:\Development\CODEX-HANDOFF.md` always reflect the latest Git branches, commits, tags, `AGENTS.md`, `*-EXPERT.md`, `HANDOFF.md`, `docs\ROADMAP.md`, and `specifications\*.md` across all discovered `C:\Development\*` repositories.
 
 ---
 

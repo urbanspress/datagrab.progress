@@ -1,6 +1,6 @@
 # GROXY-DESK-SPEC-100: Groxy Desk `v1.0.0` — Cross-Layer Audit Sign-Off, GA Contract Freeze & Branded Inno Setup Installer
 
-- **Status:** Specification in Review (Awaiting Project-Owner Approval — **Pre-`v1.0.0` 7-Layer Audit Complete**)
+- **Status:** Approved & Frozen — Complete (**Pre-`v1.0.0` 7-Layer Audit Complete, `v1.0.0` GA Released**)
 - **Target Release:** `v1.0.0` (`GA 1.0.0` — Production Freeze & Branded Windows Installer for **Step 6 of the Post-1.0 GRAB Ecosystem**)
 - **Foundational Baselines:**
   - **GRAB:** `v1.1.0` (`urbanspress/grab` — `Grisp`, `grab serve`, `grab check`, `grab format`, `grab mcp`, `ADR-005`, `ADR-017`, `ADR-025c`)

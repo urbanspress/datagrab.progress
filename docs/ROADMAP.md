@@ -48,8 +48,8 @@ Target Scope:
 
 ## `v1.0.0` — Independent Cross-Layer Audit, Branded Inno Setup Installer & Production Freeze
 
-**Status:** Specification in Review ([`specifications/GROXY-DESK-SPEC-100.md`](../specifications/GROXY-DESK-SPEC-100.md)) — **Pre-`v1.0.0` 7-Layer Audit Complete**
+**Status:** Approved & Frozen — Complete ([`specifications/GROXY-DESK-SPEC-100.md`](../specifications/GROXY-DESK-SPEC-100.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v1.0.0-Guide.pdf)) — Released as `v1.0.0`
 
 Target Scope:
 - Pre-`v1.0.0` cross-layer security, IPC (`GrexPreviewBridge`), SSH pinning/tunnels, DB isolation, Namecheap DNS/HTTPS, Author Mode, Pure `Grex JS v1.0.0` DOM/WCAG AA, `ADR-025c`, and `GROXY-SAFE-001` audit (**Completed**, including `author.Manager.Shutdown()` teardown wiring in `server.Shutdown` and pre-token `DESK-E303` DNS email re-verification + explicit `SPF`/`DKIM`/`DMARC` protection; Gates 1–4 `100%` passing).
-- Branded flicker-free Inno Setup Windows installer (`installer/groxy-desk.iss` -> `dist/Groxy-Desk-Setup-1.0.0.exe`, Inno Setup `.exe` only), `SHA256SUMS.txt`, plain-English walkthrough PDF (`docs/releases/pdf/Groxy-Desk-v1.0.0-Guide.pdf`), frozen `55` path / `57` route handler + `13` `grab mcp` tool contracts, and synchronized `v1.0.0` promotion to `origin` and `stable` (pending `GROXY-DESK-SPEC-100.md` approval).
+- Branded flicker-free Inno Setup Windows installer (`installer/groxy-desk.iss` -> `dist/Groxy-Desk-Setup-1.0.0.exe`, Inno Setup `.exe` only), `SHA256SUMS.txt`, plain-English walkthrough PDF (`docs/releases/pdf/Groxy-Desk-v1.0.0-Guide.pdf`), frozen `55` path / `57` route handler + `13` `grab mcp` tool contracts, and synchronized `v1.0.0` promotion to `origin` and `stable`.

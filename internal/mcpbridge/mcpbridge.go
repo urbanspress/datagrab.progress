@@ -613,7 +613,7 @@ func (b *Bridge) callCoreGrabMCP(ctx context.Context, toolName string, args map[
 	cmd := exec.CommandContext(cCtx, b.grabBin, argv...)
 	cmd.Dir = b.workspaceRoot
 
-	req1 := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"groxy-desk","version":"0.3.0"}}}`
+	req1 := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"groxy-desk","version":"1.0.0"}}}`
 	req2 := `{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}`
 	callObj := map[string]any{
 		"jsonrpc": "2.0",

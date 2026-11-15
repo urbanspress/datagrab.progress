@@ -3,14 +3,20 @@
 ![Built with GRAB v1.1.0](docs/badges/built-with-grab.svg)
 ![Powered by Grex JS v1.0.0](docs/badges/powered-by-grex-js.svg)
 ![GRAB Ecosystem Step 6 — Groxy Desk](docs/badges/ecosystem-step-6.svg)
-![Release v0.3.0](docs/badges/release-v0.3.0.svg)
+![Release v1.0.0 GA](docs/badges/release-v1.0.0.svg)
 
 **Groxy Desk** is the native desktop vibe-coding IDE, local `Grisp` (`grab.exe`) multi-worker supervisor, `grabman v1.0.0` workspace manager, Unified **`Groxy AI`** Adaptive Reasoning studio, and Step 5 Fleet / DB Explorer / DNS / Author Workbench for **Step 6 of the Post-1.0 GRAB Ecosystem**.
 
-- **Current Status:** `v0.3.0` — **Complete** (See [`CHANGELOG.md`](CHANGELOG.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), and the [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v0.3.0-Guide.pdf))
+- **Current Status:** `v1.0.0` GA — **Approved & Frozen — Complete** (See [`CHANGELOG.md`](CHANGELOG.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), [`specifications/GROXY-DESK-SPEC-100.md`](specifications/GROXY-DESK-SPEC-100.md), and the [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.0.0-Guide.pdf))
 - **Built Strictly Upon Frozen Baselines:** `GRAB v1.1.0`, `Grex JS v1.0.0`, `GrabLab CMS v1.0.1`, `Grex Theme Builder v1.0.0`, `Groxy AI v1.0.0`, `grabman v1.0.0`, `Grabtaculous v1.0.0`, and `Gashboard v1.0.0` (all 8 peer `v1.x` repositories remain untouched).
 
 ---
+
+## Key Features (`v1.0.0` Production GA)
+- **Branded Windows Inno Setup 6 Installer (`dist/Groxy-Desk-Setup-1.0.0.exe` / `installer/groxy-desk.iss`):**
+  - Flicker-free modern Windows `.exe` installer (**never `.msi`**) deploying `groxy-desk.exe`, `groxy-deskd.exe`, side-by-side `bin/grab.exe` (`v1.1.0`) + `bin/grabman.exe` (`v1.0.0`), Pure `Grex JS v1.0.0` web assets, and `Groxy-Desk-v1.0.0-Guide.pdf` under `{localappdata}\Groxy Desk` (`PrivilegesRequired=lowest`, zero mandatory UAC elevation), while strictly preserving user workspaces, encrypted vaults (`v1:...`), and `GROXY-SAFE-001` Pre-Mutation Snapshots on upgrade or uninstall.
+- **Pre-`v1.0.0` 7-Layer Audit Sign-Off & Frozen Contracts (`specifications/GROXY-DESK-SPEC-100.md`):**
+  - Freezes all **55 HTTP paths (57 route handlers)** on `127.0.0.1:9490`, all **13 unified `grab mcp` tools**, and the complete error taxonomy (`GRAB-E401`, `DESK-E101`, `DESK-E301`–`DESK-E304`, `DESK-E403`, `DESK-E405`, `DESK-E406`, `DESK-E409`, `DESK-E422`, `DESK-E501`–`DESK-E503`), including clean Ollama child-process teardown in `(*Server).Shutdown` and pre-token `DESK-E303` DNS email re-verification + explicit `SPF`/`DKIM`/`DMARC` protection.
 
 ## Key Features (`v0.3.0`)
 - **Step 5 Fleet & `grabtaculous` Bridge (`internal/fleet/`):** Connects over `known_hosts`-pinned SSH (`SHA256:...` fingerprint verification — `403 DESK-E405` on mismatch, zero `InsecureIgnoreHostKey`, zero public VPS admin portals) to remote `grabtaculousd` (`127.0.0.1:9440`), integrates `grabman` (`doctor`, `solve --verify`, `Site DNA` validation `422 DESK-E302`), and enforces `--read-only` non-root `@sha256` deployments behind single-use `approval_token` + SHA-256 Pre-Deploy Snapshot (`snap_deploy_*`) rollback.
@@ -43,6 +49,9 @@
 ## Quickstart
 
 ```powershell
+# Install on Windows via Branded Inno Setup 6 Installer (.exe only, never .msi)
+.\dist\Groxy-Desk-Setup-1.0.0.exe
+
 # Launch headless smoke verification
 go run ./cmd/groxy-desk --smoke-test --addr 127.0.0.1:0
 
@@ -73,6 +82,6 @@ node --test tests/*.test.js
 # Gate 4 (and Gate 3 live probes): End-to-end multi-layer integration suite
 python tests/integration_e2e.py
 
-# Build dist binaries, PDF walkthrough guide, bundle zip, and SHA256SUMS.txt
-python scripts/package_release.py --version 0.3.0
+# Build dist binaries, PDF walkthrough guide, Inno Setup installer, bundle zip, and SHA256SUMS.txt
+python scripts/package_release.py --version 1.0.0
 ```

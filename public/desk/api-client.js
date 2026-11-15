@@ -1,5 +1,5 @@
 /**
- * Authenticated loopback API client for Groxy Desk v0.1.0.
+ * Authenticated loopback API client for Groxy Desk v1.0.0.
  * Keeps bearer and CSRF credentials strictly in memory (never localStorage or URL query strings).
  */
 export function createDeskApiClient(options = {}) {

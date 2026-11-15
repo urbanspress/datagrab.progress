@@ -105,22 +105,38 @@ func (m *Manager) GrabmanBinary() string {
 	return m.grabmanBin
 }
 
-// ResolveGrabBinary locates GRAB v1.1.0 executable via explicit flag, env, PATH, or standard paths.
+// ResolveGrabBinary locates GRAB v1.1.0 executable via explicit flag, env, PATH, side-by-side bundle, or standard paths.
 func ResolveGrabBinary(explicit string) string {
-	return resolveToolBinary(explicit, "GROXY_DESK_GRAB_BIN", "GRAB_BIN", []string{"grab", "grab.exe"}, []string{
+	return resolveToolBinary(explicit, "GROXY_DESK_GRAB_BIN", "GRAB_BIN", []string{"grab", "grab.exe"}, append(bundledBinFallbacks("grab"),
 		`C:\Development\GRAB\dist\grab-windows-amd64.exe`,
 		`C:\Program Files\GRAB\grab.exe`,
 		filepath.Join(userHomeDir(), "go", "bin", exeName("grab")),
-	})
+	))
 }
 
-// ResolveGrabmanBinary locates grabman v1.0.0 executable via explicit flag, env, PATH, or standard paths.
+// ResolveGrabmanBinary locates grabman v1.0.0 executable via explicit flag, env, PATH, side-by-side bundle, or standard paths.
 func ResolveGrabmanBinary(explicit string) string {
-	return resolveToolBinary(explicit, "GROXY_DESK_GRABMAN_BIN", "GRABMAN_BIN", []string{"grabman", "grabman.exe"}, []string{
+	return resolveToolBinary(explicit, "GROXY_DESK_GRABMAN_BIN", "GRABMAN_BIN", []string{"grabman", "grabman.exe"}, append(bundledBinFallbacks("grabman"),
 		`C:\Development\grabman\dist\grabman-windows-amd64.exe`,
 		`C:\Program Files\GRAB\grabman.exe`,
 		filepath.Join(userHomeDir(), "go", "bin", exeName("grabman")),
-	})
+	))
+}
+
+func bundledBinFallbacks(base string) []string {
+	name := exeName(base)
+	var out []string
+	if selfExe, err := os.Executable(); err == nil && selfExe != "" {
+		dir := filepath.Dir(selfExe)
+		out = append(out,
+			filepath.Join(dir, "bin", name),
+			filepath.Join(dir, name),
+		)
+	}
+	if localAppData := strings.TrimSpace(os.Getenv("LOCALAPPDATA")); localAppData != "" {
+		out = append(out, filepath.Join(localAppData, "Groxy Desk", "bin", name))
+	}
+	return out
 }
 
 func resolveToolBinary(explicit, envPrimary, envSecondary string, names, fallbacks []string) string {

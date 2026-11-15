@@ -31,7 +31,85 @@ def find_browser() -> Path:
 
 def render_guide_html(version: str) -> str:
     v = html.escape(version)
-    if version.startswith("0.3."):
+    if version.startswith("1.0."):
+        body_sections = f"""
+  <header>
+    <h1>Groxy Desk v{v} — Production GA Walkthrough, 7-Layer Audit &amp; Architecture Guide</h1>
+    <p><strong>Release Tier:</strong> GA {v} — Production Step 6 Desktop IDE Freeze &amp; Branded Windows Installer | <strong>Default Bind:</strong> <code>127.0.0.1:9490</code> | <strong>Built With:</strong> Go CGO-Free WebView2 + GRAB v1.1.0 + Pure Grex JS v1.0.0</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>1. Plain-English Overview of Groxy Desk v{v} (Production GA)</h2>
+      <p><strong>Groxy Desk v{v}</strong> is the Production General Availability release for <strong>Step 6 of the Post-1.0 GRAB Ecosystem</strong>. Double-clicking <code>Groxy-Desk-Setup-{v}.exe</code> installs a lightweight native Windows WebView2 desktop IDE (~15–25 MB UI RAM overhead, zero Electron/Chromium bundle bloat) paired with the static <code>CGO_ENABLED=0</code> Go loopback daemon (<code>groxy-deskd.exe</code> on <code>127.0.0.1:9490</code>) and side-by-side <code>grab.exe</code> (<code>v1.1.0</code>) + <code>grabman.exe</code> (<code>v1.0.0</code>) CLIs—without modifying any frozen <code>v1.x</code> upstream repository.</p>
+      <ul>
+        <li><strong>Branded Flicker-Free Inno Setup Installer (<code>Groxy-Desk-Setup-{v}.exe</code>):</strong> Installs cleanly under <code>{{localappdata}}\\Groxy Desk</code> (<code>PrivilegesRequired=lowest</code>, zero mandatory UAC elevation) with Start Menu &amp; optional Desktop shortcuts, and preserves user workspaces, encrypted vaults (<code>v1:...</code>), and <code>GROXY-SAFE-001</code> Pre-Mutation Snapshots on upgrade or uninstall.</li>
+        <li><strong>One Unified AI Partner (<code>Groxy AI</code> — Zero Model-Switching Dropdowns):</strong> The <strong>Automatic Adaptive Reasoning Router</strong> seamlessly routes fast daily checks vs. deep multi-step architecture with local open-weights <strong>Ollama (<code>127.0.0.1:11434</code>)</strong> support and zero mandatory cloud API fees.</li>
+        <li><strong>Complete Post-1.0 Studio &amp; Step 5 Operations:</strong> Supervises up to 8 local <code>Grisp</code> workers (<code>127.0.0.1:8765–8772</code>), bridges all <strong>13</strong> unified <code>grab mcp</code> tools across Core GRAB + GrabLab CMS + Grex Theme Builder, embeds a live split-screen preview canvas with 1-click <code>Ctrl+Z</code> (<code>applyAiLayout</code>) undo, runs the 22-rule 4-pillar SEO/WCAG/DOM/Link scorecard + 🚀 <strong>&ldquo;Let Groxy Boost This&rdquo;</strong> remediation diffs, manages <code>known_hosts</code>-pinned Step 5 Fleet deploys, opens up to 8 <code>127.0.0.1:15432–15439</code> SSH DB tunnels + read-only-default Visual DB Explorer, automates Namecheap DNS + Auto-HTTPS, and scaffolds 1-Click Local <strong>Author Mode</strong>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>2. Pre-v1.0.0 7-Layer Audit Sign-Off &amp; Frozen Security Taxonomy</h2>
+      <table>
+        <thead>
+          <tr><th>Code</th><th>HTTP</th><th>Frozen v{v} Protection Guarantee</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>DESK-E501</code></td><td>403 / 500</td><td>Fails closed on <code>0.0.0.0</code>, <code>::</code>, wildcards, or non-loopback binds/URLs (strictly <code>127.0.0.1</code> only).</td></tr>
+          <tr><td><code>GRAB-E401</code></td><td>403</td><td>Confines all workspace &amp; SQLite paths; blocks <code>..</code>, UNC shares, escaping symlinks/junctions, NUL bytes, <code>.env*</code>, <code>.git</code>, <code>.ssh</code>, private keys, and non-loopback <code>GrexPreviewBridge</code> origins.</td></tr>
+          <tr><td><code>DESK-E403</code></td><td>403</td><td>Enforces constant-time <code>Authorization: Bearer</code>, <code>X-CSRF-Token</code>, and target-bound <code>approval_token</code> scope matching.</td></tr>
+          <tr><td><code>DESK-E405</code></td><td>403</td><td>Rejects missing or mismatched <code>known_hosts</code> <code>SHA256:...</code> SSH host-key fingerprints (zero <code>InsecureIgnoreHostKey</code>).</td></tr>
+          <tr><td><code>DESK-E406</code></td><td>403</td><td>Blocks multi-statement SQL, DDL/DML writes, <code>ATTACH DATABASE</code>, or write <code>PRAGMA</code> inside Read-Only Visual DB Query mode.</td></tr>
+          <tr><td><code>DESK-E409</code></td><td>409</td><td>Rejects single-use <code>approval_token</code> replays and enforces &le; 8 <code>Grisp</code> workers and &le; 8 SSH DB tunnels.</td></tr>
+          <tr><td><code>DESK-E302</code></td><td>422</td><td>Enforces <code>groxy-site-dna-v0.4.0</code> zero-<code>&lt;div&gt;</code>, WCAG AA (&ge; 4.5:1), <code>ADR-025c</code> wire strings, and <code>--read-only</code> non-root fleet deploys.</td></tr>
+          <tr><td><code>DESK-E303</code></td><td>422</td><td>Verifies (both at Plan and pre-token Apply) that Namecheap DNS updates preserve <code>MX</code>, <code>TXT</code>, <code>SPF</code>, <code>DKIM</code>, <code>DMARC</code>, <code>CAA</code>, <code>SRV</code>, <code>NS</code>, and email <code>CNAME</code> records byte-for-byte.</td></tr>
+          <tr><td><code>DESK-E304</code></td><td>422</td><td>Verifies live DNS propagation before ACME / Let's Encrypt Auto-HTTPS provisioning.</td></tr>
+          <tr><td><code>DESK-E503</code></td><td>503</td><td>Fails closed when local Ollama (<code>127.0.0.1:11434</code>) is unreachable, with clean subprocess teardown on daemon shutdown.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>3. Frozen v{v} Contract Inventory (55 Paths / 57 Handlers &amp; 13 MCP Tools)</h2>
+      <ul>
+        <li><strong>Health, Shell &amp; Workspace (10 routes):</strong> <code>GET /_health</code> (<code>"version": "{v}"</code>), <code>GET /_ready</code>, <code>GET /</code>, <code>GET /public/{{rest...}}</code>, <code>GET/POST /api/preferences/theme</code>, <code>GET /api/workspace/tree</code>, <code>GET /api/workspace/read</code>, <code>POST /api/workspace/check</code>, and <code>grabman init/plan</code>, <code>init</code>, <code>doctor</code>, <code>solve-verify</code>.</li>
+        <li><strong>Local Grisp Supervisor &amp; Unified Groxy AI (12 routes):</strong> <code>GET /api/grisp/workers</code>, <code>start</code>, <code>reload</code>, <code>stop</code>, <code>logs</code>; <code>POST /api/groxy/ask</code>, <code>approvals/apply</code>, <code>GET /api/groxy/snapshots</code>, <code>snapshots/restore</code>, <code>audit</code>, <code>boost</code>, and <code>boost/approve</code>.</li>
+        <li><strong>13-Tool Unified <code>grab mcp</code> &amp; Visual Studio (5 routes):</strong> <code>GET /api/mcp/tools</code>, <code>POST /api/mcp/call</code> (<code>grab_check</code>, <code>grab_format</code>, <code>grab_inspect_routes</code>, <code>grab_inspect_schema</code>, <code>grab_scaffold</code>, <code>list_content_types</code>, <code>query_entries</code>, <code>create_entry_draft</code> with <code>status_enforced: "draft"</code>, <code>update_entry_layout</code>, <code>list_media</code>, <code>list_menus</code>, <code>studio_design_system</code>, <code>studio_apply_layout</code>), <code>GET /api/studio/design-system</code>, <code>POST /api/studio/synthesize</code>, and <code>POST /api/studio/layout/apply</code>.</li>
+        <li><strong>Step 5 Fleet, DB Studio, Namecheap DNS/HTTPS &amp; Author Mode (26 routes / 27 handlers):</strong> Fleet node verification, <code>Site DNA</code> validation, deploy plan/apply &amp; rollback; SSH tunnel open/close/list, schema, bounded &le; 100 row pagination (<code>ADR-025c</code>), read-only query, mutate plan/apply &amp; rollback; Namecheap <code>AES-256-GCM</code> vault, DNS plan/apply, HTTPS preflight/apply &amp; rollback; and Author Mode plan/apply + Ollama status/start.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>4. Installer &amp; Quickstart Commands</h2>
+      <pre># Install via Branded Inno Setup Windows Installer (.exe only, never .msi)
+dist\\Groxy-Desk-Setup-{v}.exe
+
+# Or run static CGO_ENABLED=0 release binaries directly
+dist\\groxy-desk-windows-amd64.exe --workspace C:\\path\\to\\project
+dist\\groxy-desk-windows-amd64.exe --smoke-test --addr 127.0.0.1:0
+dist\\groxy-deskd-windows-amd64.exe --addr 127.0.0.1:9490 --workspace C:\\path\\to\\project</pre>
+    </section>
+
+    <section>
+      <h2>5. 7-Layer Ecosystem Compatibility Matrix (GA v{v})</h2>
+      <table>
+        <thead>
+          <tr><th>Ecosystem Layer</th><th>Repository</th><th>Required Version Range</th><th>Touched in v{v}?</th><th>Neighbor Upgrade Required?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Core Language, Bytecode VM &amp; Grisp Server</td><td><code>urbanspress/grab</code></td><td><code>&gt;= v1.1.0 (&lt; v2.0.0)</code></td><td>No</td><td>No</td></tr>
+          <tr><td>Reactive Frontend Runtime &amp; 20-Element Library</td><td><code>urbanspress/grex-js</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No</td><td>No</td></tr>
+          <tr><td>Flagship Zero-Plugin CMS</td><td><code>urbanspress/grablab-cms</code></td><td><code>&gt;= v1.0.1 (&lt; v2.0.0)</code></td><td>No</td><td>No</td></tr>
+          <tr><td>Exclusive <code>mode: "visual"</code> Theme &amp; Studio</td><td><code>urbanspress/grex-builder</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No</td><td>No</td></tr>
+          <tr><td>Autonomous Design, Content &amp; SEO Agent</td><td><code>urbanspress/groxy-ai</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No</td><td>No</td></tr>
+          <tr><td>Scaffolder, Orchestrator &amp; Discreet VPS Panel</td><td><code>grabman</code>, <code>grabtaculous</code>, <code>gashboard</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No</td><td>No</td></tr>
+          <tr><td>Native Desktop Vibe-Coding IDE &amp; Studio</td><td><code>urbanspress/groxy-desk</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>Yes (GA v{v})</td><td>No</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>"""
+    elif version.startswith("0.3."):
         body_sections = f"""
   <header>
     <h1>Groxy Desk v{v} — Step 5 Fleet, Visual DB Studio, Namecheap DNS/HTTPS &amp; Author Mode Guide</h1>
@@ -352,7 +430,7 @@ groxy-deskd-windows-amd64.exe --addr 127.0.0.1:9490 --workspace C:\\path\\to\\pr
 
 
 def main():
-    version = sys.argv[1] if len(sys.argv) > 1 else "0.1.0"
+    version = sys.argv[1] if len(sys.argv) > 1 else "1.0.0"
     HTML_DIR.mkdir(parents=True, exist_ok=True)
     PDF_DIR.mkdir(parents=True, exist_ok=True)
 

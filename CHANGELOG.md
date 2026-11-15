@@ -4,6 +4,35 @@ All notable releases of **Groxy Desk** (Step 6 of the GRAB Post-1.0 Ecosystem) a
 
 ---
 
+## `v1.0.0` — 2026-11-15
+
+### Release Type & Affected Layers
+- **Release Version & SemVer Tier:** `v1.0.0` (`GA 1.0.0 — Production Step 6 Desktop IDE Freeze & Branded Windows Installer`)
+- **Affected Layer(s):** `Groxy Desk` (`urbanspress/groxy-desk`)
+- **Neighboring Layer Upgrade Required?** `No — 100% drop-in compatible`
+
+| Ecosystem Layer | Repository | Required Version Range | Touched in This Release? | Neighbor Upgrade Required? |
+|---|---|---|---|---|
+| **Core Language, Bytecode VM & Grisp Server** | `urbanspress/grab` | `>= v1.1.0 (< v2.0.0)` | `No` | `No` |
+| **Reactive Frontend Runtime & 20-Element Library** | `urbanspress/grex-js` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Flagship Zero-Plugin CMS** | `urbanspress/grablab-cms` | `>= v1.0.1 (< v2.0.0)` | `No` | `No` |
+| **Exclusive `mode: "visual"` Theme & Studio** | `urbanspress/grex-builder` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Autonomous Design, Content & SEO Agent** | `urbanspress/groxy-ai` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Scaffolder, Orchestrator & Discreet VPS Panel** | `urbanspress/grabman`, `urbanspress/grabtaculous`, `urbanspress/gashboard` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v1.0.0 (< v2.0.0)` | `Yes` | `No` |
+
+### Highlights
+- **Pre-`v1.0.0` 7-Layer Audit Sign-Off & Production Contract Freeze (`specifications/GROXY-DESK-SPEC-100.md`):**
+  - Freezes all **55 HTTP paths (57 route handlers)** on `127.0.0.1:9490`, all **13 unified `grab mcp` tools** (`grab_check`, `grab_format`, `grab_inspect_routes`, `grab_inspect_schema`, `grab_scaffold`, `list_content_types`, `query_entries`, `create_entry_draft`, `update_entry_layout`, `list_media`, `list_menus`, `studio_design_system`, `studio_apply_layout`), and the complete error taxonomy (`GRAB-E401`, `DESK-E101`, `DESK-E301`–`DESK-E304`, `DESK-E403`, `DESK-E405`, `DESK-E406`, `DESK-E409`, `DESK-E422`, `DESK-E501`–`DESK-E503`).
+  - Includes audit-hardening guarantees: clean Ollama child-process teardown via `(*author.Manager).Shutdown()` wired into `(*server.Server).Shutdown()`, and pre-token `DESK-E303` DNS email re-verification + explicit `SPF`/`DKIM`/`DMARC` protection in `ApplyDNS`.
+- **Branded Windows Inno Setup 6 Installer (`installer/groxy-desk.iss` -> `dist/Groxy-Desk-Setup-1.0.0.exe`):**
+  - Compiles exclusively as an Inno Setup 6 `.exe` installer (**never `.msi`**) bundling `groxy-desk.exe`, `groxy-deskd.exe`, side-by-side `bin/grab.exe` (`GRAB v1.1.0`) + `bin/grabman.exe` (`grabman v1.0.0`), Pure `Grex JS v1.0.0` web assets, and `Groxy-Desk-v1.0.0-Guide.pdf`.
+  - Installs to `{localappdata}\Groxy Desk` (`PrivilegesRequired=lowest`, zero mandatory UAC prompt) with automatic side-by-side CLI discovery (`bundledBinFallbacks` in `internal/workspace/workspace.go`) and clean uninstallation that preserves user workspaces, encrypted vaults (`v1:...`), and `GROXY-SAFE-001` Pre-Mutation Snapshots.
+- **Full 4-Gate Production Verification (`docs/releases/pdf/Groxy-Desk-v1.0.0-Guide.pdf`):**
+  - `100%` pass across Gate 1 (`go build ./...`, `go vet ./...`, `go test -count=1 ./...` across all 11 tested packages, `govulncheck ./...` `0` vulnerabilities, `grab check` + canonical `grab format` byte parity), Gate 2 (`node --test tests/*.test.js` `10/10` pass — `divCount === 0`, `innerHTMLWriteCount === 0`, Light & Dark WCAG AA `>= 4.5:1`, `ADR-025c`, zero model dropdowns), Gate 3, and Gate 4 (`.\dist\groxy-desk-windows-amd64.exe --smoke-test` + `python tests/integration_e2e.py`) with all 8 peer `v1.x` repositories strictly untouched.
+
+---
+
 ## `v0.3.0` — 2026-11-15
 
 ### Release Type & Affected Layers

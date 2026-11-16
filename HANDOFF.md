@@ -2,7 +2,7 @@
 
 ## Current Status
 - **Current Milestone:** **`v1.0.0` GA — Approved & Frozen — Complete** ([`specifications/GROXY-DESK-SPEC-100.md`](specifications/GROXY-DESK-SPEC-100.md) | [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.0.0-Guide.pdf))
-- **Next Milestone Target:** None pending in `groxy-desk` (All `v0.1.0`–`v1.0.0` milestones `100%` Complete; ecosystem ready for Post-1.0 Feature Unlocks across `Groxy AI v1.1.0–v1.7.0`, `GrabLab CMS v1.2.0–v1.4.0`, and `Grex Theme Builder v1.1.0–v1.2.0`)
+- **Next Milestone Target:** **`v1.1.0 — Interactive WebView2 Research & Account-Registration Co-Pilot`** (`Status: Planned — Backwards-Compatible Minor Feature` alongside ecosystem Post-1.0 Feature Unlocks across `Groxy AI v1.1.0–v1.8.0`, `GrabLab CMS v1.2.0–v1.4.0`, `Grex Theme Builder v1.1.0–v1.2.0`, and `Grabtaculous v1.1.0`)
 - **Branch / Repositories:** `main` (`origin` `https://github.com/urbanspress/groxy-desk.progress.git` and `stable` `https://github.com/urbanspress/groxy-desk.stable.git` synchronized at `v1.0.0`)
 - **Current Owner:** `OpenAI Codex` / `Google Antigravity` (Ready for Post-1.0 Feature Unlocks per `C:\Development\CODEX-HANDOFF.md`)
 
@@ -17,8 +17,12 @@
 - Completed Pre-`v1.0.0` 7-layer security/IPC/SSH/DB/DNS/Author/DOM audit, wiring `(*author.Manager).Shutdown()` into `(*server.Server).Shutdown()` and enforcing pre-token `DESK-E303` DNS email re-verification + explicit `SPF`/`DKIM`/`DMARC` protection in `ApplyDNS`.
 - Delivered `v0.1.0` (WebView2 shell, `127.0.0.1:9490` daemon, `Grisp` multi-worker supervisor, `grabman` manager, Unified `Groxy AI`), `v0.2.0` (13-tool `grab mcp` studio, Split-Preview Canvas, 8x5 Style Packs, 22-Rule Scorecard & 🚀 Boost), and `v0.3.0` (Step 5 Fleet, `127.0.0.1:15432–15439` SSH DB Tunnels + Visual DB Explorer, Namecheap DNS + Auto-HTTPS, and 1-Click Local Author Mode + Ollama launcher).
 
+## Planned Backwards-Compatible Minor Track (`v1.1.0`)
+- **Milestone `v1.1.0` — Interactive WebView2 Research & Account-Registration Co-Pilot:** `Status: Planned — Backwards-Compatible Minor Feature` (zero `v1.0.0` implementation code modified):
+  - Opens third-party research/registration pages (e.g., SEMrush, AnswerThePublic) inside **Groxy Desk**'s WebView2 pane, offers 1-click `BRAND-DNA.md` form prefill behind human confirmation (`GROXY-SAFE-001`), pauses for user CAPTCHA/password completion, and extracts authorized page insights cleanly.
+
 ## Pending Next Steps
-- None in `groxy-desk` (`v1.0.0` GA complete). Next ecosystem work begins on the **Post-1.0 Feature Unlocks** (`Groxy AI v1.1.0–v1.7.0`, `GrabLab CMS v1.2.0–v1.4.0`, `Grex Theme Builder v1.1.0–v1.2.0`) per `C:\Development\GRAB\docs\ROADMAP.md` and `C:\Development\CODEX-HANDOFF.md`.
+- None in `groxy-desk v1.0.0` (`v1.0.0` GA complete). Next ecosystem work begins on the **Post-1.0 Feature Unlocks** (`Groxy AI v1.1.0–v1.8.0`, `GrabLab CMS v1.2.0–v1.4.0`, `Grex Theme Builder v1.1.0–v1.2.0`, `Groxy Desk v1.1.0`, `Grabtaculous v1.1.0`) per `C:\Development\GRAB\docs\ROADMAP.md` and `C:\Development\CODEX-HANDOFF.md`.
 
 ## Recommended Next Model (`AGENTS.md` 4-Tier Routing)
 - **Switch to `Google Hydrogen (Medium)` (or hand off to `OpenAI Codex` via `C:\Development\CODEX-HANDOFF.md`):** Recommended next for drafting pre-implementation specifications (`*-SPEC-*.md`) for the Post-1.0 Feature Unlocks now that all 6 core ecosystem layers are frozen at `v1.0.0+`.

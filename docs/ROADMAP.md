@@ -56,6 +56,16 @@ Target Scope:
 
 ---
 
+## `v1.0.1` — NGINX `1.30.6` Edge Generator Alignment & Trusted-Proxy Header Completeness (`PATCH 1.0.x`)
+
+**Status:** Complete ([`specifications/GROXY-DESK-SPEC-101.md`](../specifications/GROXY-DESK-SPEC-101.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v1.0.1-Guide.pdf)) — Released as `v1.0.1`
+
+Completed Scope:
+- Updated `renderEdgeHTTPSConfig` in `internal/dns/dns.go` (`edgeProxy == "nginx"`) to emit NGINX `1.30.6` (`listen 443 ssl;`, `listen [::]:443 ssl;`, `http2 on;`) instead of deprecated `listen 443 ssl http2;`, and added full `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto $scheme;`, and `X-Forwarded-Host $host;` forwarding headers for `GRAB v1.1.0` `--trusted-proxy` parity with **Grabtaculous `v1.1.0`**.
+- Verified regression test coverage in `internal/dns/dns_test.go`, passed all 4 verification gates (`go build`, `go vet`, `go test -count=1`, `govulncheck`, `grab check`/`format`, `node --test`, `python tests/integration_e2e.py`), packaged `dist/Groxy-Desk-Setup-1.0.1.exe` + `Groxy-Desk-v1.0.1-Guide.pdf` + `SHA256SUMS.txt`, and synchronized `v1.0.1` across `origin` and `stable`.
+
+---
+
 ## `v1.1.0` — Interactive WebView2 Research & Account-Registration Co-Pilot
 
 **Status:** Planned — Backwards-Compatible Minor Feature

@@ -1,5 +1,5 @@
 /**
- * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.0.0.
+ * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.0.1.
  * Zero wrapper elements, zero raw DOM writes, zero unsafe script calls, sole Groxy AI identity.
  */
 import { ForEach, effect, renderNode, signal } from "../grex/grex.js";
@@ -644,7 +644,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
             type: "Text",
             tag: "p",
             props: {
-              text: "Groxy Desk v1.0.0 — Pure Grex JS v1.0.0 | Zero Wrapper Elements | Unified Groxy AI",
+              text: "Groxy Desk v1.0.1 — Pure Grex JS v1.0.0 | Zero Wrapper Elements | Unified Groxy AI",
             },
           },
         ],

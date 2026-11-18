@@ -4,6 +4,33 @@ All notable releases of **Groxy Desk** (Step 6 of the GRAB Post-1.0 Ecosystem) a
 
 ---
 
+## `v1.0.1` — 2026-11-18
+
+### Release Type & Affected Layers
+- **Release Version & SemVer Tier:** `v1.0.1` (`PATCH 1.0.x — Non-Breaking Bug/Security/Audit Patch`)
+- **Affected Layer(s):** `Groxy Desk` (`urbanspress/groxy-desk`)
+- **Neighboring Layer Upgrade Required?** `No — 100% drop-in compatible`
+
+| Ecosystem Layer | Repository | Required Version Range | Touched in This Release? | Neighbor Upgrade Required? |
+|---|---|---|---|---|
+| **Core Language, Bytecode VM & Grisp Server** | `urbanspress/grab` | `>= v1.1.0 (< v2.0.0)` | `No` | `No` |
+| **Reactive Frontend Runtime & 20-Element Library** | `urbanspress/grex-js` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Flagship Zero-Plugin CMS** | `urbanspress/grablab-cms` | `>= v1.0.1 (< v2.0.0)` | `No` | `No` |
+| **Exclusive `mode: "visual"` Theme & Studio** | `urbanspress/grex-builder` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Autonomous Design, Content & SEO Agent** | `urbanspress/groxy-ai` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Scaffolder, Orchestrator & Discreet VPS Panel** | `urbanspress/grabman`, `urbanspress/grabtaculous`, `urbanspress/gashboard` | `>= v1.0.0 (< v2.0.0)` (aligned with `Grabtaculous v1.1.0`) | `No` | `No` |
+| **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v1.0.0 (< v2.0.0)` | `Yes` | `No` |
+
+### Fixes & Alignment (`specifications/GROXY-DESK-SPEC-101.md`)
+- **NGINX `1.30.6` (`http2 on;`) & `GRAB v1.1.0` `--trusted-proxy` Edge Generator Alignment (`internal/dns/dns.go`, `internal/dns/dns_test.go`):**
+  - Updated `renderEdgeHTTPSConfig` for `edgeProxy == "nginx"` to replace deprecated NGINX `1.24.x` `listen 443 ssl http2;` with `listen 443 ssl;`, `listen [::]:443 ssl;`, and `http2 on;`, matching official `nginx.org` NGINX `1.30.6` (Stable) deployed by **Grabtaculous `v1.1.0`**.
+  - Added full forwarded header tuple inside `location /`: `proxy_set_header Host $host;`, `proxy_set_header X-Real-IP $remote_addr;`, `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`, `proxy_set_header X-Forwarded-Proto $scheme;`, and `proxy_set_header X-Forwarded-Host $host;`.
+  - Added regression assertions in `TestDNSPlanEmailPreservationPreflightAndHTTPSApply`.
+- **Packaged Release & Installer Parity (`Groxy-Desk-Setup-1.0.1.exe`):**
+  - Rebuilt static `CGO_ENABLED=0` binaries (`groxy-desk-windows-amd64.exe`, `groxy-deskd-windows-amd64.exe`, `groxy-deskd-linux-amd64`), branded Inno Setup 6 `.exe` installer (`dist/Groxy-Desk-Setup-1.0.1.exe`), [`docs/releases/pdf/Groxy-Desk-v1.0.1-Guide.pdf`](docs/releases/pdf/Groxy-Desk-v1.0.1-Guide.pdf), `groxy-desk-v1.0.1-bundle.zip`, and `SHA256SUMS.txt`.
+
+---
+
 ## `v1.0.0` — 2026-11-15
 
 ### Release Type & Affected Layers

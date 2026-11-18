@@ -1,10 +1,10 @@
 ; ==============================================================================
-; Groxy Desk v1.0.0 — Branded Native Windows Inno Setup 6 Installer Script
-; Format Invariant (AGENTS.md): Inno Setup .exe only (Groxy-Desk-Setup-1.0.0.exe), NEVER .msi
+; Groxy Desk v1.0.1 — Branded Native Windows Inno Setup 6 Installer Script
+; Format Invariant (AGENTS.md): Inno Setup .exe only (Groxy-Desk-Setup-1.0.1.exe), NEVER .msi
 ; ==============================================================================
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.0"
+  #define MyAppVersion "1.0.1"
 #endif
 
 #ifndef GrabBinSource

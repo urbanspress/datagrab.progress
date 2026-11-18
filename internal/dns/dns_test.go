@@ -197,4 +197,10 @@ func TestDNSPlanEmailPreservationPreflightAndHTTPSApply(t *testing.T) {
 	if err != nil || rb["records_restored"] != true {
 		t.Fatalf("RestoreDNSSnapshot failed: %s err=%v", string(rawRB), err)
 	}
+
+	// Verify NGINX 1.30.6 syntax & full trusted-proxy header tuple
+	nginxCfg := renderEdgeHTTPSConfig("example.org", "nginx", "8765", "ops@example.org")
+	if strings.Contains(nginxCfg, "listen 443 ssl http2;") || !strings.Contains(nginxCfg, "http2 on;") || !strings.Contains(nginxCfg, "X-Forwarded-Proto $scheme;") || !strings.Contains(nginxCfg, "X-Forwarded-Host $host;") {
+		t.Fatalf("unexpected NGINX 1.30.6 rendered config:\n%s", nginxCfg)
+	}
 }

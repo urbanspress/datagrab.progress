@@ -32,13 +32,26 @@ def find_browser() -> Path:
 def render_guide_html(version: str) -> str:
     v = html.escape(version)
     if version.startswith("1.0."):
+        patch_note = ""
+        tier_desc = f"GA {v} — Production Step 6 Desktop IDE Freeze &amp; Branded Windows Installer"
+        if version != "1.0.0":
+            tier_desc = f"PATCH {v} — Non-Breaking NGINX 1.30.6 Edge Alignment &amp; Branded Windows Installer"
+            patch_note = f"""
+    <section>
+      <h2>What&rsquo;s New in v{v} (PATCH 1.0.x — Non-Breaking Alignment)</h2>
+      <p><strong>Groxy Desk v{v}</strong> is a 100% drop-in compatible patch release aligning the built-in Namecheap DNS &amp; Auto-HTTPS edge generator (<code>renderEdgeHTTPSConfig</code> in <code>internal/dns/dns.go</code>) with official <code>nginx.org</code> <strong>NGINX 1.30.6 (Stable)</strong> and <strong>Grabtaculous v1.1.0</strong>:</p>
+      <ul>
+        <li>Replaces deprecated NGINX <code>1.24.x</code> <code>listen 443 ssl http2;</code> syntax with <code>listen 443 ssl;</code>, <code>listen [::]:443 ssl;</code>, and <code>http2 on;</code>.</li>
+        <li>Emits the complete <code>GRAB v1.1.0</code> <code>--trusted-proxy</code> forwarding header tuple (<code>Host</code>, <code>X-Real-IP</code>, <code>X-Forwarded-For</code>, <code>X-Forwarded-Proto $scheme;</code>, and <code>X-Forwarded-Host $host;</code>) so downstream Grisp apps always see accurate client IPs and HTTPS origins.</li>
+      </ul>
+    </section>"""
         body_sections = f"""
   <header>
     <h1>Groxy Desk v{v} — Production GA Walkthrough, 7-Layer Audit &amp; Architecture Guide</h1>
-    <p><strong>Release Tier:</strong> GA {v} — Production Step 6 Desktop IDE Freeze &amp; Branded Windows Installer | <strong>Default Bind:</strong> <code>127.0.0.1:9490</code> | <strong>Built With:</strong> Go CGO-Free WebView2 + GRAB v1.1.0 + Pure Grex JS v1.0.0</p>
+    <p><strong>Release Tier:</strong> {tier_desc} | <strong>Default Bind:</strong> <code>127.0.0.1:9490</code> | <strong>Built With:</strong> Go CGO-Free WebView2 + GRAB v1.1.0 + Pure Grex JS v1.0.0</p>
   </header>
 
-  <main>
+  <main>{patch_note}
     <section>
       <h2>1. Plain-English Overview of Groxy Desk v{v} (Production GA)</h2>
       <p><strong>Groxy Desk v{v}</strong> is the Production General Availability release for <strong>Step 6 of the Post-1.0 GRAB Ecosystem</strong>. Double-clicking <code>Groxy-Desk-Setup-{v}.exe</code> installs a lightweight native Windows WebView2 desktop IDE (~15–25 MB UI RAM overhead, zero Electron/Chromium bundle bloat) paired with the static <code>CGO_ENABLED=0</code> Go loopback daemon (<code>groxy-deskd.exe</code> on <code>127.0.0.1:9490</code>) and side-by-side <code>grab.exe</code> (<code>v1.1.0</code>) + <code>grabman.exe</code> (<code>v1.0.0</code>) CLIs—without modifying any frozen <code>v1.x</code> upstream repository.</p>
@@ -103,8 +116,8 @@ dist\\groxy-deskd-windows-amd64.exe --addr 127.0.0.1:9490 --workspace C:\\path\\
           <tr><td>Flagship Zero-Plugin CMS</td><td><code>urbanspress/grablab-cms</code></td><td><code>&gt;= v1.0.1 (&lt; v2.0.0)</code></td><td>No</td><td>No</td></tr>
           <tr><td>Exclusive <code>mode: "visual"</code> Theme &amp; Studio</td><td><code>urbanspress/grex-builder</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No</td><td>No</td></tr>
           <tr><td>Autonomous Design, Content &amp; SEO Agent</td><td><code>urbanspress/groxy-ai</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No</td><td>No</td></tr>
-          <tr><td>Scaffolder, Orchestrator &amp; Discreet VPS Panel</td><td><code>grabman</code>, <code>grabtaculous</code>, <code>gashboard</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>No</td><td>No</td></tr>
-          <tr><td>Native Desktop Vibe-Coding IDE &amp; Studio</td><td><code>urbanspress/groxy-desk</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>Yes (GA v{v})</td><td>No</td></tr>
+          <tr><td>Scaffolder, Orchestrator &amp; Discreet VPS Panel</td><td><code>grabman</code>, <code>grabtaculous</code>, <code>gashboard</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code> (Grabtaculous <code>v1.1.0</code>)</td><td>No</td><td>No</td></tr>
+          <tr><td>Native Desktop Vibe-Coding IDE &amp; Studio</td><td><code>urbanspress/groxy-desk</code></td><td><code>&gt;= v1.0.0 (&lt; v2.0.0)</code></td><td>Yes (v{v})</td><td>No</td></tr>
         </tbody>
       </table>
     </section>
@@ -430,7 +443,7 @@ groxy-deskd-windows-amd64.exe --addr 127.0.0.1:9490 --workspace C:\\path\\to\\pr
 
 
 def main():
-    version = sys.argv[1] if len(sys.argv) > 1 else "1.0.0"
+    version = sys.argv[1] if len(sys.argv) > 1 else "1.0.1"
     HTML_DIR.mkdir(parents=True, exist_ok=True)
     PDF_DIR.mkdir(parents=True, exist_ok=True)
 

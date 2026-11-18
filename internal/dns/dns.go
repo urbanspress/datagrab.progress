@@ -677,7 +677,7 @@ func renderEdgeHTTPSConfig(fqdn, edgeProxy, port, email string) string {
 	switch edgeProxy {
 	case "nginx":
 		mail := firstNonEmpty(strings.TrimSpace(email), "admin@"+fqdn)
-		return fmt.Sprintf("server {\n  listen 443 ssl http2;\n  server_name %s;\n  ssl_certificate /etc/letsencrypt/live/%s/fullchain.pem;\n  ssl_certificate_key /etc/letsencrypt/live/%s/privkey.pem;\n  location / { proxy_pass http://127.0.0.1:%s; proxy_set_header Host $host; }\n}\n# certbot --nginx -d %s -m %s --agree-tos --non-interactive\n", fqdn, fqdn, fqdn, port, fqdn, mail)
+		return fmt.Sprintf("server {\n  listen 443 ssl;\n  listen [::]:443 ssl;\n  http2 on;\n  server_name %s;\n  ssl_certificate /etc/letsencrypt/live/%s/fullchain.pem;\n  ssl_certificate_key /etc/letsencrypt/live/%s/privkey.pem;\n  location / {\n    proxy_pass http://127.0.0.1:%s;\n    proxy_set_header Host $host;\n    proxy_set_header X-Real-IP $remote_addr;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n    proxy_set_header X-Forwarded-Proto $scheme;\n    proxy_set_header X-Forwarded-Host $host;\n  }\n}\n# certbot --nginx -d %s -m %s --agree-tos --non-interactive\n", fqdn, fqdn, fqdn, port, fqdn, mail)
 	case "cloudflare-tunnel":
 		return fmt.Sprintf("ingress:\n  - hostname: %s\n    service: http://127.0.0.1:%s\n  - service: http_status:404\n", fqdn, port)
 	default:

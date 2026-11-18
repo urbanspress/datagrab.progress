@@ -69,7 +69,7 @@ def sha256_file(path: Path) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="Package Groxy Desk release artifacts into dist/")
-    parser.add_argument("--version", default="1.0.0", help="SemVer version string without leading v")
+    parser.add_argument("--version", default="1.0.1", help="SemVer version string without leading v")
     args = parser.parse_args()
     version = args.version.lstrip("v")
 
@@ -123,6 +123,8 @@ def main():
         "AGENTS.md",
         "GROXY-DESK-EXPERT.md",
         "HANDOFF.md",
+        "specifications/GROXY-DESK-SPEC-100.md",
+        "specifications/GROXY-DESK-SPEC-101.md",
         "src/desk.grab",
         "views/workbench.grab.html",
         "installer/groxy-desk.iss",

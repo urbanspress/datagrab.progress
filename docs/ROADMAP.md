@@ -64,3 +64,16 @@ Target Scope:
 - Opens third-party research/registration pages (e.g., SEMrush, AnswerThePublic) inside **Groxy Desk**'s WebView2 pane.
 - Offers 1-click `BRAND-DNA.md` form prefill behind human confirmation (`GROXY-SAFE-001`), pauses for user CAPTCHA/password completion, and extracts authorized page insights cleanly.
 
+---
+
+## `v1.2.0` — Full Visual Database Workbench & DbGate-Parity Studio
+
+**Status:** Planned — Backwards-Compatible Minor Feature
+
+Target Scope:
+- **SSH-Tunneled Loopback Connections (`127.0.0.1`):** Built-in `known_hosts` `SHA256:...`-pinned SSH tunnels (zero `InsecureIgnoreHostKey`) bound strictly to `127.0.0.1` alongside `GRAB-E401`-confined local paths for **SQLite**, **PostgreSQL**, and **MariaDB/MySQL**.
+- **Multi-Tab Autocomplete SQL Editor & Spreadsheet-Style Inline Cell Editing:** Schema-aware SQL autocomplete across tabs plus inline spreadsheet-style cell editing preserving exact `ADR-025c` base-10 `GrabDecimal` and `GrabInteger` wire strings (zero IEEE-754 float drift).
+- **Visual ER Schema Diagrams & 1-Click Import/Export:** Interactive entity-relationship (ER) schema diagrams rendered in pure `Grex JS v1.0.0` (`divCount === 0`, `innerHTMLWriteCount === 0`, Light/Dark WCAG AA `>= 4.5:1`), plus 1-click **CSV**, **Excel (`.xlsx`)**, **JSON**, and **SQL dump** import/export.
+- **Cross-Environment Schema Diffing & `GROXY-SAFE-001` Safety Gate:** Side-by-side schema diffing between **Local SQLite** and **VPS PostgreSQL/MariaDB**, with every mutating write, DDL change, import, or schema sync gated by a single-use `approval_token`, `X-CSRF-Token`, and automatic **SHA-256 Pre-Mutation Snapshot** with 1-click rollback.
+
+

@@ -1,10 +1,10 @@
 # HANDOFF.md — Groxy Desk
 
 ## Current Status
-- **Current Milestone:** **`v1.0.1` GA (`PATCH 1.0.x`) — Approved & Frozen — Complete** ([`specifications/GROXY-DESK-SPEC-101.md`](specifications/GROXY-DESK-SPEC-101.md) | [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.0.1-Guide.pdf))
-- **Next Milestone Target:** **`v1.1.0 — Interactive WebView2 Research & Account-Registration Co-Pilot`** (`Status: Planned — Backwards-Compatible Minor Feature` alongside ecosystem Post-1.0 Feature Unlocks across `Groxy AI v1.1.0–v1.8.0`, `GrabLab CMS v1.2.0–v1.4.0`, `Grex Theme Builder v1.1.0–v1.2.0`, and `Grabtaculous v1.1.0`)
-- **Branch / Repositories:** `main` (`origin` `https://github.com/urbanspress/groxy-desk.progress.git` and `stable` `https://github.com/urbanspress/groxy-desk.stable.git` synchronized at `v1.0.1`)
-- **Current Owner:** `Google Antigravity` (`v1.0.1` Patch Complete — Zero Pending Tasks)
+- **Current Milestone:** **`v1.0.2` (`PATCH 1.0.x`)**. The release tag records the Windows WebView2 launch-crash fix.
+- **Next Milestone Target:** **`v1.1.0` — Built-In Browser Co-Pilot, Bestseller Radar Side-Panel & DbGate-Parity Visual Database Workbench**. Approved target; specification in review ([`GROXY-DESK-SPEC-110.md`](specifications/GROXY-DESK-SPEC-110.md)).
+- **Branch / Repositories:** `main` on `origin` (`urbanspress/groxy-desk.progress`) for Stage 1 review. Release history remains on `stable` (`urbanspress/groxy-desk.stable`).
+- **Current Owner:** `Google Antigravity` for specification review.
 
 ## Completed in `v1.0.1` (`PATCH 1.0.x` — NGINX `1.30.6` Edge Generator Alignment)
 - Updated `renderEdgeHTTPSConfig` in `internal/dns/dns.go` (`edgeProxy == "nginx"`) to emit NGINX `1.30.6` (`listen 443 ssl;`, `listen [::]:443 ssl;`, `http2 on;`) instead of deprecated `listen 443 ssl http2;`, plus the full `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto $scheme;`, and `X-Forwarded-Host $host;` header tuple required by `GRAB v1.1.0` `--trusted-proxy`.
@@ -21,12 +21,13 @@
 - Completed Pre-`v1.0.0` 7-layer security/IPC/SSH/DB/DNS/Author/DOM audit, wiring `(*author.Manager).Shutdown()` into `(*server.Server).Shutdown()` and enforcing pre-token `DESK-E303` DNS email re-verification + explicit `SPF`/`DKIM`/`DMARC` protection in `ApplyDNS`.
 - Delivered `v0.1.0` (WebView2 shell, `127.0.0.1:9490` daemon, `Grisp` multi-worker supervisor, `grabman` manager, Unified `Groxy AI`), `v0.2.0` (13-tool `grab mcp` studio, Split-Preview Canvas, 8x5 Style Packs, 22-Rule Scorecard & 🚀 Boost), and `v0.3.0` (Step 5 Fleet, `127.0.0.1:15432–15439` SSH DB Tunnels + Visual DB Explorer, Namecheap DNS + Auto-HTTPS, and 1-Click Local Author Mode + Ollama launcher).
 
-## Planned Backwards-Compatible Minor Track (`v1.1.0`)
-- **Milestone `v1.1.0` — Interactive WebView2 Research & Account-Registration Co-Pilot:** `Status: Planned — Backwards-Compatible Minor Feature` (zero `v1.0.0` implementation code modified):
-  - Opens third-party research/registration pages (e.g., SEMrush, AnswerThePublic) inside **Groxy Desk**'s WebView2 pane, offers 1-click `BRAND-DNA.md` form prefill behind human confirmation (`GROXY-SAFE-001`), pauses for user CAPTCHA/password completion, and extracts authorized page insights cleanly.
+## Backwards-Compatible Minor Track (`v1.1.0`)
+
+- **Browser Co-Pilot and Bestseller Radar:** Isolated WebView2 split pane, Groxy AI `v1.8.0` research and draft-only receipts, and approved GrabLab CMS `v1.4.0`/`v1.5.0` book draft handoff.
+- **Visual Database Workbench:** Pinned SSH loopback connections, multi-tab SQL, exact-decimal inline edits, visual schema diagrams, import/export, and cross-environment schema comparison with separately approved writes and verified rollback.
 
 ## Pending Next Steps
-- None in `groxy-desk v1.0.1` (`v1.0.1` Patch Complete, `0` pending tasks). Next ecosystem work begins on `Groxy Desk v1.1.0` per `docs/ROADMAP.md` and `C:\Development\CODEX-HANDOFF.md`.
+- Review SPEC-110, confirm the documented integration and snapshot questions, and obtain explicit owner approval before implementing `v1.1.0`. The Stage 1 checkpoint consists of documentation.
 
 ## Recommended Next Model (`AGENTS.md` 4-Tier Routing)
-- **Switch to `Google Hydrogen (Medium)` (or hand off to `OpenAI Codex` via `C:\Development\CODEX-HANDOFF.md`):** Recommended next for drafting pre-implementation specifications (`*-SPEC-*.md`) for the Post-1.0 Feature Unlocks now that all 6 core ecosystem layers are frozen at `v1.0.0+`.
+- **Switch to `Orchestrator (Argon)` for a cross-layer specification review.** Verify WebView2 trust boundaries, Groxy AI and CMS receipt handling, and database rollback guarantees before owner approval.

@@ -4,6 +4,7 @@
 **Foundational Baselines:** **GRAB `v1.1.0`**, **Grex JS `v1.0.0`**, **GrabLab CMS `v1.0.1`**, **Grex Theme Builder `v1.0.0`**, **Groxy AI `v1.0.0`**, **`grabman v1.0.0`**, **Grabtaculous `v1.0.0`**, and **Gashboard `v1.0.0`**
 
 **Status Labels:**
+- **Approved target; specification in review** — Scope approved and the specification awaiting separate implementation approval.
 - **Specification in Review** — Specification drafted and awaiting explicit project-owner approval before any Go, GRAB, C/Win32, or JS application code is written.
 - **Approved** — Authorized by the project owner for implementation.
 - **Complete** — Implemented, all 4 verification gates passing `100%`, walkthrough PDF generated, and synchronized to `origin` + `stable`.
@@ -66,22 +67,14 @@ Completed Scope:
 
 ---
 
-## `v1.1.0` — Interactive WebView2 Research & Account-Registration Co-Pilot
+## `v1.1.0` — Built-In Browser Co-Pilot, Bestseller Radar Side-Panel & DbGate-Parity Visual Database Workbench
 
-**Status:** Planned — Backwards-Compatible Minor Feature
-
-Target Scope:
-- Opens third-party research/registration pages (e.g., SEMrush, AnswerThePublic) inside **Groxy Desk**'s WebView2 pane.
-- Offers 1-click `BRAND-DNA.md` form prefill behind human confirmation (`GROXY-SAFE-001`), pauses for user CAPTCHA/password completion, and extracts authorized page insights cleanly.
-
----
-
-## `v1.2.0` — Full Visual Database Workbench & DbGate-Parity Studio
-
-**Status:** Planned — Backwards-Compatible Minor Feature
+**Status:** Approved target; specification in review ([`GROXY-DESK-SPEC-110.md`](../specifications/GROXY-DESK-SPEC-110.md))
 
 Target Scope:
-- **SSH-Tunneled Loopback Connections (`127.0.0.1`):** Built-in `known_hosts` `SHA256:...`-pinned SSH tunnels (zero `InsecureIgnoreHostKey`) bound strictly to `127.0.0.1` alongside `GRAB-E401`-confined local paths for **SQLite**, **PostgreSQL**, and **MariaDB/MySQL**.
+- **WebView2 Browser Co-Pilot:** Side-by-side research and registration browsing with approved `BRAND-DNA.md` form prefill. Users control passwords, CAPTCHAs, and submission.
+- **Bestseller Radar:** Groxy AI `v1.8.0` research and `rtok_res_<hex>` draft-only receipts, plus GrabLab CMS `v1.4.0`/`v1.5.0` draft creation and Radar navigation through `GRAB-E402` allowlisted origins.
+- **SSH-Tunneled Loopback Connections (`127.0.0.1`):** Workspace-confined SQLite, capability-gated remote SQLite, and `known_hosts` `SHA256:...`-pinned connections for PostgreSQL and MariaDB/MySQL on native Ubuntu `systemd` or containerized services.
 - **Multi-Tab Autocomplete SQL Editor & Spreadsheet-Style Inline Cell Editing:** Schema-aware SQL autocomplete across tabs plus inline spreadsheet-style cell editing preserving exact `ADR-025c` base-10 `GrabDecimal` and `GrabInteger` wire strings (zero IEEE-754 float drift).
 - **Visual ER Schema Diagrams & 1-Click Import/Export:** Interactive entity-relationship (ER) schema diagrams rendered in pure `Grex JS v1.0.0` (`divCount === 0`, `innerHTMLWriteCount === 0`, Light/Dark WCAG AA `>= 4.5:1`), plus 1-click **CSV**, **Excel (`.xlsx`)**, **JSON**, and **SQL dump** import/export.
 - **Cross-Environment Schema Diffing & `GROXY-SAFE-001` Safety Gate:** Side-by-side schema diffing between **Local SQLite** and **VPS PostgreSQL/MariaDB**, with every mutating write, DDL change, import, or schema sync gated by a single-use `approval_token`, `X-CSRF-Token`, and automatic **SHA-256 Pre-Mutation Snapshot** with 1-click rollback.

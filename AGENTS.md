@@ -20,6 +20,8 @@
 ---
 
 ## 2. Workflow, Spec Gate & Verification Gates
+- **PostgreSQL-First Production Rule.** Target native Ubuntu PostgreSQL 16+ (including 18) with Redis 8.2 for multi-worker production. MariaDB remains a supported compatibility target. Use workspace-confined SQLite files only for zero-config, single-node development and test fixtures. SQLite has no native TCP listener.
+- **Live Stable Tag Verification Rule.** Before citing a stable tag in any `HANDOFF.md` or specification, verify the relevant repository’s `stable/main` against `git ls-remote stable refs/heads/main`. Refresh the tracking ref and tags if needed, then run `git describe --tags --abbrev=0 stable/main` in that repository. If live verification fails, leave the stable version unconfirmed.
 - **Spec-First Approval Gate:** Do NOT write `groxy-desk` application code (Go, GRAB, C/Win32/WebView2, or JS) until the active milestone specification (starting with `specifications/GROXY-DESK-SPEC-001.md`) has been reviewed and explicitly approved by the project owner.
 - **Plain-English User Communication:** The project owner directs development in plain English. Always explain IDE workflows, local `Grisp` workers, `Groxy AI` actions, and fleet/database bridges simply without unnecessary jargon. Handle all file edits, git commands, and terminal verification directly.
 - **No Unapproved Commits/Pushes:** Do not commit, push, or publish releases without explicit project-owner approval (explicitly requested repository bootstraps excepted).
@@ -76,21 +78,20 @@
 
 ---
 
-## 4. 4-Tier Model Routing & Tandem Handoff Protocol
+## 4. Codex and Antigravity model and effort routing
 
-### 4-Tier Antigravity Model Routing
-Before ending a turn or starting a new phase, advise the project owner which Antigravity model and effort level to select for the next step so AI Pro quota is used efficiently:
-1. **`Google Hydrogen (Medium)`:** Pre-implementation specifications (`*-SPEC-*.md`), documentation, governance updates, and single-module edits.
-2. **`Google Hydrogen (High)`:** Standard feature milestone implementations (`v0.1.0` WebView2 shell, `Grisp` supervisor, `grabman` integration, unit/DOM tests).
-3. **`Orchestrator (Argon)`:** Second-opinion pre-`v1.0.0` security/DOM/IPC/contract audits, multi-repo cross-layer integrations (`groxy-desk` + `Groxy AI` + `Grex Theme Builder` + `GrabLab CMS` + `Gashboard`), and complex refactors.
-4. **`Google Hydrogen (Extra)`:** Reserved for multi-server orchestration, full `grab mcp` + split-preview canvas integration, and stubborn cross-layer bugs.
-- **Mandatory Pause & Swap Prompt Rule:** Every active AI agent MUST pause at milestone boundaries or before high-risk cross-layer/pre-`v1.0.0` audits and explicitly tell the user when to switch to `Orchestrator (Argon)`, including a clear 1-sentence reason why `Orchestrator (Argon)` is recommended next.
+| Work | OpenAI Codex | Google Antigravity |
+|---|---|---|
+| Stage 1 specifications, roadmaps and governance | GPT-6.2 Sol (Medium), alternate GPT-6.1 Sol (Medium) | Claude Sonnet (Medium) or Hydrogen (Medium), backup GPT-OSS 120B (Medium) |
+| Stage 2 cross-layer security and contract audit | GPT-6.2 Astra (High) | Claude Opus (High) or Orchestrator (Argon) |
+| Stage 3 multi-file implementation and unit or DOM tests | GPT-6.2 Sol (High), alternate GPT-6.1 Terra (High) | Rotate Claude Sonnet (High), GPT-OSS 120B (High) and Hydrogen (High) across milestones |
+| Stage 4 independent security audit and release sign-off | GPT-6.2 Astra (High) | Claude Opus (High) or Orchestrator (Argon) for cross-layer review |
+| Quick UI edits, snapshot sync, packaging and walkthroughs | GPT-6 Luna (Medium), alternate GPT-6.1 Sol (Medium) | Gemini 3.8 Flash (single package) or Hydrogen (High), including final E2E gate execution |
 
-### Tier 1 vs. Tier 2 Strict Single-Module/Package Routing
-- **Tier 1 — Frontier Models (`Google Hydrogen`, `Gemini 4 Argon`, `GPT-6.1 Sol`, `Claude Opus/Sonnet`):** Authorized to draft specifications, implement multi-layer Go host daemon + WebView2 shell + `Grex JS` workbench modules, and execute cross-layer verification suites.
-- **Tier 2 — Fast Workhorse & Backup Models (`Gemini 3.8 Flash`, `OpenCode`, `Cline`, `Kilo Code`):** Must operate in **Strict Single-Module / Single-Package Mode** (`GROXY-DESK-EXPERT.md` first, one Go package or JS UI module at a time, immediate `go test -count=1 ./<package>` or `node --test` verification).
+At milestone boundaries and before high-risk audits, pause and identify the next review or implementation step. Close every checkpoint with **Recommended Next Model & Effort Tier**, naming the model, effort and reason. Reserve Hydrogen (Extra) or Claude Opus (High) for stubborn cross-layer failures.
 
-### Tandem Handoff Protocol (`Google Antigravity <-> OpenAI Codex`)
-- **Google Antigravity -> Codex:** If an issue remains unresolved after 2 attempts on `Google Hydrogen (Extra)` or `Orchestrator (Argon)`, stop editing, revert only the specific files edited during the failed attempt (asking the owner first if pre-existing uncommitted work would be affected), record what was tried in `HANDOFF.md`, update `Current Owner: OpenAI Codex`, and say: `"Ready to hand off to Codex. Type use-codex to continue."`
-- **Codex -> Google Antigravity:** When Codex completes an architectural or verification task, update `HANDOFF.md`, set `Current Owner: Google Antigravity`, and say: `"Core task complete—ready to hand off to Google Antigravity. Type use-antigravity to continue."`
-- **Automatic Pickup:** On pickup (`use-antigravity` or `use-codex`), immediately read `GROXY-DESK-EXPERT.md`, `AGENTS.md`, and `HANDOFF.md`, verify baseline checks, and continue the next pending task.
+### Package scope and handoff
+
+- Use the stage matrix for multi-package work. Gemini 3.8 Flash, OpenCode, Cline and Kilo Code must read `GROXY-DESK-EXPERT.md` first, edit one Go package or JS module at a time and immediately verify it with `go test -count=1 ./<package>` or `node --test`.
+- After two unsuccessful attempts on Hydrogen (Extra) or Orchestrator (Argon), record the attempts in `HANDOFF.md` and hand off to OpenAI Codex. Revert only the failed attempt’s edits and ask the owner first if that would affect pre-existing work.
+- Record the incoming agent in `HANDOFF.md` under **Current Owner**, with the next task and pending checks. On pickup, read `GROXY-DESK-EXPERT.md`, `AGENTS.md` and `HANDOFF.md`, verify the applicable baseline and continue.

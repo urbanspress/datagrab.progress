@@ -69,11 +69,11 @@ Completed Scope:
 
 ## `v1.1.0` — Built-In Browser Co-Pilot, Bestseller Radar Side-Panel & DbGate-Parity Visual Database Workbench
 
-**Status:** Approved target; specification in review ([`GROXY-DESK-SPEC-110.md`](../specifications/GROXY-DESK-SPEC-110.md))
+**Status:** Approved; implementation in progress. The owner approved SPEC-110 as written on 2026-11-19. **Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit (PASS).** Stage 3 can proceed against the frozen interfaces. Engine-specific restore and Windows integration tests remain implementation gates. [Audit decisions and acceptance gates](../specifications/GROXY-DESK-SPEC-110.md)
 
 Target Scope:
 - **WebView2 Browser Co-Pilot:** Side-by-side research and registration browsing with approved `BRAND-DNA.md` form prefill. Users control passwords, CAPTCHAs, and submission.
-- **Bestseller Radar:** Groxy AI `v1.8.0` research and `rtok_res_<hex>` draft-only receipts, plus GrabLab CMS `v1.4.0`/`v1.5.0` draft creation and Radar navigation through `GRAB-E402` allowlisted origins.
+- **Bestseller Radar:** Groxy AI `v1.8.0` consumes the single-use `rtok_res_<hex>` approval and returns a Desk-bound draft receipt. Separate approval creates a GrabLab CMS `v1.4.0`/`v1.5.0` book draft through the allowlisted MCP endpoint.
 - **SSH-Tunneled Loopback Connections (`127.0.0.1`):** Workspace-confined SQLite, capability-gated remote SQLite, and `known_hosts` `SHA256:...`-pinned connections for PostgreSQL and MariaDB/MySQL on native Ubuntu `systemd` or containerized services.
 - **Multi-Tab Autocomplete SQL Editor & Spreadsheet-Style Inline Cell Editing:** Schema-aware SQL autocomplete across tabs plus inline spreadsheet-style cell editing preserving exact `ADR-025c` base-10 `GrabDecimal` and `GrabInteger` wire strings (zero IEEE-754 float drift).
 - **Visual ER Schema Diagrams & 1-Click Import/Export:** Interactive entity-relationship (ER) schema diagrams rendered in pure `Grex JS v1.0.0` (`divCount === 0`, `innerHTMLWriteCount === 0`, Light/Dark WCAG AA `>= 4.5:1`), plus 1-click **CSV**, **Excel (`.xlsx`)**, **JSON**, and **SQL dump** import/export.

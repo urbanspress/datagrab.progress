@@ -1,10 +1,10 @@
 # HANDOFF.md — Groxy Desk
 
 ## Current Status
-- **Current Milestone:** **`v1.0.2` (`PATCH 1.0.x`)**. The release tag records the Windows WebView2 launch-crash fix.
-- **Next Milestone Target:** **`v1.1.0` — Built-In Browser Co-Pilot, Bestseller Radar Side-Panel & DbGate-Parity Visual Database Workbench**. Approved target; specification in review ([`GROXY-DESK-SPEC-110.md`](specifications/GROXY-DESK-SPEC-110.md)).
-- **Branch / Repositories:** `main` on `origin` (`urbanspress/groxy-desk.progress`) for Stage 1 review. Release history remains on `stable` (`urbanspress/groxy-desk.stable`).
-- **Current Owner:** `Google Antigravity` for specification review.
+- **Verified stable release:** `v1.0.2`, the Windows WebView2 launch-crash fix. Verified `stable/main` on 2026-11-19 (`3c36988`).
+- **Current milestone:** `v1.1.0` Browser Co-Pilot, Bestseller Radar and Visual Database Workbench. `Approved; implementation in progress`. The owner approved [SPEC-110](specifications/GROXY-DESK-SPEC-110.md) as written on 2026-11-19.
+- **Branch:** `origin/main` (`urbanspress/groxy-desk.progress`) for the documentation checkpoint.
+- **Current Owner:** OpenAI Codex for Stage 3 implementation.
 
 ## Completed in `v1.0.1` (`PATCH 1.0.x` — NGINX `1.30.6` Edge Generator Alignment)
 - Updated `renderEdgeHTTPSConfig` in `internal/dns/dns.go` (`edgeProxy == "nginx"`) to emit NGINX `1.30.6` (`listen 443 ssl;`, `listen [::]:443 ssl;`, `http2 on;`) instead of deprecated `listen 443 ssl http2;`, plus the full `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto $scheme;`, and `X-Forwarded-Host $host;` header tuple required by `GRAB v1.1.0` `--trusted-proxy`.
@@ -26,8 +26,14 @@
 - **Browser Co-Pilot and Bestseller Radar:** Isolated WebView2 split pane, Groxy AI `v1.8.0` research and draft-only receipts, and approved GrabLab CMS `v1.4.0`/`v1.5.0` book draft handoff.
 - **Visual Database Workbench:** Pinned SSH loopback connections, multi-tab SQL, exact-decimal inline edits, visual schema diagrams, import/export, and cross-environment schema comparison with separately approved writes and verified rollback.
 
-## Pending Next Steps
-- Review SPEC-110, confirm the documented integration and snapshot questions, and obtain explicit owner approval before implementing `v1.1.0`. The Stage 1 checkpoint consists of documentation.
+## Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit (PASS)
 
-## Recommended Next Model (`AGENTS.md` 4-Tier Routing)
-- **Switch to `Orchestrator (Argon)` for a cross-layer specification review.** Verify WebView2 trust boundaries, Groxy AI and CMS receipt handling, and database rollback guarantees before owner approval.
+The frozen Radar and CMS contracts support a Desk-bound receipt followed by a separately approved book draft. WebView2 isolation, exact-origin checks, pinned SSH and exact decimal handling can all be enforced in Desk. No upstream code changes are required. [Binding decisions and evidence in SPEC-110 §10](specifications/GROXY-DESK-SPEC-110.md#10-stage-2-pre-implementation-cross-layer-security--contract-audit-pass)
+
+## Pending next steps
+
+Implement Stage 3 and execute all four §9 gates on Windows. Include independent browser profiles, receipt replay and duplicate draft checks, SSH pin rejection, exact numeric round trips, and recovery of real rows and schema on each engine. The current network database snapshot contains only operation metadata. Keep writes gated until verified backups and separately approved restores work.
+
+## Recommended Next Model & Effort Tier
+
+**GPT-6.2 Sol (High)** is cleared for Stage 3 multi-file implementation and integration tests. Use **GPT-6.1 Terra (High)** as the alternate.

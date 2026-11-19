@@ -726,7 +726,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     };
     webview.addEventListener("message", onWebViewMsg);
     if (typeof webview.postMessage === "function") {
-      webview.postMessage({ type: "groxy-desk-ready" });
+      webview.postMessage(JSON.stringify({ type: "groxy-desk-ready" }));
     }
   } else if (apiClient.hasSession() && options.autoHydrate !== false) {
     hydrateWorkspace();

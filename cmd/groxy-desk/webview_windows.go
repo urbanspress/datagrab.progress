@@ -106,14 +106,12 @@ func launchWebViewWindow(sess server.SessionCredentials, stateDir string, debug 
 			if chromium != nil {
 				chromium.Resize()
 			}
-			return 0
 		case wmDestroy:
 			_, _, _ = procPostQuitMessage.Call(0)
 			return 0
-		default:
-			ret, _, _ := procDefWindowProcW.Call(hwnd, uintptr(msg), wParam, lParam)
-			return ret
 		}
+		ret, _, _ := procDefWindowProcW.Call(hwnd, uintptr(msg), wParam, lParam)
+		return ret
 	})
 
 	wc := wndClassExW{
@@ -126,7 +124,9 @@ func launchWebViewWindow(sess server.SessionCredentials, stateDir string, debug 
 		lpszClassName: className,
 	}
 	if atom, _, callErr := procRegisterClassExW.Call(uintptr(unsafe.Pointer(&wc))); atom == 0 {
-		return callErr
+		if !errors.Is(callErr, windows.ERROR_CLASS_ALREADY_EXISTS) {
+			return callErr
+		}
 	}
 
 	hwnd, _, callErr := procCreateWindowExW.Call(

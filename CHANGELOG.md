@@ -4,6 +4,33 @@ All notable releases of **Groxy Desk** (Step 6 of the GRAB Post-1.0 Ecosystem) a
 
 ---
 
+## `v1.0.2` — 2026-11-19
+
+### Release Type & Affected Layers
+- **Release Version & SemVer Tier:** `v1.0.2` (`PATCH 1.0.x — Non-Breaking Bug/Security/Audit Patch`)
+- **Affected Layer(s):** `Groxy Desk` (`urbanspress/groxy-desk`)
+- **Neighboring Layer Upgrade Required?** `No — 100% drop-in compatible`
+
+| Ecosystem Layer | Repository | Required Version Range | Touched in This Release? | Neighbor Upgrade Required? |
+|---|---|---|---|---|
+| **Core Language, Bytecode VM & Grisp Server** | `urbanspress/grab` | `>= v1.1.0 (< v2.0.0)` | `No` | `No` |
+| **Reactive Frontend Runtime & 20-Element Library** | `urbanspress/grex-js` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Flagship Zero-Plugin CMS** | `urbanspress/grablab-cms` | `>= v1.0.1 (< v2.0.0)` | `No` | `No` |
+| **Exclusive `mode: "visual"` Theme & Studio** | `urbanspress/grex-builder` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Autonomous Design, Content & SEO Agent** | `urbanspress/groxy-ai` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Scaffolder, Orchestrator & Discreet VPS Panel** | `urbanspress/grabman`, `urbanspress/grabtaculous`, `urbanspress/gashboard` | `>= v1.0.0 (< v2.0.0)` (aligned with `Grabtaculous v1.1.0`) | `No` | `No` |
+| **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v1.0.0 (< v2.0.0)` | `Yes` | `No` |
+
+### Fixes & Hardening
+- **Windows WebView2 Startup Handshake Fix (`public/desk/workbench.js`, `cmd/groxy-desk/webview_windows.go`):**
+  - Updated the frontend handshake in `workbench.js` to serialize `webview.postMessage(JSON.stringify({ type: "groxy-desk-ready" }))` as a JSON string instead of passing an unstringified object.
+  - Fixes an immediate application crash on Windows startup where `go-webview2`'s `args.TryGetWebMessageAsString()` failed with `E_INVALIDARG` (`0x80070057`: "The parameter is incorrect") on non-string payloads, which invoked `os.Exit(1)` and caused the launcher to flash black and exit immediately.
+  - Added safety check in `webview_windows.go` to tolerate `ERROR_CLASS_ALREADY_EXISTS` on window class registration.
+- **Packaged Release & Installer Parity (`Groxy-Desk-Setup-1.0.2.exe`):**
+  - Compiled static binaries, updated Inno Setup 6 `.exe` installer (`dist/Groxy-Desk-Setup-1.0.2.exe`), generated [`docs/releases/pdf/Groxy-Desk-v1.0.2-Guide.pdf`](docs/releases/pdf/Groxy-Desk-v1.0.2-Guide.pdf), `groxy-desk-v1.0.2-bundle.zip`, and verified `SHA256SUMS.txt`.
+
+---
+
 ## `v1.0.1` — 2026-11-18
 
 ### Release Type & Affected Layers

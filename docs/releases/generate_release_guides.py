@@ -34,7 +34,19 @@ def render_guide_html(version: str) -> str:
     if version.startswith("1.0."):
         patch_note = ""
         tier_desc = f"GA {v} — Production Step 6 Desktop IDE Freeze &amp; Branded Windows Installer"
-        if version != "1.0.0":
+        if version == "1.0.2":
+            tier_desc = f"PATCH {v} — Windows WebView2 Launch Crash Fix &amp; Branded Installer"
+            patch_note = f"""
+    <section>
+      <h2>What&rsquo;s New in v{v} (PATCH 1.0.x — Windows WebView2 Launch Fix)</h2>
+      <p><strong>Groxy Desk v{v}</strong> is a critical 100% drop-in compatible patch release resolving a Windows startup crash that caused Groxy Desk to flash black and exit immediately:</p>
+      <ul>
+        <li><strong>WebView2 Handshake Serialization Fix (<code>public/desk/workbench.js</code>):</strong> Safely serializes the initial <code>groxy-desk-ready</code> handshake message via <code>JSON.stringify</code> instead of passing a bare JavaScript object, preventing <code>go-webview2</code>'s internal <code>TryGetWebMessageAsString()</code> COM method from throwing <code>E_INVALIDARG</code> (<code>0x80070057</code>: &ldquo;The parameter is incorrect&rdquo;) and terminating the application process via <code>os.Exit(1)</code>.</li>
+        <li><strong>Window Class Registration Safety (<code>cmd/groxy-desk/webview_windows.go</code>):</strong> Tolerates <code>ERROR_CLASS_ALREADY_EXISTS</code> during repeated desktop window initializations without returning an error.</li>
+        <li><strong>Updated Installer:</strong> Refreshes <code>Groxy-Desk-Setup-1.0.2.exe</code>, static binaries, SHA-256 signatures, and walkthrough PDF guide.</li>
+      </ul>
+    </section>"""
+        elif version != "1.0.0":
             tier_desc = f"PATCH {v} — Non-Breaking NGINX 1.30.6 Edge Alignment &amp; Branded Windows Installer"
             patch_note = f"""
     <section>

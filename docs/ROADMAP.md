@@ -86,11 +86,13 @@ Target Scope:
 
 ## `v1.2.0` — DbGate-Parity 3-Tab Dedicated Workspace Studio & Visual Polish (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`)
 
-**Status:** Planned
+**Status:** Approved target; specification in review ([`specifications/GROXY-DESK-SPEC-120.md`](../specifications/GROXY-DESK-SPEC-120.md))
 
 Target Scope:
-- **Dedicated 3-Tab Top-Level Workspace Studio Switcher (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`):** Full-viewport top-level studio tabs giving each primary workflow dedicated screen real estate while preserving shared workspace context, active SSH tunnels, and Unified `Groxy AI` state.
-- **DbGate-Parity `Database Studio` Layout & Visual Polish:** Dedicated left connection & pinned schema object tree (tables, views, triggers, indexes, ER diagrams), multi-tab SQL editor + inline spreadsheet data grid split, and dedicated schema-diff / import-export drawers rendered in pure `Grex JS v1.0.0` (`divCount === 0`, `innerHTMLWriteCount === 0`, Light/Dark WCAG AA `>= 4.5:1`).
-- **Dedicated `Browser & Radar` Research Deck & `Code & Grex Studio` Canvas:** Full-height split-pane WebView2 Browser Co-Pilot + Bestseller Radar research, receipt, and GrabLab CMS draft handoff deck alongside a dedicated `Code & Grex Studio` split-preview canvas with 22-rule Scorecard and 🚀 `"Let Groxy Boost This"` remediation diffs.
+- **Sticky Top Workspace Mode Switcher & `Urbanist` Typography:** Clean sticky top header with `Urbanist` geometric typography, authenticated loopback status badge, Light/Dark theme toggle, and 3 dedicated full-viewport workspace tabs (`role="tablist"` with `ArrowLeft`/`ArrowRight`/`Home`/`End` keyboard navigation and URL hash/session persistence) while preserving shared workspace context, active SSH tunnels, and Unified `Groxy AI` state.
+- **Tab 1 — `Database Studio` (True DbGate 3-Pane Layout):** Left sidebar (saved/active `PostgreSQL`, `MariaDB`, `SQLite` connections + expandable `Tables`/`Views`/`Triggers` schema tree), center workspace (focused action toolbar: `Run Query`, `Export CSV/XLSX/JSON/SQL`, `ER Diagram`, `Schema Diff`, `Undo Snapshot` + multi-tab autocomplete SQL editor over spreadsheet-style data grid), and right inspector (`ADR-025c` exact-decimal editor, pre-mutation snapshot guard, and `GROXY-SAFE-001` approval/rollback drawer).
+- **Tab 2 — `Browser & Radar` (Full-Height 50/50 Split Pane):** Isolated WebView2 allowlisted browser with origin lock badge on the left, paired with Bestseller Radar niche explorer, `BRAND-DNA.md` prefill preview, and `GrabLab CMS` draft handoff panel on the right.
+- **Tab 3 — `Code & Grex Studio` (Clean 3-Pane Vibe-Coding Studio):** Workspace file explorer & `grabman` tools on the left, active `.grab`/`.html` code workbench & responsive `Grex` visual preview canvas in the center, and Unified `Groxy AI` Adaptive Reasoning co-pilot & 22-rule audit scorecard on the right.
+- **Zero Regression & Pure `Grex JS v1.0.0` Conformance:** 100% preservation of existing `v1.1.0` DOM element IDs, ARIA attributes, and API bindings (`divCount === 0`, `innerHTMLWriteCount === 0`, zero `eval()`, Light & Dark WCAG AA `>= 4.5:1` contrast).
 
 

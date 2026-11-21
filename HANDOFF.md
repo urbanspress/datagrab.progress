@@ -2,9 +2,9 @@
 
 ## Current Status
 - **Verified stable release:** `v1.1.0`, Browser Co-Pilot, Bestseller Radar and DbGate-Parity Visual Database Workbench (`MINOR 1.x.0`). Verified prior `stable/main` (`v1.0.2` at `3c36988`) via `git ls-remote stable refs/heads/main` and promoted `v1.1.0` to both `origin` and `stable` on 2026-11-21.
-- **Current milestone:** `v1.1.0` (`Approved & Frozen — Complete`; Section 9 Gates 1–4 & Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off `PASS`). Next queued milestone in [`docs/ROADMAP.md`](docs/ROADMAP.md): **`v1.2.0` — DbGate-Parity 3-Tab Dedicated Workspace Studio & Visual Polish (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`)** (`Planned`).
-- **Branch:** `main` synchronized across `origin` (`urbanspress/groxy-desk.progress`) and `stable` (`urbanspress/groxy-desk.stable`) at tag `v1.1.0`.
-- **Current Owner:** Stage 1 Specification Author (**GPT-6.2 Sol (Medium)** or **Claude Sonnet (Medium)** / **Hydrogen (Medium)**) for Milestone `v1.2.0` ([`docs/ROADMAP.md`](docs/ROADMAP.md)) when initiated by the project owner.
+- **Current milestone:** `v1.1.0` (`Approved & Frozen — Complete`; Section 9 Gates 1–4 & Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off `PASS`). Active Stage 1 milestone in [`docs/ROADMAP.md`](docs/ROADMAP.md): **`v1.2.0` — DbGate-Parity 3-Tab Dedicated Workspace Studio & Visual Polish (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`)** (`Approved target; specification in review` — [`specifications/GROXY-DESK-SPEC-120.md`](specifications/GROXY-DESK-SPEC-120.md)).
+- **Branch:** `main` on `origin` (`urbanspress/groxy-desk.progress`) ahead of `stable` (`urbanspress/groxy-desk.stable` remains frozen at `v1.1.0`).
+- **Current Owner:** Stage 2 Cross-Layer Security & Contract Auditor (**GPT-6.2 Astra (High)**, **Claude Opus (High)**, or **Orchestrator (Argon)**) to review [`specifications/GROXY-DESK-SPEC-120.md`](specifications/GROXY-DESK-SPEC-120.md) before Stage 3 implementation approval.
 
 ## Completed in `v1.0.1` (`PATCH 1.0.x` — NGINX `1.30.6` Edge Generator Alignment)
 - Updated `renderEdgeHTTPSConfig` in `internal/dns/dns.go` (`edgeProxy == "nginx"`) to emit NGINX `1.30.6` (`listen 443 ssl;`, `listen [::]:443 ssl;`, `http2 on;`) instead of deprecated `listen 443 ssl http2;`, plus the full `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto $scheme;`, and `X-Forwarded-Host $host;` header tuple required by `GRAB v1.1.0` `--trusted-proxy`.
@@ -66,4 +66,4 @@ The frozen Radar and CMS contracts support a Desk-bound receipt followed by a se
 
 ## Recommended Next Model & Effort Tier
 
-**GPT-6.2 Sol (Medium)** (or **Claude Sonnet (Medium)** / **Hydrogen (Medium)**) for **Stage 1 specification drafting** of **Milestone `v1.2.0` — DbGate-Parity 3-Tab Dedicated Workspace Studio & Visual Polish (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`)** (`specifications/GROXY-DESK-SPEC-120.md`), preserving Pure `Grex JS v1.0.0` (`divCount === 0`), Light/Dark WCAG AA (`>= 4.5:1`), `ADR-025c`, and all frozen `v1.0.0`/`v1.1.0` security contracts.
+**GPT-6.2 Astra (High)** (or **Claude Opus (High)** / **Orchestrator (Argon)**) for **Stage 2 cross-layer security and contract audit** of **Milestone `v1.2.0`** ([`specifications/GROXY-DESK-SPEC-120.md`](specifications/GROXY-DESK-SPEC-120.md)) — verifying sticky 3-tab `role="tablist"` accessibility, URL hash/session persistence, `Urbanist` offline-safe font loading, DbGate 3-pane layout, and 100% preservation of `v1.1.0` DOM IDs, Pure `Grex JS v1.0.0` (`divCount === 0`), Light/Dark WCAG AA (`>= 4.5:1`), `ADR-025c`, WebView2 isolation, and `GROXY-SAFE-001` contracts prior to Stage 3 implementation approval.

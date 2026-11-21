@@ -69,7 +69,7 @@ Completed Scope:
 
 ## `v1.1.0` — Built-In Browser Co-Pilot, Bestseller Radar Side-Panel & DbGate-Parity Visual Database Workbench
 
-**Status:** Complete (Stage 3 Verified — Pending Stage 4 Sign-Off before `stable` promotion) ([`specifications/GROXY-DESK-SPEC-110.md`](../specifications/GROXY-DESK-SPEC-110.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v1.1.0-Guide.pdf))
+**Status:** Approved & Frozen — Complete (**Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off: PASS — Released as `v1.1.0`**) ([`specifications/GROXY-DESK-SPEC-110.md`](../specifications/GROXY-DESK-SPEC-110.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v1.1.0-Guide.pdf))
 
 Completed Stage 3 Scope (All Section 9 Acceptance Gates Passed):
 - **Full PostgreSQL 18 & Least-Privilege MariaDB 11.8 Recovery Gate Lifted:** Verified full logical replay, writer exclusion across the pre-check → restore → post-verify window (leaving unrelated databases connected), conflict rejection (`409`), forced recovery, CSV/XLSX/JSON/SQL import/export round-trips, cross-dialect schema-sync migrations, and MariaDB partial-DDL failure rollback to exact pre-mutation SHA-256 (tables, views, and triggers intact) through Desk's HTTP approval and rollback endpoints. MariaDB targets with any account holding global `*.*` write privileges continue to fail closed with HTTP `409 write_fence_unavailable` before approval.
@@ -81,5 +81,16 @@ Target Scope:
 - **Multi-Tab Autocomplete SQL Editor & Spreadsheet-Style Inline Cell Editing:** Schema-aware SQL autocomplete across tabs plus inline spreadsheet-style cell editing preserving exact `ADR-025c` base-10 `GrabDecimal` and `GrabInteger` wire strings (zero IEEE-754 float drift).
 - **Visual ER Schema Diagrams & 1-Click Import/Export:** Interactive entity-relationship (ER) schema diagrams rendered in pure `Grex JS v1.0.0` (`divCount === 0`, `innerHTMLWriteCount === 0`, Light/Dark WCAG AA `>= 4.5:1`), plus 1-click **CSV**, **Excel (`.xlsx`)**, **JSON**, and **SQL dump** import/export.
 - **Cross-Environment Schema Diffing & `GROXY-SAFE-001` Safety Gate:** Side-by-side schema diffing between **Local SQLite** and **VPS PostgreSQL/MariaDB**, with every mutating write, DDL change, import, or schema sync gated by a single-use `approval_token`, `X-CSRF-Token`, and automatic **SHA-256 Pre-Mutation Snapshot** with 1-click rollback.
+
+---
+
+## `v1.2.0` — DbGate-Parity 3-Tab Dedicated Workspace Studio & Visual Polish (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`)
+
+**Status:** Planned
+
+Target Scope:
+- **Dedicated 3-Tab Top-Level Workspace Studio Switcher (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`):** Full-viewport top-level studio tabs giving each primary workflow dedicated screen real estate while preserving shared workspace context, active SSH tunnels, and Unified `Groxy AI` state.
+- **DbGate-Parity `Database Studio` Layout & Visual Polish:** Dedicated left connection & pinned schema object tree (tables, views, triggers, indexes, ER diagrams), multi-tab SQL editor + inline spreadsheet data grid split, and dedicated schema-diff / import-export drawers rendered in pure `Grex JS v1.0.0` (`divCount === 0`, `innerHTMLWriteCount === 0`, Light/Dark WCAG AA `>= 4.5:1`).
+- **Dedicated `Browser & Radar` Research Deck & `Code & Grex Studio` Canvas:** Full-height split-pane WebView2 Browser Co-Pilot + Bestseller Radar research, receipt, and GrabLab CMS draft handoff deck alongside a dedicated `Code & Grex Studio` split-preview canvas with 22-rule Scorecard and 🚀 `"Let Groxy Boost This"` remediation diffs.
 
 

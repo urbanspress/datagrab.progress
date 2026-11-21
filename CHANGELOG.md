@@ -4,11 +4,27 @@ All notable releases of **Groxy Desk** (Step 6 of the GRAB Post-1.0 Ecosystem) a
 
 ---
 
-## `v1.1.0` — Stage 3 Complete (Pending Stage 4 Sign-Off)
+## `v1.1.0` — 2026-11-21
 
+### Release Type & Affected Layers
+- **Release Version & SemVer Tier:** `v1.1.0` (`MINOR 1.x.0` — Backwards-Compatible Feature Release)
+- **Affected Layer(s):** `Groxy Desk` (`urbanspress/groxy-desk`)
+- **Neighboring Layer Upgrade Required?** Existing workflows use the frozen baselines. The optional Bestseller Radar and book draft integrations require the service versions listed below.
+
+| Ecosystem Layer | Repository | Required Version Range | Touched in This Release? | Neighbor Upgrade Required? |
+|---|---|---|---|---|
+| **Core Language, Bytecode VM & Grisp Server** | `urbanspress/grab` | `>= v1.1.0 (< v2.0.0)` | `No` | `No` |
+| **Reactive Frontend Runtime & 20-Element Library** | `urbanspress/grex-js` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Flagship Zero-Plugin CMS** | `urbanspress/grablab-cms` | `>= v1.0.1 (< v2.0.0)` for existing workflows; `v1.4.0` or `v1.5.0` with Author Mode capabilities for book drafts | `No` | `For book drafts only, if needed` |
+| **Exclusive `mode: "visual"` Theme & Studio** | `urbanspress/grex-builder` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Autonomous Design, Content & SEO Agent** | `urbanspress/groxy-ai` | `>= v1.0.0 (< v2.0.0)` for existing workflows; `v1.8.0` for Bestseller Radar | `No` | `For Bestseller Radar only, if needed` |
+| **Scaffolder, Orchestrator & Discreet VPS Panel** | `urbanspress/grabman`, `urbanspress/grabtaculous`, `urbanspress/gashboard` | `>= v1.0.0 (< v2.0.0)` (bundle pins `grabman v1.0.0`) | `No` | `No` |
+| **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v1.1.0 (< v2.0.0)` | `Yes` | `No` |
+
+### Added & Verified (`Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off: PASS`)
 - Added the isolated WebView2 Browser Co-Pilot pane, approved research capture and `BRAND-DNA.md` organization prefill, `Groxy AI v1.8.0` Bestseller Radar receipt handoff, and separately approved `GrabLab CMS v1.4.0`/`v1.5.0` draft creation.
 - Added multi-tab SQL workbench, `ADR-025c` inline cell edits, Pure `Grex JS v1.0.0` ER diagrams, CSV/XLSX/JSON/SQL import/export, cross-dialect schema comparison, and pinned SSH remote SQLite inspection (`Gashboard v1.0.0`).
-- Verified full logical recovery and partial-DDL rollback across WAL SQLite, PostgreSQL `18.6`, and least-privilege target-scoped MariaDB `11.8` (`admission_admin` scoped strictly to `<target_db>.*` + `CONNECTION ADMIN`/`PROCESS`, failing closed with HTTP `409 write_fence_unavailable` whenever any account holds global `*.*` write privileges). Lifted the wider write gate for compliant least-privilege PostgreSQL and MariaDB targets after 100% Section 9 acceptance pass. [Release Notes](docs/releases/pdf/Groxy-Desk-v1.1.0-RELEASE-NOTES.md)
+- Verified full logical recovery and partial-DDL rollback across WAL SQLite, PostgreSQL `18.6`, and least-privilege target-scoped MariaDB `11.8` (`admission_admin` scoped strictly to `<target_db>.*` + `CONNECTION ADMIN`/`PROCESS`, failing closed with HTTP `409 write_fence_unavailable` whenever any account holds global `*.*` write privileges). Lifted the wider write gate for compliant least-privilege PostgreSQL and MariaDB targets after 100% Section 9 acceptance pass and Stage 4 cross-layer sign-off. [Release Notes](docs/releases/pdf/Groxy-Desk-v1.1.0-RELEASE-NOTES.md)
 
 ## `v1.0.2` — 2026-11-19
 

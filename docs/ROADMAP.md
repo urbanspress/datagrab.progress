@@ -86,7 +86,7 @@ Target Scope:
 
 ## `v1.2.0` — DbGate-Parity 3-Tab Dedicated Workspace Studio & Visual Polish (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`)
 
-**Status:** Approved target; specification in review ([`specifications/GROXY-DESK-SPEC-120.md`](../specifications/GROXY-DESK-SPEC-120.md))
+**Status:** Approved; implementation in progress (**Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit: PASS** — [`specifications/GROXY-DESK-SPEC-120.md`](../specifications/GROXY-DESK-SPEC-120.md#8-stage-2-pre-implementation-cross-layer-security--contract-audit-pass))
 
 Target Scope:
 - **Sticky Top Workspace Mode Switcher & `Urbanist` Typography:** Clean sticky top header with `Urbanist` geometric typography, authenticated loopback status badge, Light/Dark theme toggle, and 3 dedicated full-viewport workspace tabs (`role="tablist"` with `ArrowLeft`/`ArrowRight`/`Home`/`End` keyboard navigation and URL hash/session persistence) while preserving shared workspace context, active SSH tunnels, and Unified `Groxy AI` state.

@@ -2,7 +2,7 @@
 
 **DbGate-Parity 3-Tab Dedicated Workspace Studio & Visual Polish (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`)**
 
-- **Status:** Stage 3 Implementation & Section 7 Acceptance Gates Complete (Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off Pending; **Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit: PASS**)
+- **Status:** Approved & Frozen — Complete (**Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off: PASS — Released `v1.2.0`**)
 - **Release tier:** Backwards-compatible minor feature (`ADR-027c`)
 - **Base Frozen Release:** `v1.1.0` (`9aa3ff4`, in-sync across `origin` and `stable`)
 
@@ -132,3 +132,13 @@ On 2026-11-21, the project owner approved `GROXY-DESK-SPEC-120.md` as written. C
 5. **50/50 `Browser & Radar`, 3-Pane `Code & Grex Studio`, & Zero-Regression Guarantees (`§§4–6`):**
    - Preserve 100% of `v1.1.0` DOM IDs, ARIA attributes, `GrexPreviewBridge` origin allowlists, `#desk-groxy-sidebar` / `#desk-author-panel` zero-`<select>` invariant (zero model-switching dropdowns), `divCount === 0`, `innerHTMLWriteCount === 0`, zero `eval()` / `new Function()`, zero unsafe URLs, and Light/Dark WCAG AA (`>= 4.5:1`).
    - All 10 sibling `v1.x` repositories (`GRAB`, `grex-js`, `grablab-cms`, `grex-builder`, `groxy-ai`, `grabman`, `grabtaculous`, `gashboard`, `grab-ide-icons`, `plotific-press`) verified clean (`git status --short`) and untouched.
+
+---
+
+## 9. Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off (PASS)
+
+- **Sign-Off Status & Baseline Commit:** `PASS` (`Approved & Frozen — Complete` on 2026-11-21; implementation verified at `ef9357d`).
+- **Sticky 3-Tab Switcher, WAI-ARIA Conformance & WebView2 Fragment Allowlisting (`§§2, 6, 8.1, 8.3`):** Verified `trustedWorkbenchSource` in `cmd/groxy-desk/browser_policy.go` enforces exact loopback origin, `u.Path == "/"`, empty query, `u.User == nil`, and the strict 5-value fragment allowlist (`""`, `"studio=database"`, `"studio=browser"`, `"studio=code"`, `"desk-workspace-stage"`). Verified `<nav role="tablist">` wrapping `ArrowLeft`/`ArrowRight` + `Home`/`End` keyboard navigation, allowlisted `#studio=database|browser|code` URL hash and `sessionStorage` (`groxy_desk_active_studio`) persistence, single `<main id="desk-workspace-stage">` landmark, sequential `h1` -> `h2` -> `h3` -> `h4` -> `h5` heading hierarchy (`GREX-A11Y-004`), and 100% preserved `v1.1.0` DOM IDs across all 3 mounted `role="tabpanel"` containers.
+- **Offline `Urbanist` Typography & CSP/MIME Enforcement (`§§2.1, 8.2`):** Verified locally bundled `Urbanist` (`400`/`500`/`600`/`700`) `.woff2` font files under `public/desk/fonts/` (embedded via `assets.go`), explicit `font/woff2` and `font/woff` MIME mappings in `handleStaticPublic` (`internal/server/server.go`), strict `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; ...` and `X-Content-Type-Options: nosniff` compliance with zero external CDN requests, and `--desk-border` -> `var(--grex-border)` remediation in `public/desk/desk.css`.
+- **Pure `Grex JS v1.0.0`, `ADR-025c`, `GROXY-SAFE-001` & Cross-Layer E2E Parity (`§§3–7, 8.4, 8.5`):** Verified `grab check src/desk.grab views/workbench.grab.html`, canonical `grab format` byte parity, `13/13` Node DOM/WCAG AA tests (`divCount === 0`, `innerHTMLWriteCount === 0`, zero `eval()`, Light & Dark WCAG AA `>= 4.5:1`, zero `<select>` model pickers), `TestNativeWebView2Isolation`, `python tests/integration_e2e.py`, `python tests/radar_live_e2e.py`, and `python tests/network_dump_recovery.py` at `100%` pass.
+- **Release Packaging & Cross-Repo Hygiene:** Verified `dist/SHA256SUMS.txt` byte-for-byte across all 6 packaged assets (`Groxy-Desk-Setup-1.2.0.exe`, `Groxy-Desk-v1.2.0-Guide.pdf`, `groxy-desk-v1.2.0-bundle.zip`, `groxy-desk-windows-amd64.exe`, `groxy-deskd-linux-amd64`, `groxy-deskd-windows-amd64.exe`) and clean `git status --short` across all 10 sibling `v1.x` repositories (`GRAB`, `grex-js`, `grablab-cms`, `grex-builder`, `groxy-ai`, `grabman`, `grabtaculous`, `gashboard`, `grab-ide-icons`, `plotific-press`).

@@ -34,7 +34,7 @@
   - Center: active `.grab`/`.html` code workbench (`#desk-main-stage`) and responsive `Grex` live split-preview canvas.
   - Right: Unified `Groxy AI` Adaptive Reasoning co-pilot (zero model-switching dropdowns), 22-rule audit scorecard (`Let Groxy Boost This`), and Pre-Mutation Snapshots.
 
-### Stage 3 Verification Summary (`SPEC-120` Acceptance Gates)
+### Stage 3 & Stage 4 Verification Summary (`SPEC-120` Acceptance Gates — Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off: PASS)
 
 - `CGO_ENABLED=0` `go build ./...` and `go vet ./...` (Windows amd64 & Linux amd64), `go mod verify`, `govulncheck ./...` (`0` vulnerabilities), and `go test -count=1 ./...` across all tested Go packages passed `100%`.
 - `grab check src/desk.grab views/workbench.grab.html` and canonical `grab format` byte-for-byte parity passed `100%`.

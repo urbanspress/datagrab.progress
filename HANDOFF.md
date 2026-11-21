@@ -1,10 +1,10 @@
 # HANDOFF.md — Groxy Desk
 
 ## Current Status
-- **Verified stable release:** `v1.1.0`, Browser Co-Pilot, Bestseller Radar and DbGate-Parity Visual Database Workbench (`MINOR 1.x.0`). Verified prior `stable/main` (`v1.0.2` at `3c36988`) via `git ls-remote stable refs/heads/main` and promoted `v1.1.0` to both `origin` and `stable` on 2026-11-21.
-- **Current milestone:** **`v1.2.0` — DbGate-Parity 3-Tab Dedicated Workspace Studio & Visual Polish (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`)** (`Stage 3 Implementation & Verification Complete — Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off Pending`; [`specifications/GROXY-DESK-SPEC-120.md`](specifications/GROXY-DESK-SPEC-120.md)).
-- **Branch:** `main` on `origin` (`urbanspress/groxy-desk.progress`) ahead of `stable` (`urbanspress/groxy-desk.stable` remains frozen at `v1.1.0`).
-- **Current Owner:** Stage 4 Independent Auditor (**GPT-6.2 Astra (High)**, **Claude Opus (High)**, or **Orchestrator (Argon)**) for **Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off** of `v1.2.0` before promoting `main` and tag `v1.2.0` to `stable`.
+- **Verified stable release:** `v1.2.0`, DbGate-Parity 3-Tab Dedicated Workspace Studio & Visual Polish (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`, `MINOR 1.x.0`). Verified prior `stable/main` (`v1.1.0` at `9aa3ff4`) via `git ls-remote stable refs/heads/main` and promoted `v1.2.0` to both `origin` and `stable` on 2026-11-21.
+- **Current milestone:** **`v1.2.0` — DbGate-Parity 3-Tab Dedicated Workspace Studio & Visual Polish (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`)** (`Approved & Frozen — Complete — Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off: PASS — Released v1.2.0`; [`specifications/GROXY-DESK-SPEC-120.md`](specifications/GROXY-DESK-SPEC-120.md)).
+- **Branch:** `main` synchronized across `origin` (`urbanspress/groxy-desk.progress`) and `stable` (`urbanspress/groxy-desk.stable`) at `v1.2.0`.
+- **Current Owner:** Project Owner / Stage 1 Planner (**Claude Sonnet (Medium)**, **Hydrogen (Medium)**, or **GPT-6.2 Sol (Medium)**) for the next milestone specification.
 
 ## Completed in `v1.0.1` (`PATCH 1.0.x` — NGINX `1.30.6` Edge Generator Alignment)
 - Updated `renderEdgeHTTPSConfig` in `internal/dns/dns.go` (`edgeProxy == "nginx"`) to emit NGINX `1.30.6` (`listen 443 ssl;`, `listen [::]:443 ssl;`, `http2 on;`) instead of deprecated `listen 443 ssl http2;`, plus the full `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto $scheme;`, and `X-Forwarded-Host $host;` header tuple required by `GRAB v1.1.0` `--trusted-proxy`.
@@ -83,6 +83,11 @@ The frozen Radar and CMS contracts support a Desk-bound receipt followed by a se
   - `GROXY_DESK_TEST_WEBVIEW2=1` `TestNativeWebView2Isolation`, `python tests/integration_e2e.py`, `python tests/radar_live_e2e.py`, `python tests/network_dump_recovery.py`, packaged launcher `--smoke-test`, and clean `git status --short` across all 10 sibling `v1.x` repositories passed `100%`.
   - Packaged `dist/Groxy-Desk-Setup-1.2.0.exe`, `dist/groxy-desk-windows-amd64.exe`, `dist/groxy-deskd-windows-amd64.exe`, `dist/groxy-deskd-linux-amd64`, `dist/Groxy-Desk-v1.2.0-Guide.pdf` (plus `docs/releases/pdf/Groxy-Desk-v1.2.0-Guide.pdf` & `Groxy-Desk-v1.2.0-RELEASE-NOTES.md`), `dist/groxy-desk-v1.2.0-bundle.zip`, and `dist/SHA256SUMS.txt`.
 
+## Milestone `v1.2.0` — Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off (PASS — Released `v1.2.0`)
+
+- **Sign-Off & Freeze:** Verified `ef9357d` baseline, `trustedWorkbenchSource` fragment allowlist in `cmd/groxy-desk/browser_policy.go`, `.woff2`/`.woff` MIME and strict CSP/`nosniff` handling in `internal/server/server.go`, `dist/SHA256SUMS.txt` byte-for-byte parity across all 6 packaged release assets, `grab check src/desk.grab views/workbench.grab.html`, `node --test tests/*.test.js` (`13/13` pass), and clean `git status --short` across all 10 sibling `v1.x` repositories. Recorded `PASS` (`Approved & Frozen — Complete`) in [`specifications/GROXY-DESK-SPEC-120.md`](specifications/GROXY-DESK-SPEC-120.md#9-stage-4-pre-release-cross-layer-security--contract-sign-off-pass), [`docs/ROADMAP.md`](docs/ROADMAP.md), [`CHANGELOG.md`](CHANGELOG.md), [`README.md`](README.md), and [`docs/releases/pdf/Groxy-Desk-v1.2.0-RELEASE-NOTES.md`](docs/releases/pdf/Groxy-Desk-v1.2.0-RELEASE-NOTES.md).
+- **Dual-Remote Promotion & Synchronized Releases:** Promoted `main` and annotated tag `v1.2.0` to both `origin` (`urbanspress/groxy-desk.progress`) and `stable` (`urbanspress/groxy-desk.stable`), and published synchronized `v1.2.0` GitHub Releases with all 6 verified assets + `SHA256SUMS.txt`.
+
 ## Recommended Next Model & Effort Tier
 
-**GPT-6.2 Astra (High)** (or **Claude Opus (High)** / **Orchestrator (Argon)**) for **Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off** of **Milestone `v1.2.0`** ([`specifications/GROXY-DESK-SPEC-120.md`](specifications/GROXY-DESK-SPEC-120.md)) — auditing the `v1.2.0` diff, `browser_policy.go` fragment allowlist, `server.go` `.woff2` MIME/CSP handling, `divCount === 0` / `auditDom()` / Light & Dark WCAG AA conformance, `dist/SHA256SUMS.txt` parity, and clean sibling worktrees prior to promoting `main` and `v1.2.0` to `stable`.
+**GPT-6.2 Sol (Medium)** (or **Claude Sonnet (Medium)** / **Hydrogen (Medium)**) for Stage 1 planning and specification drafting of the next post-`v1.2.0` milestone when queued by the project owner.

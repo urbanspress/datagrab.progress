@@ -21,7 +21,7 @@ All notable releases of **Groxy Desk** (Step 6 of the GRAB Post-1.0 Ecosystem) a
 | **Scaffolder, Orchestrator & Discreet VPS Panel** | `urbanspress/grabman`, `urbanspress/grabtaculous`, `urbanspress/gashboard` | `>= v1.0.0 (< v2.0.0)` (bundle pins `grabman v1.0.0`) | `No` | `No` |
 | **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v1.2.0 (< v2.0.0)` | `Yes` | `No` |
 
-### Added & Verified (`SPEC-120` Stage 3 Acceptance Complete — Stage 4 Sign-Off Pending)
+### Added & Verified (`Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off: PASS`)
 - **Sticky Top 3-Tab Studio Switcher & Offline `Urbanist` Typography (`views/workbench.grab.html`, `public/desk/workbench.js`, `public/desk/desk.css`, `internal/server/server.go`, `cmd/groxy-desk/browser_policy.go`):**
   - Bundled `Urbanist` (`400`/`500`/`600`/`700`) `.woff2` fonts locally under `public/desk/fonts/`, added `font/woff2` + `font/woff` MIME mapping in `handleStaticPublic`, and replaced `--desk-border` with `var(--grex-border)` in `public/desk/desk.css`.
   - Built sticky top `.desk-header` with `nav[role="tablist"]` (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`), wrapping `ArrowLeft`/`ArrowRight` + `Home`/`End` keyboard navigation, allowlisted `#studio=database|browser|code` URL hash + `sessionStorage` (`groxy_desk_active_studio`) persistence, and fragment-allowlisted `trustedWorkbenchSource` validation in `browser_policy.go`.

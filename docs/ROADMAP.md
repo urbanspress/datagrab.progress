@@ -95,4 +95,18 @@ Target Scope:
 - **Tab 3 — `Code & Grex Studio` (Clean 3-Pane Vibe-Coding Studio):** Workspace file explorer & `grabman` tools on the left, active `.grab`/`.html` code workbench & responsive `Grex` visual preview canvas in the center, and Unified `Groxy AI` Adaptive Reasoning co-pilot & 22-rule audit scorecard on the right.
 - **Zero Regression & Pure `Grex JS v1.0.0` Conformance:** 100% preservation of existing `v1.1.0` DOM element IDs, ARIA attributes, and API bindings (`divCount === 0`, `innerHTMLWriteCount === 0`, zero `eval()`, Light & Dark WCAG AA `>= 4.5:1` contrast).
 
+---
+
+## `v1.3.0` — VS Code / DbGate / Coolify High-Density Desktop IDE Shell
+
+**Status:** Approved; implementation in progress (**Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit: PASS**) ([`specifications/GROXY-DESK-SPEC-130.md`](../specifications/GROXY-DESK-SPEC-130.md))
+
+Target Scope:
+- **Locked `100vh` High-Density IDE Shell & Dark Obsidian / Clean Light Palettes (`public/desk/desk.css`, `public/desk/theme.js`):** Zero page scroll (`height: 100vh; max-height: 100vh; overflow: hidden` on `html, body, #desk-root`), Dark Obsidian (`#0f1115` / `#181b20`) and Clean Light (`#f8fafc` / `#ffffff`) token system with WCAG AA `>= 4.5:1` text and `>= 3.0:1` UI contrast, `1px solid var(--grex-border)` hairline pane dividers, and custom `26px–28px` dark/light semantic inputs (zero unstyled white browser inputs).
+- **`32px` Top IDE Menu & Command Bar (`<header id="desk-header" class="desk-ide-header" role="banner">`):** Compact application menu bar (`<nav role="menubar">` with `File`, `Edit`, `View`, `Database`, `Browser`, `Tools`, `Help` and keyboard access keys), centered command search bar (`#desk-command-search`, `Ctrl+K`), active workspace badge, `#desk-host-status-badge` (`#desk-connection-badge`), and `#desk-theme-toggle`.
+- **`48px` Far-Left Vertical Activity Icon Rail (`<nav id="desk-activity-rail" class="desk-activity-rail" role="tablist" aria-label="Activity Rail">`):** Crisp SVG icons (`grab-ide-icons` via Pure Grex JS `Icon`) switching panes cleanly (`#desk-tab-code` Explorer & Code, `#desk-tab-database` Database Studio, `#desk-tab-browser` Browser & Radar, `#desk-tab-grex` Grex Visual Builder, `#desk-tab-fleet` Server & Fleet, plus bottom-anchored `#desk-action-settings` and `#desk-action-shortcuts`) with WAI-ARIA keyboard navigation and `#studio=database|browser|code` hash/session persistence.
+- **Main Locked Stage (`.desk-stage-locked`, `height: calc(100vh - var(--desk-header-h) - var(--desk-statusbar-h))`):** `240px` collapsible left sidebars (`#desk-db-sidebar` with `#desk-db-object-filter`), `28px`-row-height sticky-header zebra-striped spreadsheet grid (`.desk-grid-table`, `font-variant-numeric: tabular-nums`), `280px` right inspector (`#desk-db-inspector`), and Coolify-density Server & Fleet health pills.
+- **`24px` Pinned Bottom IDE Status Bar (`<footer id="desk-status-bar" class="desk-ide-statusbar" role="status">`):** Live `#desk-status-db` connection pill (1-click connect/disconnect), `#desk-status-ssh` pinned `SHA256:...` fingerprint, `#desk-status-safety` (`GROXY-SAFE-001` guard state), `#desk-status-grisp` active worker pool, and `#desk-status-adr025c` exact-wire indicator, preserving 100% of frozen `v1.2.0` DOM element IDs and invariants.
+
+
 

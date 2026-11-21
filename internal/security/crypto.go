@@ -16,6 +16,7 @@ import (
 	"unicode/utf8"
 
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 const masterKeyFileName = "desk-master.key"
@@ -241,26 +242,21 @@ func NewPinnedHostKeyCallback(expectedFingerprint, knownHostsPath string) (ssh.H
 	if err != nil {
 		return nil, err
 	}
-	var khEntries []ssh.PublicKey
+	var known ssh.HostKeyCallback
 	if strings.TrimSpace(knownHostsPath) != "" {
-		parsed, err := ReadKnownHostKeys(knownHostsPath)
+		known, err = knownhosts.New(knownHostsPath)
 		if err != nil {
-			return nil, err
+			return nil, NewError(CodeDeskE405, 403, "invalid pinned known_hosts file", err)
 		}
-		khEntries = parsed
 	}
 	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 		if err := VerifySSHHostKey(expected, key); err != nil {
 			return err
 		}
-		if len(khEntries) > 0 {
-			actual := SSHFingerprintSHA256(key)
-			for _, allowed := range khEntries {
-				if ConstantTimeEqual(actual, SSHFingerprintSHA256(allowed)) {
-					return nil
-				}
+		if known != nil {
+			if err := known(hostname, remote, key); err != nil {
+				return NewError(CodeDeskE405, 403, "SSH host and port do not match the pinned known_hosts entry", err)
 			}
-			return NewError(CodeDeskE405, 403, fmt.Sprintf("SSH host %s key %s not present in pinned known_hosts (DESK-E405)", hostname, actual), nil)
 		}
 		return nil
 	}, nil

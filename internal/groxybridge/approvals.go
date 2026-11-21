@@ -43,19 +43,21 @@ const (
 	defaultApprovalTTL = 15 * time.Minute
 )
 
-var validSnapshotIDPattern = regexp.MustCompile(`^snap(?:-[a-f0-9]{16,64}|_(?:deploy|db|dns|author)_[a-f0-9]{16,64})$`)
+var validSnapshotIDPattern = regexp.MustCompile(`^snap(?:-[a-f0-9]{16,64}|_(?:deploy|db|db_pgfull|db_mdfull|dns|author)_[a-f0-9]{16,64})$`)
 
 // SnapshotRecord records an immutable pre-mutation SHA-256 backup of a workspace target.
 type SnapshotRecord struct {
-	SnapshotID   string `json:"snapshot_id"`
-	TargetPath   string `json:"target_path"`
-	Existed      bool   `json:"existed"`
-	Virtual      bool   `json:"virtual,omitempty"`
-	BeforeSHA256 string `json:"before_sha256"`
-	ByteLength   string `json:"byte_length"`
-	CreatedAt    string `json:"created_at"`
-	Restored     bool   `json:"restored"`
-	RestoredAt   string `json:"restored_at,omitempty"`
+	SnapshotID     string `json:"snapshot_id"`
+	TargetPath     string `json:"target_path"`
+	Existed        bool   `json:"existed"`
+	Virtual        bool   `json:"virtual,omitempty"`
+	BeforeSHA256   string `json:"before_sha256"`
+	ByteLength     string `json:"byte_length"`
+	CreatedAt      string `json:"created_at"`
+	Restored       bool   `json:"restored"`
+	RestoredAt     string `json:"restored_at,omitempty"`
+	RestoredSHA256 string `json:"restored_sha256,omitempty"`
+	ForcedRestore  bool   `json:"forced_restore,omitempty"`
 }
 
 // ApprovalRecord tracks a single-use, target-bound GROXY-SAFE-001 approval token.
@@ -224,12 +226,16 @@ func (m *ApprovalManager) persistSnapshotLocked(rec SnapshotRecord, content []by
 	if err != nil {
 		return security.NewError(security.CodeDeskE101, 500, "failed to serialize snapshot metadata", err)
 	}
+	write := os.WriteFile
+	if strings.HasPrefix(rec.SnapshotID, "snap_db_") {
+		write = writeFileAtomic
+	}
 	if rec.Existed {
-		if err := os.WriteFile(dataPath, content, 0o600); err != nil {
+		if err := write(dataPath, content, 0o600); err != nil {
 			return security.NewError(security.CodeDeskE101, 500, "failed to write snapshot backup bytes", err)
 		}
 	}
-	if err := os.WriteFile(metaPath, metaBytes, 0o600); err != nil {
+	if err := write(metaPath, metaBytes, 0o600); err != nil {
 		return security.NewError(security.CodeDeskE101, 500, "failed to write snapshot metadata", err)
 	}
 	return nil
@@ -409,17 +415,17 @@ func (m *ApprovalManager) ConsumeToken(token, expectedAction, expectedTarget str
 	if matched == nil {
 		return ApprovalRecord{}, security.NewError(security.CodeDeskE403, 403, "invalid or unrecognized approval_token", nil)
 	}
-	if matched.Used {
-		return ApprovalRecord{}, security.NewError(security.CodeDeskE409, 409, "approval_token already consumed (replay rejected)", nil)
-	}
-	if time.Now().UTC().After(matched.ExpiresAt) {
-		return ApprovalRecord{}, security.NewError(security.CodeDeskE403, 403, "approval_token has expired", nil)
-	}
 	if matched.Action != expectedAction {
 		return ApprovalRecord{}, security.NewError(security.CodeDeskE403, 403, "approval_token action mismatch", nil)
 	}
 	if matched.TargetPath != normExpected {
 		return ApprovalRecord{}, security.NewError(security.CodeDeskE403, 403, "approval_token target mismatch", nil)
+	}
+	if matched.Used {
+		return ApprovalRecord{}, security.NewError(security.CodeDeskE409, 409, "approval_token already consumed (replay rejected)", nil)
+	}
+	if time.Now().UTC().After(matched.ExpiresAt) {
+		return ApprovalRecord{}, security.NewError(security.CodeDeskE403, 403, "approval_token has expired", nil)
 	}
 
 	matched.Used = true
@@ -528,6 +534,9 @@ func (m *ApprovalManager) ListSnapshots() []SnapshotRecord {
 // RestoreSnapshot restores the workspace file back to its pre-mutation SHA-256 snapshot.
 func (m *ApprovalManager) RestoreSnapshot(workspaceRoot, snapshotID string) (RestoreResult, error) {
 	id := strings.TrimSpace(snapshotID)
+	if strings.HasPrefix(id, "snap_db_") {
+		return RestoreResult{}, security.NewError(security.CodeDeskE403, 403, "database snapshots require a separate approved database restore", nil)
+	}
 	if !validSnapshotIDPattern.MatchString(id) {
 		return RestoreResult{}, security.NewError(security.CodeDeskE101, 400, "invalid snapshot_id format", nil)
 	}
@@ -628,6 +637,69 @@ func (m *ApprovalManager) RestoreSnapshot(workspaceRoot, snapshotID string) (Res
 	}, nil
 }
 
+func (m *ApprovalManager) dbSnapshot(id, target string) (SnapshotRecord, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	record, ok := m.snapshots[id]
+	if !ok || !strings.HasPrefix(id, "snap_db_") || !record.Virtual || record.TargetPath != target {
+		return SnapshotRecord{}, security.NewError(security.CodeDeskE403, 403, "database snapshot does not match the approved target", nil)
+	}
+	return *record, nil
+}
+
+func (m *ApprovalManager) ReadDBSnapshot(id, target string) ([]byte, error) {
+	record, err := m.dbSnapshot(id, target)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := os.ReadFile(filepath.Join(m.snapshotDir, id+".bak"))
+	if err != nil || security.SHA256Hex(raw) != record.BeforeSHA256 {
+		return nil, security.NewError(security.CodeDeskE406, 422, "database snapshot failed its SHA-256 integrity check", err)
+	}
+	return raw, nil
+}
+
+func (m *ApprovalManager) WriteDBOutcome(id, target, baseline string) error {
+	if _, err := m.dbSnapshot(id, target); err != nil {
+		return err
+	}
+	return writeFileAtomic(filepath.Join(m.snapshotDir, id+".after"), []byte(baseline), 0o600)
+}
+
+func (m *ApprovalManager) ReadDBOutcome(id, target string) (string, error) {
+	if _, err := m.dbSnapshot(id, target); err != nil {
+		return "", err
+	}
+	raw, err := os.ReadFile(filepath.Join(m.snapshotDir, id+".after"))
+	if err != nil || len(raw) != 64 {
+		return "", security.NewError(security.CodeDeskE409, 409, "no verified database operation baseline is available", err)
+	}
+	return string(raw), nil
+}
+
+// RecordDBRestore records the verified state after the database commits a restore.
+func (m *ApprovalManager) RecordDBRestore(id, target, digest string, force bool) error {
+	record, err := m.dbSnapshot(id, target)
+	if err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	record.Restored = true
+	record.RestoredAt = time.Now().UTC().Format(time.RFC3339Nano)
+	record.RestoredSHA256 = digest
+	record.ForcedRestore = force
+	data, err := json.MarshalIndent(record, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := writeFileAtomic(filepath.Join(m.snapshotDir, id+".json"), data, 0o600); err != nil {
+		return err
+	}
+	m.snapshots[id] = &record
+	return nil
+}
+
 func normalizeTarget(target string) string {
 	cleaned := strings.TrimSpace(strings.ReplaceAll(target, "\\", "/"))
 	cleaned = strings.TrimPrefix(cleaned, "./")
@@ -656,6 +728,10 @@ func writeFileAtomic(dest string, content []byte, perm os.FileMode) error {
 		return err
 	}
 	if err := tmp.Chmod(perm); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Sync(); err != nil {
 		_ = tmp.Close()
 		return err
 	}

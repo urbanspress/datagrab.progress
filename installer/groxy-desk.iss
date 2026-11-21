@@ -1,10 +1,10 @@
 ; ==============================================================================
-; Groxy Desk v1.0.2 — Branded Native Windows Inno Setup 6 Installer Script
-; Format Invariant (AGENTS.md): Inno Setup .exe only (Groxy-Desk-Setup-1.0.2.exe), NEVER .msi
+; Groxy Desk v1.1.0 — Branded Native Windows Inno Setup 6 Installer Script
+; Format Invariant (AGENTS.md): Inno Setup .exe only (Groxy-Desk-Setup-1.1.0.exe), NEVER .msi
 ; ==============================================================================
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.2"
+  #define MyAppVersion "1.1.0"
 #endif
 
 #ifndef GrabBinSource
@@ -13,6 +13,10 @@
 
 #ifndef GrabmanBinSource
   #define GrabmanBinSource "C:\Development\grabman\dist\grabman-windows-amd64.exe"
+#endif
+
+#ifndef DeskBuildDir
+  #define DeskBuildDir "..\dist"
 #endif
 
 #define MyAppName "Groxy Desk"
@@ -35,7 +39,7 @@ DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-OutputDir=..\dist
+OutputDir={#DeskBuildDir}
 OutputBaseFilename=Groxy-Desk-Setup-{#MyAppVersion}
 Compression=lzma2/fast
 SolidCompression=yes
@@ -53,8 +57,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; Native Windows WebView2 Desktop Shell & Loopback Host Daemon (127.0.0.1:9490, CGO_ENABLED=0)
-Source: "..\dist\groxy-desk-windows-amd64.exe"; DestDir: "{app}"; DestName: "{#MyAppExeName}"; Flags: ignoreversion
-Source: "..\dist\groxy-deskd-windows-amd64.exe"; DestDir: "{app}"; DestName: "{#MyDaemonExeName}"; Flags: ignoreversion
+Source: "{#DeskBuildDir}\groxy-desk-windows-amd64.exe"; DestDir: "{app}"; DestName: "{#MyAppExeName}"; Flags: ignoreversion
+Source: "{#DeskBuildDir}\groxy-deskd-windows-amd64.exe"; DestDir: "{app}"; DestName: "{#MyDaemonExeName}"; Flags: ignoreversion
 
 ; Bundled Side-by-Side Frozen Upstream Ecosystem CLIs (GRAB v1.1.0 & grabman v1.0.0)
 Source: "{#GrabBinSource}"; DestDir: "{app}\bin"; DestName: "grab.exe"; Flags: ignoreversion

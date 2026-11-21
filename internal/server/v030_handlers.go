@@ -8,6 +8,7 @@ import (
 	"groxy-desk/internal/dbstudio"
 	"groxy-desk/internal/dns"
 	"groxy-desk/internal/fleet"
+	"groxy-desk/internal/security"
 )
 
 func (s *Server) registerV030Routes(mux *http.ServeMux) {
@@ -28,8 +29,14 @@ func (s *Server) registerV030Routes(mux *http.ServeMux) {
 	mux.Handle("POST /api/db/rows", s.authCSRF(http.HandlerFunc(s.handleDBRows)))
 	mux.Handle("POST /api/db/query", s.authCSRF(http.HandlerFunc(s.handleDBQuery)))
 	mux.Handle("POST /api/db/mutate/plan", s.authCSRF(http.HandlerFunc(s.handleDBMutatePlan)))
-	mux.Handle("POST /api/db/mutate/apply", s.authCSRF(http.HandlerFunc(s.handleDBMutateApply)))
-	mux.Handle("POST /api/db/snapshots/restore", s.authCSRF(http.HandlerFunc(s.handleDBSnapshotRestore)))
+	mux.Handle("POST /api/db/mutate/apply", contextJSONAction(s, http.StatusCreated, s.dbStudio.ApplyMutation))
+	mux.Handle("POST /api/db/schema/compare", contextJSONAction(s, http.StatusOK, s.dbStudio.CompareSchema))
+	mux.Handle("POST /api/db/export/page", contextJSONAction(s, http.StatusCreated, s.dbStudio.ExportPage))
+	mux.Handle("POST /api/db/export/diagram", contextJSONAction(s, http.StatusCreated, s.dbStudio.ExportDiagram))
+	mux.Handle("POST /api/db/import/plan", contextJSONAction(s, http.StatusOK, s.dbStudio.PlanImport))
+	mux.Handle("POST /api/db/import/apply", contextJSONAction(s, http.StatusCreated, s.dbStudio.ApplyImport))
+	mux.Handle("POST /api/db/snapshots/restore/plan", contextJSONAction(s, http.StatusOK, s.dbStudio.PlanRestore))
+	mux.Handle("POST /api/db/snapshots/restore", contextJSONAction(s, http.StatusCreated, s.dbStudio.RestoreSnapshot))
 
 	// Encrypted Namecheap DNS Vault & Domain -> DNS -> Auto-HTTPS endpoints
 	mux.Handle("GET /api/dns/vault", s.authCSRF(http.HandlerFunc(s.handleDNSVaultStatus)))
@@ -112,6 +119,9 @@ func (s *Server) handleDBTunnels(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleDBTunnelOpen(w http.ResponseWriter, r *http.Request) {
 	handleJSONAction(s, w, r, func(req dbstudio.OpenTunnelRequest) (map[string]any, error) {
+		if strings.EqualFold(strings.TrimSpace(req.Transport), "loopback_test") {
+			return nil, security.NewError(security.CodeDeskE405, 403, "database forwarding requires an authenticated pinned SSH connection", nil)
+		}
 		view, err := s.dbStudio.Tunnels().OpenTunnel(req)
 		if err != nil {
 			return nil, err
@@ -176,22 +186,6 @@ func (s *Server) handleDBQuery(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleDBMutatePlan(w http.ResponseWriter, r *http.Request) {
 	handleJSONAction(s, w, r, func(req dbstudio.MutatePlanRequest) (map[string]any, error) {
 		return s.dbStudio.PlanMutation(r.Context(), req)
-	})
-}
-
-func (s *Server) handleDBMutateApply(w http.ResponseWriter, r *http.Request) {
-	handleJSONAction(s, w, r, func(req dbstudio.MutateApplyRequest) (map[string]any, error) {
-		return s.dbStudio.ApplyMutation(r.Context(), req)
-	})
-}
-
-func (s *Server) handleDBSnapshotRestore(w http.ResponseWriter, r *http.Request) {
-	type restoreReq struct {
-		Target     dbstudio.TargetSpec `json:"target"`
-		SnapshotID string              `json:"snapshot_id"`
-	}
-	handleJSONAction(s, w, r, func(req restoreReq) (map[string]any, error) {
-		return s.dbStudio.RestoreSnapshot(r.Context(), req.Target, req.SnapshotID)
 	})
 }
 

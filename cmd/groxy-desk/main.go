@@ -94,5 +94,5 @@ func runDesktop(addr, workspaceDir, stateDir, grabBin, grabmanBin, ollamaURL str
 		return nil
 	}
 
-	return launchWebViewWindow(sess, cleanState, debug)
+	return launchWebViewWindow(sess, cleanState, workspaceDir, debug)
 }

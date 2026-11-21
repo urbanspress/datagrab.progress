@@ -360,3 +360,49 @@ a:focus-visible {
   background-color: var(--grex-bg);
   color: var(--grex-text);
 }
+
+.desk-db-grid {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.desk-db-grid table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.desk-db-grid th,
+.desk-db-grid td {
+  border-bottom: 1px solid var(--desk-border);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.desk-db-grid caption {
+  font-weight: 600;
+  padding: 0.5rem 0;
+  text-align: left;
+}
+
+.desk-db-diagram {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0.75rem;
+}
+
+.desk-db-entity {
+  border: 1px solid var(--desk-border);
+  padding: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.desk-db-entity:focus-within {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.desk-db-relationships button {
+  white-space: normal;
+  text-align: left;
+}

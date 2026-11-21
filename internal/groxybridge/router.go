@@ -38,15 +38,15 @@ type RuleFinding struct {
 
 // AuditReport summarizes the 22-rule Groxy AI deterministic audit across SEO, Accessibility, DOM, and Links.
 type AuditReport struct {
-	TargetPath    string        `json:"target_path"`
-	Score         string        `json:"score"`
-	Grade         string        `json:"grade"`
-	PublishSafe   bool          `json:"publish_safe"`
-	PassedCount   string        `json:"passed_count"`
-	TotalRules    string        `json:"total_rules"`
-	DivCount      string        `json:"div_count"`
-	Findings      []RuleFinding `json:"findings"`
-	Summary       string        `json:"summary"`
+	TargetPath  string        `json:"target_path"`
+	Score       string        `json:"score"`
+	Grade       string        `json:"grade"`
+	PublishSafe bool          `json:"publish_safe"`
+	PassedCount string        `json:"passed_count"`
+	TotalRules  string        `json:"total_rules"`
+	DivCount    string        `json:"div_count"`
+	Findings    []RuleFinding `json:"findings"`
+	Summary     string        `json:"summary"`
 }
 
 // PlanStep describes one step in an Adaptive Reasoning Deep Plan.
@@ -74,24 +74,24 @@ type AskRequest struct {
 
 // AskResponse is returned by POST /api/groxy/ask with Unified Groxy AI identity.
 type AskResponse struct {
-	Agent                 string                 `json:"agent"`
-	AgentName             string                 `json:"agent_name"`
-	ModelSwitchingAllowed bool                   `json:"model_switching_allowed"`
-	ReasoningMode         string                 `json:"reasoning_mode"`
-	RoutingReason         string                 `json:"routing_reason"`
-	ActionExecuted        string                 `json:"action_executed"`
-	Summary               string                 `json:"summary"`
-	ApprovalRequired      bool                   `json:"approval_required"`
-	ApprovalToken         string                 `json:"approval_token,omitempty"`
-	ApprovalExpiresAt     string                 `json:"approval_expires_at,omitempty"`
-	TargetPath            string                 `json:"target_path,omitempty"`
-	ProposedContent       string                 `json:"proposed_content,omitempty"`
-	ProposedSHA256        string                 `json:"proposed_sha256,omitempty"`
-	Snapshot              *SnapshotRecord        `json:"snapshot,omitempty"`
-	Plan                  []PlanStep             `json:"plan,omitempty"`
-	Audit                 *AuditReport           `json:"audit,omitempty"`
-	WorkspaceCheck        *workspace.CheckResult `json:"workspace_check,omitempty"`
-	GrabmanDoctor         *workspace.GrabmanResult `json:"grabman_doctor,omitempty"`
+	Agent                 string                      `json:"agent"`
+	AgentName             string                      `json:"agent_name"`
+	ModelSwitchingAllowed bool                        `json:"model_switching_allowed"`
+	ReasoningMode         string                      `json:"reasoning_mode"`
+	RoutingReason         string                      `json:"routing_reason"`
+	ActionExecuted        string                      `json:"action_executed"`
+	Summary               string                      `json:"summary"`
+	ApprovalRequired      bool                        `json:"approval_required"`
+	ApprovalToken         string                      `json:"approval_token,omitempty"`
+	ApprovalExpiresAt     string                      `json:"approval_expires_at,omitempty"`
+	TargetPath            string                      `json:"target_path,omitempty"`
+	ProposedContent       string                      `json:"proposed_content,omitempty"`
+	ProposedSHA256        string                      `json:"proposed_sha256,omitempty"`
+	Snapshot              *SnapshotRecord             `json:"snapshot,omitempty"`
+	Plan                  []PlanStep                  `json:"plan,omitempty"`
+	Audit                 *AuditReport                `json:"audit,omitempty"`
+	WorkspaceCheck        *workspace.CheckResult      `json:"workspace_check,omitempty"`
+	GrabmanDoctor         *workspace.GrabmanResult    `json:"grabman_doctor,omitempty"`
 	Workers               []supervisor.WorkerSnapshot `json:"workers,omitempty"`
 }
 
@@ -473,32 +473,32 @@ func htmlEscapeText(s string) string {
 }
 
 var (
-	titleRe          = regexp.MustCompile(`(?is)<title\b[^>]*>(.*?)</title>`)
-	metaDescRe       = regexp.MustCompile(`(?is)<meta\b[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>`)
-	metaViewportRe   = regexp.MustCompile(`(?is)<meta\b[^>]*name=["']viewport["'][^>]*>`)
-	h1Re             = regexp.MustCompile(`(?is)<h1\b[^>]*>.*?</h1>`)
-	headingLevelRe   = regexp.MustCompile(`(?is)<h([1-6])\b`)
-	htmlLangRe       = regexp.MustCompile(`(?is)<html\b[^>]*\blang=["'][^"']+["'][^>]*>`)
-	canonicalRe      = regexp.MustCompile(`(?is)<link\b[^>]*rel=["']canonical["'][^>]*>`)
-	ogTitleRe        = regexp.MustCompile(`(?is)<meta\b[^>]*property=["']og:title["'][^>]*>`)
-	imgTagRe         = regexp.MustCompile(`(?is)<img\b([^>]*)>`)
-	altAttrRe        = regexp.MustCompile(`(?is)\balt=["']([^"']+)["']`)
-	formFieldRe      = regexp.MustCompile(`(?is)<(input|select|textarea)\b([^>]*)>`)
-	labelOrAriaRe    = regexp.MustCompile(`(?is)\baria-label=["'][^"']+["']`)
-	labelTagRe       = regexp.MustCompile(`(?is)<label\b[^>]*>`)
-	interactiveRe    = regexp.MustCompile(`(?is)<(button|a)\b([^>]*)>(.*?)</(button|a)>`)
-	tabindexPosRe    = regexp.MustCompile(`(?is)\btabindex=["']?([1-9][0-9]*)["']?`)
-	divOpenRe        = regexp.MustCompile(`(?is)<div\b([^>]*)>`)
-	divCloseRe       = regexp.MustCompile(`(?is)</div\s*>`)
-	inlineScriptRe   = regexp.MustCompile(`(?is)<script\b([^>]*)>`)
-	evalOrFuncRe     = regexp.MustCompile(`(?i)\b(eval|new\s+Function)\s*\(`)
-	innerHTMLRe      = regexp.MustCompile(`(?i)\.(innerHTML|outerHTML)\s*=|insertAdjacentHTML\s*\(`)
-	inlineEventRe    = regexp.MustCompile(`(?is)\s+on[a-z]{2,20}\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
-	jsHrefRe         = regexp.MustCompile(`(?is)(href|src)\s*=\s*["']\s*(javascript|vbscript|data:text/html):[^"']*["']`)
-	blankLinkRe      = regexp.MustCompile(`(?is)<a\b([^>]*target=["']_blank["'][^>]*)>`)
-	emptyHrefRe      = regexp.MustCompile(`(?is)<a\b[^>]*\bhref=["']\s*(?:#|)\s*["'][^>]*>`)
-	urlAttrRe        = regexp.MustCompile(`(?is)\b(?:href|src)=["']([^"']+)["']`)
-	tagNameRe        = regexp.MustCompile(`(?is)<([a-z][a-z0-9-]*)\b`)
+	titleRe        = regexp.MustCompile(`(?is)<title\b[^>]*>(.*?)</title>`)
+	metaDescRe     = regexp.MustCompile(`(?is)<meta\b[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>`)
+	metaViewportRe = regexp.MustCompile(`(?is)<meta\b[^>]*name=["']viewport["'][^>]*>`)
+	h1Re           = regexp.MustCompile(`(?is)<h1\b[^>]*>.*?</h1>`)
+	headingLevelRe = regexp.MustCompile(`(?is)<h([1-6])\b`)
+	htmlLangRe     = regexp.MustCompile(`(?is)<html\b[^>]*\blang=["'][^"']+["'][^>]*>`)
+	canonicalRe    = regexp.MustCompile(`(?is)<link\b[^>]*rel=["']canonical["'][^>]*>`)
+	ogTitleRe      = regexp.MustCompile(`(?is)<meta\b[^>]*property=["']og:title["'][^>]*>`)
+	imgTagRe       = regexp.MustCompile(`(?is)<img\b([^>]*)>`)
+	altAttrRe      = regexp.MustCompile(`(?is)\balt=["']([^"']+)["']`)
+	formFieldRe    = regexp.MustCompile(`(?is)<(input|select|textarea)\b([^>]*)>`)
+	labelOrAriaRe  = regexp.MustCompile(`(?is)\baria-label=["'][^"']+["']`)
+	labelTagRe     = regexp.MustCompile(`(?is)<label\b[^>]*>`)
+	interactiveRe  = regexp.MustCompile(`(?is)<(button|a)\b([^>]*)>(.*?)</(button|a)>`)
+	tabindexPosRe  = regexp.MustCompile(`(?is)\btabindex=["']?([1-9][0-9]*)["']?`)
+	divOpenRe      = regexp.MustCompile(`(?is)<div\b([^>]*)>`)
+	divCloseRe     = regexp.MustCompile(`(?is)</div\s*>`)
+	inlineScriptRe = regexp.MustCompile(`(?is)<script\b([^>]*)>`)
+	evalOrFuncRe   = regexp.MustCompile(`(?i)\b(eval|new\s+Function)\s*\(`)
+	innerHTMLRe    = regexp.MustCompile(`(?i)\.(innerHTML|outerHTML)\s*=|insertAdjacentHTML\s*\(`)
+	inlineEventRe  = regexp.MustCompile(`(?is)\s+on[a-z]{2,20}\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
+	jsHrefRe       = regexp.MustCompile(`(?is)(href|src)\s*=\s*["']\s*(javascript|vbscript|data:text/html):[^"']*["']`)
+	blankLinkRe    = regexp.MustCompile(`(?is)<a\b([^>]*target=["']_blank["'][^>]*)>`)
+	emptyHrefRe    = regexp.MustCompile(`(?is)<a\b[^>]*\bhref=["']\s*(?:#|)\s*["'][^>]*>`)
+	urlAttrRe      = regexp.MustCompile(`(?is)\b(?:href|src)=["']([^"']+)["']`)
+	tagNameRe      = regexp.MustCompile(`(?is)<([a-z][a-z0-9-]*)\b`)
 )
 
 var allowedGrexAuditTags = map[string]bool{

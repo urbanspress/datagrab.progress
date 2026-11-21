@@ -7,6 +7,7 @@ Usage: python scripts/package_release.py --version 1.0.0
 import argparse
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -67,19 +68,32 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest().lower()
 
 
+def verify_frozen_cli(path: Path, version: str):
+    output = subprocess.check_output([str(path), "--version"], text=True, timeout=15)
+    if not re.search(rf"(?<![\w.])v?{re.escape(version)}(?![\w.+-])", output):
+        raise RuntimeError(f"Expected {path} to report frozen version {version}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Package Groxy Desk release artifacts into dist/")
     parser.add_argument("--version", default="1.0.1", help="SemVer version string without leading v")
+    parser.add_argument("--output-dir", type=Path, default=DIST_DIR)
+    parser.add_argument("--grab-bin", type=Path, default=GRAB_BIN_SRC)
+    parser.add_argument("--grabman-bin", type=Path, default=GRABMAN_BIN_SRC)
     args = parser.parse_args()
     version = args.version.lstrip("v")
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        parser.error("--version must be MAJOR.MINOR.PATCH")
+    dist_dir = args.output_dir.resolve()
+    grab_bin = args.grab_bin.resolve(strict=True)
+    grabman_bin = args.grabman_bin.resolve(strict=True)
+    verify_frozen_cli(grab_bin, "1.1.0")
+    verify_frozen_cli(grabman_bin, "1.0.0")
+    dist_dir.mkdir(parents=True, exist_ok=True)
 
-    if DIST_DIR.exists():
-        shutil.rmtree(DIST_DIR)
-    DIST_DIR.mkdir(parents=True, exist_ok=True)
-
-    desk_win = DIST_DIR / "groxy-desk-windows-amd64.exe"
-    deskd_win = DIST_DIR / "groxy-deskd-windows-amd64.exe"
-    deskd_linux = DIST_DIR / "groxy-deskd-linux-amd64"
+    desk_win = dist_dir / "groxy-desk-windows-amd64.exe"
+    deskd_win = dist_dir / "groxy-deskd-windows-amd64.exe"
+    deskd_linux = dist_dir / "groxy-deskd-linux-amd64"
 
     build_binary("windows", "amd64", "./cmd/groxy-desk", desk_win)
     build_binary("windows", "amd64", "./cmd/groxy-deskd", deskd_win)
@@ -91,23 +105,19 @@ def main():
         check=True,
     )
     pdf_src = ROOT / "docs" / "releases" / "pdf" / f"Groxy-Desk-v{version}-Guide.pdf"
-    pdf_dist = DIST_DIR / f"Groxy-Desk-v{version}-Guide.pdf"
+    pdf_dist = dist_dir / f"Groxy-Desk-v{version}-Guide.pdf"
     shutil.copy2(pdf_src, pdf_dist)
 
-    if not GRAB_BIN_SRC.is_file():
-        raise FileNotFoundError(f"Missing frozen GRAB v1.1.0 binary: {GRAB_BIN_SRC}")
-    if not GRABMAN_BIN_SRC.is_file():
-        raise FileNotFoundError(f"Missing frozen grabman v1.0.0 binary: {GRABMAN_BIN_SRC}")
-
     iscc = find_iscc()
-    setup_exe = DIST_DIR / f"Groxy-Desk-Setup-{version}.exe"
+    setup_exe = dist_dir / f"Groxy-Desk-Setup-{version}.exe"
     print(f"Compiling {setup_exe.name} via Inno Setup 6 ({iscc})...")
     subprocess.run(
         [
             str(iscc),
             f"/DMyAppVersion={version}",
-            f"/DGrabBinSource={GRAB_BIN_SRC}",
-            f"/DGrabmanBinSource={GRABMAN_BIN_SRC}",
+            f"/DGrabBinSource={grab_bin}",
+            f"/DGrabmanBinSource={grabman_bin}",
+            f"/DDeskBuildDir={dist_dir}",
             str(ISS_SCRIPT),
         ],
         cwd=ISS_SCRIPT.parent,
@@ -116,7 +126,7 @@ def main():
     if not setup_exe.is_file() or setup_exe.stat().st_size == 0:
         raise RuntimeError(f"Expected Inno Setup output {setup_exe} was not created.")
 
-    bundle_zip = DIST_DIR / f"groxy-desk-v{version}-bundle.zip"
+    bundle_zip = dist_dir / f"groxy-desk-v{version}-bundle.zip"
     include_rel = [
         "README.md",
         "CHANGELOG.md",
@@ -125,6 +135,8 @@ def main():
         "HANDOFF.md",
         "specifications/GROXY-DESK-SPEC-100.md",
         "specifications/GROXY-DESK-SPEC-101.md",
+        f"specifications/GROXY-DESK-SPEC-{version.replace('.', '')}.md",
+        f"docs/releases/pdf/Groxy-Desk-v{version}-RELEASE-NOTES.md",
         "src/desk.grab",
         "views/workbench.grab.html",
         "installer/groxy-desk.iss",
@@ -134,10 +146,10 @@ def main():
         zf.write(desk_win, desk_win.name)
         zf.write(deskd_win, deskd_win.name)
         zf.write(deskd_linux, deskd_linux.name)
-        zf.write(GRAB_BIN_SRC, "bin/grab.exe")
-        zf.write(GRABMAN_BIN_SRC, "bin/grabman.exe")
+        zf.write(grab_bin, "bin/grab.exe")
+        zf.write(grabman_bin, "bin/grabman.exe")
         zf.write(pdf_dist, pdf_dist.name)
-        for rel in include_rel:
+        for rel in dict.fromkeys(include_rel):
             p = ROOT / rel
             if p.exists():
                 zf.write(p, rel)
@@ -151,10 +163,10 @@ def main():
         key=lambda p: p.name,
     )
     sums_lines = [f"{sha256_file(p)}  {p.name}" for p in artifact_paths]
-    sums_file = DIST_DIR / "SHA256SUMS.txt"
+    sums_file = dist_dir / "SHA256SUMS.txt"
     sums_file.write_text("\n".join(sums_lines) + "\n", encoding="utf-8")
 
-    print("\nPackaged release artifacts in dist/:")
+    print(f"\nPackaged release artifacts in {dist_dir}:")
     for p in artifact_paths + [sums_file]:
         print(f"  - {p.name} ({p.stat().st_size} bytes)")
 

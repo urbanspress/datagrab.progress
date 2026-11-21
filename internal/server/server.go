@@ -23,6 +23,7 @@ import (
 	"groxy-desk/internal/fleet"
 	"groxy-desk/internal/groxybridge"
 	"groxy-desk/internal/mcpbridge"
+	"groxy-desk/internal/radar"
 	"groxy-desk/internal/security"
 	"groxy-desk/internal/supervisor"
 	"groxy-desk/internal/workspace"
@@ -73,6 +74,7 @@ type Server struct {
 	mcp           *mcpbridge.Bridge
 	fleetMgr      *fleet.Manager
 	dbStudio      *dbstudio.Manager
+	radar         *radar.Manager
 	dnsMgr        *dns.Manager
 	authorMgr     *author.Manager
 	viewsFS       fs.FS
@@ -191,6 +193,7 @@ func New(cfg Config) (*Server, error) {
 		mcp:           mcpBridge,
 		fleetMgr:      fleetMgr,
 		dbStudio:      dbStudio,
+		radar:         radar.NewManager(apprMgr, absState),
 		dnsMgr:        dnsMgr,
 		authorMgr:     authorMgr,
 		viewsFS:       cfg.ViewsFS,
@@ -317,6 +320,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 
 	// v0.3.0 Step 5 Fleet, Pinned SSH DB Tunnels + Explorer, Namecheap DNS/HTTPS & Author Mode endpoints.
 	s.registerV030Routes(mux)
+	s.registerRadarRoutes(mux)
 }
 
 func (s *Server) securityHeadersMiddleware(next http.Handler) http.Handler {
@@ -362,7 +366,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, map[string]any{
 		"status":       "ok",
 		"service":      "groxy-desk",
-		"version":      "1.0.1",
+		"version":      "1.1.0",
 		"bind":         s.Addr(),
 		"worker_count": strconv.Itoa(len(workers)),
 	})

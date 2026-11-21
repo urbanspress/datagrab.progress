@@ -55,6 +55,8 @@ const ALLOWED_SEMANTIC_TAGS = new Set([
   "li",
   "tbody",
   "dialog",
+  "details",
+  "summary",
 ]);
 
 function sha256File(filePath) {

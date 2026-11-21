@@ -3,8 +3,6 @@ package dbstudio
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"math"
 	"net/url"
@@ -17,8 +15,9 @@ import (
 	"groxy-desk/internal/groxybridge"
 	"groxy-desk/internal/security"
 
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/go-sql-driver/mysql"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	_ "modernc.org/sqlite"
 )
 
@@ -28,21 +27,24 @@ const (
 )
 
 var (
-	reSafeIdent   = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]{0,63}$`)
-	reUnsafeWrite = regexp.MustCompile(`(?i)\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|REPLACE|TRUNCATE|GRANT|REVOKE|ATTACH|DETACH|VACUUM|REINDEX|PRAGMA\s+[A-Za-z_]+\s*=|INTO\s+OUTFILE|INTO\s+DUMPFILE|LOAD_FILE)\b`)
+	reSafeIdent     = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]{0,63}$`)
+	reUnsafeWrite   = regexp.MustCompile(`(?i)\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|REPLACE|TRUNCATE|GRANT|REVOKE|ATTACH|DETACH|VACUUM|REINDEX|PRAGMA\s+[A-Za-z_]+\s*=|INTO\s+OUTFILE|INTO\s+DUMPFILE|LOAD_FILE)\b`)
 	reAllowedPragma = regexp.MustCompile(`(?i)^PRAGMA\s+(table_info|index_list|index_info|foreign_key_list)\s*\(`)
 )
 
 // TargetSpec identifies an inspectable SQLite (GRAB-E401) or active 127.0.0.1 tunneled database.
 type TargetSpec struct {
-	Engine     string `json:"engine"` // sqlite | postgres | mariadb
-	SQLitePath string `json:"sqlite_path,omitempty"`
-	TunnelID   string `json:"tunnel_id,omitempty"`
-	DirectHost string `json:"host,omitempty"` // rejected if non-empty to prevent public DB bypass
-	DBUser     string `json:"db_user,omitempty"`
-	DBPassword string `json:"db_password,omitempty"`
-	DBName     string `json:"db_name,omitempty"`
-	SchemaName string `json:"schema_name,omitempty"`
+	Engine              string `json:"engine"` // sqlite | postgres | mariadb
+	SQLitePath          string `json:"sqlite_path,omitempty"`
+	TunnelID            string `json:"tunnel_id,omitempty"`
+	DirectHost          string `json:"host,omitempty"` // rejected if non-empty to prevent public DB bypass
+	DBUser              string `json:"db_user,omitempty"`
+	DBPassword          string `json:"db_password,omitempty"`
+	MaintenanceUser     string `json:"maintenance_user,omitempty"`
+	MaintenancePassword string `json:"maintenance_password,omitempty"`
+	DBName              string `json:"db_name,omitempty"`
+	SchemaName          string `json:"schema_name,omitempty"`
+	BridgeBearer        string `json:"bridge_bearer,omitempty"`
 }
 
 // ColumnMeta describes table/query column metadata.
@@ -57,6 +59,7 @@ type ColumnMeta struct {
 // ForeignKeyMeta describes a table foreign key relationship.
 type ForeignKeyMeta struct {
 	Column    string `json:"column"`
+	RefSchema string `json:"ref_schema,omitempty"`
 	RefTable  string `json:"ref_table"`
 	RefColumn string `json:"ref_column"`
 }
@@ -88,12 +91,14 @@ type RowsRequest struct {
 type MutatePlanRequest struct {
 	Target TargetSpec `json:"target"`
 	SQL    string     `json:"sql"`
+	Edit   *CellEdit  `json:"edit,omitempty"`
 }
 
 // MutateApplyRequest executes an approved mutation gated by single-use approval_token.
 type MutateApplyRequest struct {
 	Target        TargetSpec `json:"target"`
 	SQL           string     `json:"sql"`
+	Edit          *CellEdit  `json:"edit,omitempty"`
 	ApprovalToken string     `json:"approval_token"`
 }
 
@@ -132,6 +137,9 @@ func (m *Manager) CloseAll() {
 
 // GetSchema discovers tables, columns, indexes, foreign keys, and exact row counts.
 func (m *Manager) GetSchema(ctx context.Context, target TargetSpec) (map[string]any, error) {
+	if normalizeEngine(target.Engine) == "sqlite-bridge" {
+		return m.remoteSQLiteSchema(ctx, target)
+	}
 	db, engine, label, err := m.openTarget(target)
 	if err != nil {
 		return nil, err
@@ -156,15 +164,20 @@ func (m *Manager) GetSchema(ctx context.Context, target TargetSpec) (map[string]
 	}
 
 	return map[string]any{
-		"ok":           true,
-		"engine":       engine,
-		"target_label": label,
-		"tables":       tables,
+		"ok":                        true,
+		"engine":                    engine,
+		"target_label":              label,
+		"tables":                    tables,
+		"postgres_replay_candidate": engine == "postgres" && postgresReplayCandidate,
+		"mariadb_replay_candidate":  engine == "mariadb",
 	}, nil
 }
 
 // BrowseRows returns <= 100 bounded rows with exact ADR-025c base-10 wire strings.
 func (m *Manager) BrowseRows(ctx context.Context, req RowsRequest) (map[string]any, error) {
+	if normalizeEngine(req.Target.Engine) == "sqlite-bridge" {
+		return m.remoteSQLiteRows(ctx, req)
+	}
 	if err := validateIdentifier(req.Table); err != nil {
 		return nil, err
 	}
@@ -184,6 +197,9 @@ func (m *Manager) BrowseRows(ctx context.Context, req RowsRequest) (map[string]a
 	defer db.Close()
 
 	tableIdent := quoteIdent(engine, req.Table)
+	if engine == "postgres" {
+		tableIdent = quoteIdent(engine, firstNonEmpty(req.Target.SchemaName, "public")) + "." + tableIdent
+	}
 	whereClause := ""
 	var args []any
 	if strings.TrimSpace(req.FilterCol) != "" {
@@ -217,9 +233,19 @@ func (m *Manager) BrowseRows(ctx context.Context, req RowsRequest) (map[string]a
 	qCtx, cancel := context.WithTimeout(ctx, queryTimeout)
 	defer cancel()
 
+	q := db.QueryContext
+	qRow := db.QueryRowContext
+	if engine != "sqlite" {
+		tx, err := db.BeginTx(qCtx, &sql.TxOptions{ReadOnly: true, Isolation: sql.LevelRepeatableRead})
+		if err != nil {
+			return nil, security.NewError(security.CodeDeskE502, 502, "database read-only session is unavailable", err)
+		}
+		defer tx.Rollback()
+		q, qRow = tx.QueryContext, tx.QueryRowContext
+	}
 	var totalCount int64
 	countSQL := fmt.Sprintf("SELECT COUNT(*) FROM %s%s", tableIdent, whereClause)
-	if err := db.QueryRowContext(qCtx, countSQL, args...).Scan(&totalCount); err != nil {
+	if err := qRow(qCtx, countSQL, args...).Scan(&totalCount); err != nil {
 		return nil, security.NewError(security.CodeDeskE101, 400, "failed counting table rows", err)
 	}
 
@@ -233,7 +259,7 @@ func (m *Manager) BrowseRows(ctx context.Context, req RowsRequest) (map[string]a
 		limitSQL = fmt.Sprintf("SELECT * FROM %s%s%s LIMIT ? OFFSET ?", tableIdent, whereClause, orderClause)
 	}
 	queryArgs := append(append([]any(nil), args...), limit, offset)
-	rows, err := db.QueryContext(qCtx, limitSQL, queryArgs...)
+	rows, err := q(qCtx, limitSQL, queryArgs...)
 	if err != nil {
 		return nil, security.NewError(security.CodeDeskE101, 400, "failed querying table rows", err)
 	}
@@ -277,7 +303,16 @@ func (m *Manager) RunReadOnlyQuery(ctx context.Context, target TargetSpec, rawSQ
 	qCtx, cancel := context.WithTimeout(ctx, queryTimeout)
 	defer cancel()
 
-	rows, err := db.QueryContext(qCtx, strings.TrimSpace(rawSQL))
+	q := db.QueryContext
+	if engine != "sqlite" {
+		tx, err := db.BeginTx(qCtx, &sql.TxOptions{ReadOnly: true})
+		if err != nil {
+			return nil, security.NewError(security.CodeDeskE502, 502, "database read-only session is unavailable", err)
+		}
+		defer tx.Rollback()
+		q = tx.QueryContext
+	}
+	rows, err := q(qCtx, strings.TrimSpace(rawSQL))
 	if err != nil {
 		return nil, security.NewError(security.CodeDeskE101, 400, "read-only SQL query execution failed", err)
 	}
@@ -301,202 +336,11 @@ func (m *Manager) RunReadOnlyQuery(ctx context.Context, target TargetSpec, rawSQ
 	}, nil
 }
 
-// PlanMutation inspects a write/DDL/import SQL batch, captures a SHA-256 Pre-Mutation DB Snapshot (snap_db_*),
-// and mints a single-use target-bound GROXY-SAFE-001 approval_token.
-func (m *Manager) PlanMutation(ctx context.Context, req MutatePlanRequest) (map[string]any, error) {
-	stmts, err := splitSQLStatements(req.SQL)
-	if err != nil || len(stmts) == 0 {
-		return nil, security.NewError(security.CodeDeskE101, 400, "valid SQL statement(s) required for mutation plan", err)
-	}
-	for _, s := range stmts {
-		if strings.Contains(strings.ToUpper(s), "ATTACH") {
-			return nil, security.NewError(security.CodeDeskE406, 403, "ATTACH DATABASE is blocked in Visual DB Explorer (DESK-E406)", nil)
-		}
-	}
-
-	db, engine, label, err := m.openTarget(req.Target)
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	snapPayload, err := m.capturePreMutationSnapshotPayload(ctx, db, engine, req.Target, stmts)
-	if err != nil {
-		return nil, err
-	}
-
-	targetKey := buildTargetKey(req.Target, engine)
-	snap, err := m.approvals.CreatePrefixedVirtualSnapshot("snap_db_", targetKey, snapPayload)
-	if err != nil {
-		return nil, err
-	}
-	appr, err := m.approvals.IssueSnapshotBoundToken(groxybridge.ActionDBMutate, targetKey, snap.SnapshotID)
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]any{
-		"ok":              true,
-		"engine":          engine,
-		"target_label":    label,
-		"target_key":      targetKey,
-		"statement_count": strconv.Itoa(len(stmts)),
-		"snapshot":        snap,
-		"approval_token":  appr.Token,
-		"plain_summary":   fmt.Sprintf("Captured Pre-Mutation DB Snapshot %s before applying %d SQL statement(s) to %s.", snap.SnapshotID, len(stmts), label),
-	}, nil
-}
-
-// ApplyMutation consumes a single-use approval_token and executes the SQL batch atomically inside a transaction.
-func (m *Manager) ApplyMutation(ctx context.Context, req MutateApplyRequest) (map[string]any, error) {
-	engine := normalizeEngine(req.Target.Engine)
-	targetKey := buildTargetKey(req.Target, engine)
-
-	appr, err := m.approvals.ConsumeToken(req.ApprovalToken, groxybridge.ActionDBMutate, targetKey)
-	if err != nil {
-		return nil, err
-	}
-
-	stmts, err := splitSQLStatements(req.SQL)
-	if err != nil || len(stmts) == 0 {
-		return nil, security.NewError(security.CodeDeskE101, 400, "SQL statements must not be empty", err)
-	}
-
-	db, openEngine, _, err := m.openTarget(req.Target)
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	qCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-
-	tx, err := db.BeginTx(qCtx, nil)
-	if err != nil {
-		return nil, security.NewError(security.CodeDeskE101, 500, "failed starting DB mutation transaction", err)
-	}
-
-	var affected int64
-	for _, st := range stmts {
-		res, execErr := tx.ExecContext(qCtx, st)
-		if execErr != nil {
-			_ = tx.Rollback()
-			return nil, security.NewError(security.CodeDeskE101, 422, "DB mutation rolled back cleanly on SQL error", execErr)
-		}
-		if rows, rErr := res.RowsAffected(); rErr == nil {
-			affected += rows
-		}
-	}
-	if err := tx.Commit(); err != nil {
-		return nil, security.NewError(security.CodeDeskE101, 500, "failed committing DB mutation transaction", err)
-	}
-
-	return map[string]any{
-		"ok":                  true,
-		"engine":              openEngine,
-		"snapshot_id":         appr.SnapshotID,
-		"statements_executed": strconv.Itoa(len(stmts)),
-		"affected_rows":       strconv.FormatInt(affected, 10),
-	}, nil
-}
-
-// RestoreSnapshot verifies SHA-256 snapshot integrity and restores the pre-mutation SQLite file or SQL dump.
-func (m *Manager) RestoreSnapshot(ctx context.Context, target TargetSpec, snapshotID string) (map[string]any, error) {
-	restoreRes, err := m.approvals.RestoreSnapshot(m.workspaceRoot, snapshotID)
-	if err != nil {
-		return nil, err
-	}
-	var payload struct {
-		Engine        string   `json:"engine"`
-		SQLiteRelPath string   `json:"sqlite_rel_path,omitempty"`
-		SQLiteBytesB64 string  `json:"sqlite_bytes_b64,omitempty"`
-		RestoreSQL    []string `json:"restore_sql,omitempty"`
-	}
-	if err := json.Unmarshal([]byte(restoreRes.RestoredContent), &payload); err != nil {
-		return nil, security.NewError(security.CodeDeskE101, 500, "corrupt DB snapshot payload format", err)
-	}
-
-	if payload.Engine == "sqlite" && payload.SQLiteBytesB64 != "" {
-		rel := firstNonEmpty(payload.SQLiteRelPath, target.SQLitePath)
-		absDB, _, confErr := security.ConfineWorkspacePath(m.workspaceRoot, rel)
-		if confErr != nil {
-			return nil, confErr
-		}
-		origBytes, decErr := base64.StdEncoding.DecodeString(payload.SQLiteBytesB64)
-		if decErr != nil {
-			return nil, security.NewError(security.CodeDeskE101, 500, "failed decoding SQLite snapshot bytes", decErr)
-		}
-		_ = os.Remove(absDB + "-wal")
-		_ = os.Remove(absDB + "-shm")
-		tmp := absDB + ".groxy-restore-tmp"
-		if wErr := os.WriteFile(tmp, origBytes, 0o600); wErr != nil {
-			return nil, security.NewError(security.CodeDeskE101, 500, "failed writing SQLite snapshot restore file", wErr)
-		}
-		if rErr := os.Rename(tmp, absDB); rErr != nil {
-			_ = os.Remove(tmp)
-			return nil, security.NewError(security.CodeDeskE101, 500, "failed swapping restored SQLite database", rErr)
-		}
-	} else if len(payload.RestoreSQL) > 0 {
-		db, _, _, err := m.openTarget(target)
-		if err != nil {
-			return nil, err
-		}
-		defer db.Close()
-		tx, err := db.BeginTx(ctx, nil)
-		if err != nil {
-			return nil, err
-		}
-		for _, stmt := range payload.RestoreSQL {
-			if _, execErr := tx.ExecContext(ctx, stmt); execErr != nil {
-				_ = tx.Rollback()
-				return nil, security.NewError(security.CodeDeskE101, 500, "failed executing DB restore SQL", execErr)
-			}
-		}
-		if err := tx.Commit(); err != nil {
-			return nil, err
-		}
-	}
-
-	return map[string]any{
-		"ok":              true,
-		"snapshot_id":     restoreRes.SnapshotID,
-		"restored_sha256": restoreRes.RestoredSHA256,
-		"engine":          payload.Engine,
-		"status":          "restored",
-	}, nil
-}
-
-func (m *Manager) capturePreMutationSnapshotPayload(ctx context.Context, db *sql.DB, engine string, target TargetSpec, stmts []string) (string, error) {
-	if engine == "sqlite" {
-		absDB, relDB, err := security.ConfineWorkspacePath(m.workspaceRoot, target.SQLitePath)
-		if err != nil {
-			return "", err
-		}
-		_, _ = db.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE);")
-		rawBytes, rErr := os.ReadFile(absDB)
-		if rErr != nil {
-			return "", security.NewError(security.CodeDeskE101, 500, "failed reading SQLite database bytes for snapshot", rErr)
-		}
-		out, _ := json.Marshal(map[string]any{
-			"engine":           "sqlite",
-			"sqlite_rel_path":  relDB,
-			"sqlite_bytes_b64": base64.StdEncoding.EncodeToString(rawBytes),
-			"statements":       stmts,
-		})
-		return string(out), nil
-	}
-
-	// Remote tunneled Postgres / MariaDB: snapshot affected table rows or schema list
-	out, _ := json.Marshal(map[string]any{
-		"engine":     engine,
-		"tunnel_id":  target.TunnelID,
-		"db_name":    target.DBName,
-		"statements": stmts,
-	})
-	return string(out), nil
-}
-
 func (m *Manager) openTarget(target TargetSpec) (*sql.DB, string, string, error) {
+	return m.openTargetOnTunnel(target, m.tunnels.activeTunnel(target.TunnelID))
+}
+
+func (m *Manager) openTargetOnTunnel(target TargetSpec, tunnel *managedTunnel) (*sql.DB, string, string, error) {
 	if strings.TrimSpace(target.DirectHost) != "" {
 		return nil, "", "", security.NewError(security.CodeDeskE501, 422, "direct public database hosts are forbidden; use an active 127.0.0.1 SSH tunnel or confined SQLite file (DESK-E501)", nil)
 	}
@@ -510,18 +354,14 @@ func (m *Manager) openTarget(target TargetSpec) (*sql.DB, string, string, error)
 		if _, stErr := os.Stat(absPath); stErr != nil {
 			return nil, "", "", security.NewError(security.CodeDeskE101, 404, fmt.Sprintf("SQLite database %q not found", relPath), stErr)
 		}
-		db, err := sql.Open("sqlite", absPath)
+		db, err := sql.Open("sqlite", sqliteURI(absPath, "ro"))
 		if err != nil {
 			return nil, "", "", security.NewError(security.CodeDeskE101, 500, "failed opening SQLite database", err)
 		}
-		_, _ = db.Exec("PRAGMA foreign_keys = ON;")
-		_, _ = db.Exec("PRAGMA journal_mode = DELETE;")
-		_, _ = db.Exec("PRAGMA busy_timeout = 5000;")
 		return db, "sqlite", relPath, nil
 
 	case "postgres":
-		tun, ok := m.tunnels.GetTunnel(target.TunnelID)
-		if !ok || tun.Engine != "postgres" {
+		if tunnel == nil || tunnel.view.Engine != "postgres" {
 			return nil, "", "", security.NewError(security.CodeDeskE405, 403, "active pinned PostgreSQL SSH tunnel is required (DESK-E405)", nil)
 		}
 		if strings.TrimSpace(target.DBPassword) != "" {
@@ -530,7 +370,7 @@ func (m *Manager) openTarget(target TargetSpec) (*sql.DB, string, string, error)
 		u := url.URL{
 			Scheme: "postgres",
 			User:   url.UserPassword(firstNonEmpty(target.DBUser, "postgres"), target.DBPassword),
-			Host:   tun.LocalBindAddr,
+			Host:   tunnel.view.LocalBindAddr,
 			Path:   "/" + firstNonEmpty(target.DBName, "postgres"),
 		}
 		q := u.Query()
@@ -538,32 +378,38 @@ func (m *Manager) openTarget(target TargetSpec) (*sql.DB, string, string, error)
 		u.RawQuery = q.Encode()
 		dsn := u.String()
 		m.redactor.Register(dsn)
-		db, err := sql.Open("pgx", dsn)
+		config, err := pgx.ParseConfig(dsn)
 		if err != nil {
 			return nil, "", "", security.NewError(security.CodeDeskE101, 500, "failed initializing PostgreSQL tunnel client", err)
 		}
-		return db, "postgres", fmt.Sprintf("%s@%s/%s", firstNonEmpty(target.DBUser, "postgres"), tun.LocalBindAddr, firstNonEmpty(target.DBName, "postgres")), nil
+		if tunnel.sshClient != nil {
+			config.DialFunc = m.tunnels.pinDial(tunnel)
+		}
+		db := stdlib.OpenDB(*config)
+		return db, "postgres", fmt.Sprintf("%s@%s/%s", firstNonEmpty(target.DBUser, "postgres"), tunnel.view.LocalBindAddr, firstNonEmpty(target.DBName, "postgres")), nil
 
 	case "mariadb":
-		tun, ok := m.tunnels.GetTunnel(target.TunnelID)
-		if !ok || tun.Engine != "mariadb" {
+		if tunnel == nil || tunnel.view.Engine != "mariadb" {
 			return nil, "", "", security.NewError(security.CodeDeskE405, 403, "active pinned MariaDB SSH tunnel is required (DESK-E405)", nil)
 		}
 		if strings.TrimSpace(target.DBPassword) != "" {
 			m.redactor.Register(target.DBPassword)
 		}
-		dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=false",
-			firstNonEmpty(target.DBUser, "root"),
-			target.DBPassword,
-			tun.LocalBindAddr,
-			target.DBName,
-		)
-		m.redactor.Register(dsn)
-		db, err := sql.Open("mysql", dsn)
+		cfg := mysql.NewConfig()
+		cfg.User = target.DBUser
+		cfg.Passwd = target.DBPassword
+		cfg.Net = "tcp"
+		cfg.Addr = tunnel.view.LocalBindAddr
+		cfg.DBName = target.DBName
+		cfg.Timeout = queryTimeout
+		if tunnel.sshClient != nil {
+			cfg.DialFunc = m.tunnels.pinDial(tunnel)
+		}
+		connector, err := mysql.NewConnector(cfg)
 		if err != nil {
 			return nil, "", "", security.NewError(security.CodeDeskE101, 500, "failed initializing MariaDB tunnel client", err)
 		}
-		return db, "mariadb", fmt.Sprintf("%s@%s/%s", firstNonEmpty(target.DBUser, "root"), tun.LocalBindAddr, target.DBName), nil
+		return sql.OpenDB(connector), "mariadb", fmt.Sprintf("%s@%s/%s", target.DBUser, tunnel.view.LocalBindAddr, target.DBName), nil
 
 	default:
 		return nil, "", "", security.NewError(security.CodeDeskE101, 400, fmt.Sprintf("unsupported DB engine %q (expected sqlite, postgres, or mariadb)", target.Engine), nil)
@@ -605,7 +451,7 @@ func ValidateReadOnlySQL(rawSQL string) (string, error) {
 }
 
 func inspectSQLiteSchema(ctx context.Context, db *sql.DB) ([]TableSchema, error) {
-	tRows, err := db.QueryContext(ctx, "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+	tRows, err := db.QueryContext(ctx, "SELECT name FROM sqlite_master WHERE type='table' AND substr(name,1,7) != 'sqlite_' ORDER BY name")
 	if err != nil {
 		return nil, err
 	}
@@ -686,76 +532,6 @@ func inspectSQLiteSchema(ctx context.Context, db *sql.DB) ([]TableSchema, error)
 	return out, nil
 }
 
-func inspectPostgresSchema(ctx context.Context, db *sql.DB, schemaName string) ([]TableSchema, error) {
-	rows, err := db.QueryContext(ctx, "SELECT tablename FROM pg_tables WHERE schemaname = $1 ORDER BY tablename", schemaName)
-	if err != nil {
-		return nil, err
-	}
-	var names []string
-	for rows.Next() {
-		var name string
-		if rows.Scan(&name) == nil && validateIdentifier(name) == nil {
-			names = append(names, name)
-		}
-	}
-	_ = rows.Close()
-
-	out := make([]TableSchema, 0, len(names))
-	for _, tName := range names {
-		var count int64
-		_ = db.QueryRowContext(ctx, fmt.Sprintf("SELECT COUNT(*) FROM %s.%s", quoteIdent("postgres", schemaName), quoteIdent("postgres", tName))).Scan(&count)
-		cols := make([]ColumnMeta, 0)
-		cRows, cErr := db.QueryContext(ctx, "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2 ORDER BY ordinal_position", schemaName, tName)
-		if cErr == nil {
-			for cRows.Next() {
-				var cName, dType, isNull string
-				if cRows.Scan(&cName, &dType, &isNull) == nil {
-					cols = append(cols, ColumnMeta{
-						Name:     cName,
-						Type:     dType,
-						Nullable: strings.EqualFold(isNull, "YES"),
-					})
-				}
-			}
-			_ = cRows.Close()
-		}
-		out = append(out, TableSchema{
-			Name:     tName,
-			Schema:   schemaName,
-			RowCount: strconv.FormatInt(count, 10),
-			Columns:  cols,
-		})
-	}
-	return out, nil
-}
-
-func inspectMariaDBSchema(ctx context.Context, db *sql.DB, dbName string) ([]TableSchema, error) {
-	rows, err := db.QueryContext(ctx, "SHOW TABLES")
-	if err != nil {
-		return nil, err
-	}
-	var names []string
-	for rows.Next() {
-		var name string
-		if rows.Scan(&name) == nil && validateIdentifier(name) == nil {
-			names = append(names, name)
-		}
-	}
-	_ = rows.Close()
-
-	out := make([]TableSchema, 0, len(names))
-	for _, tName := range names {
-		var count int64
-		_ = db.QueryRowContext(ctx, fmt.Sprintf("SELECT COUNT(*) FROM %s", quoteIdent("mariadb", tName))).Scan(&count)
-		out = append(out, TableSchema{
-			Name:     tName,
-			Schema:   dbName,
-			RowCount: strconv.FormatInt(count, 10),
-		})
-	}
-	return out, nil
-}
-
 func scanExactRows(rows *sql.Rows, maxRows int) ([]ColumnMeta, []map[string]any, error) {
 	colTypes, err := rows.ColumnTypes()
 	if err != nil {
@@ -789,6 +565,9 @@ func scanExactRows(rows *sql.Rows, maxRows int) ([]ColumnMeta, []map[string]any,
 			rec[col.Name] = formatWireCell(dest[i])
 		}
 		result = append(result, rec)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
 	}
 	return cols, result, nil
 }
@@ -834,9 +613,9 @@ func validateIdentifier(name string) error {
 func quoteIdent(engine, name string) string {
 	clean := strings.TrimSpace(name)
 	if engine == "mariadb" {
-		return "`" + clean + "`"
+		return "`" + strings.ReplaceAll(clean, "`", "``") + "`"
 	}
-	return `"` + clean + `"`
+	return sqliteIdent(clean)
 }
 
 func normalizeFilterOp(raw string) (string, error) {
@@ -865,14 +644,6 @@ func parsePositiveInt(raw, field string, fallback, maxVal int) (int, error) {
 		return 0, security.NewError(security.CodeDeskE101, 400, fmt.Sprintf("%s must be between 1 and %d", field, maxVal), nil)
 	}
 	return val, nil
-}
-
-func buildTargetKey(t TargetSpec, engine string) string {
-	if engine == "sqlite" {
-		cleaned := strings.TrimSpace(strings.ReplaceAll(t.SQLitePath, "\\", "/"))
-		return "db:sqlite:" + strings.TrimPrefix(cleaned, "./")
-	}
-	return fmt.Sprintf("db:%s:%s/%s", engine, strings.TrimSpace(t.TunnelID), strings.TrimSpace(t.DBName))
 }
 
 func stripSQLComments(sqlText string) string {

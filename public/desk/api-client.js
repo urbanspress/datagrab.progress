@@ -1,5 +1,5 @@
 /**
- * Authenticated loopback API client for Groxy Desk v1.0.1.
+ * Authenticated loopback API client for Groxy Desk v1.1.0.
  * Keeps bearer and CSRF credentials strictly in memory (never localStorage or URL query strings).
  */
 export function createDeskApiClient(options = {}) {
@@ -30,7 +30,7 @@ export function createDeskApiClient(options = {}) {
     return Boolean(state.bearerToken && state.csrfToken);
   }
 
-  async function request(method, path, body = undefined, requiresAuth = true) {
+  async function request(method, path, body = undefined, requiresAuth = true, signal) {
     if (typeof fetchFn !== "function") {
       throw new Error("Fetch API is unavailable in this environment.");
     }
@@ -52,6 +52,7 @@ export function createDeskApiClient(options = {}) {
       method,
       headers,
       body: payloadBody,
+      signal,
     });
     const text = await res.text();
     let parsed = {};
@@ -152,9 +153,20 @@ export function createDeskApiClient(options = {}) {
       request("POST", "/api/db/tunnels/close", payload),
     dbSchema: (target) => request("POST", "/api/db/schema", target),
     dbRows: (payload) => request("POST", "/api/db/rows", payload),
-    dbQuery: (payload) => request("POST", "/api/db/query", payload),
+    dbQuery: (payload, signal) => request("POST", "/api/db/query", payload, true, signal),
+    dbCompare: (payload) => request("POST", "/api/db/schema/compare", payload),
+    dbExportPage: (payload) => request("POST", "/api/db/export/page", payload),
+    dbExportDiagram: (payload) => request("POST", "/api/db/export/diagram", payload),
+    dbImportPlan: (payload) => request("POST", "/api/db/import/plan", payload),
+    dbImportApply: (payload) => request("POST", "/api/db/import/apply", payload),
     dbMutatePlan: (payload) => request("POST", "/api/db/mutate/plan", payload),
     dbMutateApply: (payload) => request("POST", "/api/db/mutate/apply", payload),
+    dbRestorePlan: (payload) => request("POST", "/api/db/snapshots/restore/plan", payload),
+    radarCapabilities: () => request("GET", "/api/radar/capabilities"),
+    radarResearch: (payload) => request("POST", "/api/radar/research", payload),
+    radarReceipt: (payload) => request("POST", "/api/radar/receipt", payload),
+    radarPlanDraft: (payload) => request("POST", "/api/radar/draft/plan", payload),
+    radarCreateDraft: (payload) => request("POST", "/api/radar/draft/apply", payload),
     dbRestoreSnapshot: (payload) =>
       request("POST", "/api/db/snapshots/restore", payload),
     dnsVaultStatus: () => request("GET", "/api/dns/vault"),

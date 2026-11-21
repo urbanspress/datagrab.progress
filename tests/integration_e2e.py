@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Gate 4 Cross-Layer End-to-End Integration Suite for Groxy Desk v1.0.1.
+Gate 4 Cross-Layer End-to-End Integration Suite for Groxy Desk v1.1.0.
 Verifies compiled binaries + GRAB v1.1.0 + Grex JS v1.0.0 + GrabLab CMS v1.0.1 + Grex Builder v1.0.0 + grabman v1.0.0 + Unified Groxy AI.
 """
 import hashlib
@@ -30,6 +30,8 @@ PEER_REPOS = [
     Path(r"C:\Development\grabman"),
     Path(r"C:\Development\grabtaculous"),
     Path(r"C:\Development\gashboard"),
+    Path(r"C:\Development\grab-ide-icons"),
+    Path(r"C:\Development\plotific-press"),
 ]
 
 
@@ -74,7 +76,7 @@ def sha256_hex(path: Path) -> str:
 
 
 def main():
-    print("[Gate 4] Verifying 8 peer v1.x repositories are strictly clean...")
+    print("[Gate 4] Verifying 10 peer v1.x repositories are strictly clean...")
     assert_peer_repos_clean()
 
     with tempfile.TemporaryDirectory(prefix="groxy-desk-e2e-") as tmp:
@@ -166,7 +168,7 @@ def main():
 
             # Verify /_health, /_ready, /, and static bundle
             st, hdrs, raw_health = http_req("GET", f"{base_url}/_health")
-            assert st == 200 and json.loads(raw_health)["version"] == "1.0.1", f"/_health failed: {st} {raw_health}"
+            assert st == 200 and json.loads(raw_health)["version"] == "1.1.0", f"/_health failed: {st} {raw_health}"
             assert hdrs.get("X-Frame-Options") == "DENY"
             assert hdrs.get("X-Content-Type-Options") == "nosniff"
             assert "script-src 'self'" in hdrs.get("Content-Security-Policy", "")
@@ -746,20 +748,13 @@ def main():
                 )
                 assert st == 200 and daemon_calls["rollback"] == 1
 
-                # Loopback SSH DB Tunnel TCP forwarding + Close
+                # Production HTTP must reject the internal loopback test transport.
                 echo_port = str(echo_sock.getsockname()[1])
                 st, _, raw_to = http_req(
                     "POST", f"{base_url}/api/db/tunnels/open", headers=auth_headers,
                     body={"engine": "postgres", "pinned_fingerprint": fp_good, "presented_fingerprint": fp_good, "remote_db_host": "127.0.0.1", "remote_db_port": echo_port, "transport": "loopback_test"},
                 )
-                assert st == 200
-                tun_obj = json.loads(raw_to)["tunnel"]
-                t_host, t_port = tun_obj["local_bind_addr"].split(":")
-                with socket.create_connection((t_host, int(t_port)), timeout=3) as s_cli:
-                    s_cli.sendall(b"GROXY-E2E-TUNNEL")
-                    assert s_cli.recv(16) == b"GROXY-E2E-TUNNEL"
-                st, _, _ = http_req("POST", f"{base_url}/api/db/tunnels/close", headers=auth_headers, body={"tunnel_id": tun_obj["tunnel_id"]})
-                assert st == 200
+                assert st == 403, raw_to
 
                 # DB Studio SQLite confinement, ADR-025c rows, DESK-E406, mutation + restore
                 e2e_db = ws_dir / "data" / "e2e_books.db"
@@ -783,10 +778,14 @@ def main():
                 st, _, raw_dp = http_req("POST", f"{base_url}/api/db/mutate/plan", headers=auth_headers, body={"target": db_target, "sql": "UPDATE books SET price='24.00' WHERE id=1;"})
                 dp_obj = json.loads(raw_dp)
                 assert st == 200 and dp_obj["snapshot"]["snapshot_id"].startswith("snap_db_")
-                st, _, _ = http_req("POST", f"{base_url}/api/db/mutate/apply", headers=auth_headers, body={"target": db_target, "sql": "UPDATE books SET price='24.00' WHERE id=1;", "approval_token": dp_obj["approval_token"]})
-                assert st == 200
-                st, _, _ = http_req("POST", f"{base_url}/api/db/snapshots/restore", headers=auth_headers, body={"target": db_target, "snapshot_id": dp_obj["snapshot"]["snapshot_id"]})
-                assert st == 200
+                st, _, raw_apply = http_req("POST", f"{base_url}/api/db/mutate/apply", headers=auth_headers, body={"target": db_target, "sql": "UPDATE books SET price='24.00' WHERE id=1;", "approval_token": dp_obj["approval_token"]})
+                assert st == 201, raw_apply
+                restore = {"target": db_target, "snapshot_id": dp_obj["snapshot"]["snapshot_id"]}
+                st, _, raw_restore_plan = http_req("POST", f"{base_url}/api/db/snapshots/restore/plan", headers=auth_headers, body=restore)
+                assert st == 200, raw_restore_plan
+                restore["approval_token"] = json.loads(raw_restore_plan)["approval_token"]
+                st, _, raw_restore = http_req("POST", f"{base_url}/api/db/snapshots/restore", headers=auth_headers, body=restore)
+                assert st == 201, raw_restore
                 st, _, raw_rows2 = http_req("POST", f"{base_url}/api/db/rows", headers=auth_headers, body={"target": db_target, "table": "books", "page": "1", "limit": "50"})
                 assert json.loads(raw_rows2)["rows"][0]["price"] == "19.99"
 

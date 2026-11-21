@@ -1,11 +1,12 @@
 /**
- * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.0.1.
+ * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.1.0.
  * Zero wrapper elements, zero raw DOM writes, zero unsafe script calls, sole Groxy AI identity.
  */
 import { ForEach, effect, renderNode, signal } from "../grex/grex.js";
 import { createDeskApiClient } from "./api-client.js";
 import { createAuthorPanelNode } from "./author-panel.js";
 import { createDBStudioPanelNode } from "./db-studio-panel.js";
+import { createRadarPanelNode } from "./radar-panel.js";
 import { createDNSPanelNode } from "./dns-panel.js";
 import { createFleetPanelNode } from "./fleet-panel.js";
 import { createGroxySidebarNode } from "./groxy-agent.js";
@@ -84,8 +85,10 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     fleetNodes: signal([]),
     fleetDeployPlan: signal(null),
     dbTunnels: signal([]),
-    dbRowsList: signal([]),
-    dbMutatePlan: signal(null),
+    browserStatus: signal({ origin: "", message: "" }),
+    browserSelection: signal(null),
+    browserBrand: signal(null),
+    groxyPrompt: signal(""),
     dnsPlan: signal(null),
     httpsPlan: signal(null),
     authorPlan: signal(null),
@@ -346,16 +349,15 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       return res;
     },
     dbSchema: (target) => apiClient.dbSchema(target),
-    dbRows: async (payload) => {
-      const res = await apiClient.dbRows(payload);
-      if (res && Array.isArray(res.rows)) store.dbRowsList.set(res.rows);
-      return res;
-    },
-    dbQuery: async (payload) => {
-      const res = await apiClient.dbQuery(payload);
-      if (res && Array.isArray(res.rows)) store.dbRowsList.set(res.rows);
-      return res;
-    },
+    dbRows: (payload) => apiClient.dbRows(payload),
+    dbQuery: (payload, signal) => apiClient.dbQuery(payload, signal),
+    dbCompare: (payload) => apiClient.dbCompare(payload),
+    dbExportPage: (payload) => apiClient.dbExportPage(payload),
+    dbExportDiagram: (payload) => apiClient.dbExportDiagram(payload),
+    dbImportPlan: (payload) => apiClient.dbImportPlan(payload),
+    dbImportApply: (payload) => apiClient.dbImportApply(payload),
+    dbRestorePlan: (payload) => apiClient.dbRestorePlan(payload),
+    dbRestore: (payload) => apiClient.dbRestoreSnapshot(payload),
     dbMutatePlan: async (payload) => {
       const res = await apiClient.dbMutatePlan(payload);
       await refreshSnapshots().catch(() => []);
@@ -551,6 +553,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
               createScorecardPanelNode(store, actions, doc),
               createSupervisorPanelNode(store, actions, doc),
               createFleetPanelNode(store, actions, doc),
+              createRadarPanelNode(store, apiClient, doc),
               createDBStudioPanelNode(store, actions, doc),
               createDNSPanelNode(store, actions, doc),
               createAuthorPanelNode(store, actions, doc),
@@ -644,7 +647,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
             type: "Text",
             tag: "p",
             props: {
-              text: "Groxy Desk v1.0.1 — Pure Grex JS v1.0.0 | Zero Wrapper Elements | Unified Groxy AI",
+              text: "Groxy Desk v1.1.0 — Pure Grex JS v1.0.0 | Zero Wrapper Elements | Unified Groxy AI",
             },
           },
         ],
@@ -715,7 +718,18 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
           msg = null;
         }
       }
-      if (msg && msg.type === "groxy-desk-session") {
+      if (msg?.type === "groxy-browser-status") {
+        if (msg.origin !== store.browserStatus.peek().origin) {
+          store.browserSelection.set(null);
+          store.browserBrand.set(null);
+        }
+        store.browserStatus.set({ origin: msg.origin, message: msg.message });
+      } else if (msg?.type === "groxy-browser-selection" &&
+          msg.origin === store.browserStatus.peek().origin && typeof msg.text === "string") {
+        store.browserSelection.set({ text: msg.text.slice(0, 4000), origin: msg.origin });
+      } else if (msg?.type === "groxy-browser-brand") {
+        store.browserBrand.set(msg);
+      } else if (msg?.type === "groxy-desk-session") {
         apiClient.setSession({
           baseUrl: msg.url || "",
           bearerToken: msg.bearer_token || "",

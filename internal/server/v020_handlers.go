@@ -14,8 +14,8 @@ import (
 
 func (s *Server) handleMCPTools(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, map[string]any{
-		"tools":                 s.mcp.ListTools(),
-		"agent":                 groxybridge.AgentID,
+		"tools":                   s.mcp.ListTools(),
+		"agent":                   groxybridge.AgentID,
 		"model_switching_allowed": false,
 	})
 }

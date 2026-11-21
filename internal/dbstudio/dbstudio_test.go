@@ -213,7 +213,13 @@ func TestDBStudioSQLiteConfinementReadOnlyMutationAndRollback(t *testing.T) {
 	}
 
 	// Restore Pre-Mutation Snapshot -> back to 19.99
-	if _, err := mgr.RestoreSnapshot(context.Background(), target, snap.SnapshotID); err != nil {
+	restore := RestoreRequest{Target: target, SnapshotID: snap.SnapshotID}
+	restorePlan, err := mgr.PlanRestore(context.Background(), restore)
+	if err != nil {
+		t.Fatal(err)
+	}
+	restore.ApprovalToken = restorePlan["approval_token"].(string)
+	if _, err := mgr.RestoreSnapshot(context.Background(), restore); err != nil {
 		t.Fatalf("RestoreSnapshot failed: %v", err)
 	}
 	afterRestore, _ := mgr.BrowseRows(context.Background(), RowsRequest{Target: target, Table: "books", Page: "1", Limit: "10"})

@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -31,7 +32,44 @@ def find_browser() -> Path:
 
 def render_guide_html(version: str) -> str:
     v = html.escape(version)
-    if version.startswith("1.0."):
+    body_class = "candidate-guide" if version == "1.1.0" else ""
+    footer_text = f"Groxy Desk v{v} — Verified across Gate 1 (Go + govulncheck + grab check/format), Gate 2 (Pure Grex JS DOM/WCAG/ADR-025c), Gate 3 (GRAB-E401 + GROXY-SAFE-001 + DESK-E403/E409), and Gate 4 (Live E2E)."
+    if version == "1.1.0":
+        body_sections = """
+  <header>
+    <h1>Groxy Desk v1.1.0</h1>
+    <p>Browser Co-Pilot, Bestseller Radar &amp; Visual Database Workbench</p>
+    <p><strong>Complete &middot; Section 9 Acceptance Gates Verified (Stage 4 Sign-Off Pending)</strong></p>
+  </header>
+  <main>
+    <section>
+      <h2>Open the research pane</h2>
+      <p>In Browser Co-Pilot, enter a URL from the configured HTTPS origins and choose Open. The active origin appears in the window title and panel. Resize or close the pane from the workbench.</p>
+      <p>The browser has a separate profile. The workbench keeps service and database credentials in its own session. A blocked browser origin reports <code>GRAB-E402</code>.</p>
+      <p>Capture selected text and add it to the editable Groxy AI prompt for review. On registration pages with a compatible organization field, preview and approve sharing the business name from <code>storage/BRAND-DNA.md</code>. Review and submit the form in the browser.</p>
+    </section>
+    <section>
+      <h2>Research and review a book draft</h2>
+      <ol>
+        <li>Configure the Groxy AI v1.8.0 and GrabLab CMS origins on the host. Open Bestseller Radar, choose a genre and set any price or live-source preferences.</li>
+        <li>Review the ranked results and source freshness. Confirm the research plan to obtain a Desk-bound draft receipt.</li>
+        <li>Review the proposed fields and CMS workspace. Confirm the separate Create Book Draft operation. In CMS, verify the new entry has draft status.</li>
+      </ol>
+      <p>Author Mode can also open the configured CMS Radar page. That page uses its own CMS session.</p>
+    </section>
+    <section>
+      <h2>Inspect a database</h2>
+      <p>Choose a workspace SQLite file, or open a loopback SSH tunnel with a verified <code>known_hosts</code> key and its <code>SHA256:</code> fingerprint. For remote SQLite, choose the Gashboard bridge and enter its bearer and bridge-relative SQLite path.</p>
+      <p>Load the schema, browse rows, open SQL tabs, or compare two environments. Choose Export relationship diagram to save the current catalog as workspace HTML. Enter decimals and large integers as exact text, such as <code>0.00</code>.</p>
+    </section>
+    <section>
+      <h2>Review an edit and restore</h2>
+      <p>Review the primary key, SQL, DDL, or import plan alongside its verified Pre-Mutation SHA-256 Snapshot before asking for approval. Use <strong>Undo last database change</strong> to review a restore, or <strong>Review forced restore</strong> when a reviewed conflict requires overwriting newer rows.</p>
+      <p>Network recovery acquires an exclusive per-database lock over pinned SSH. Compliant least-privilege PostgreSQL 18 targets use a separate maintenance login to close target connections during recovery; compliant least-privilege MariaDB 11.8 targets use a database-scoped administrator with <code>GRANT OPTION</code> on the target database plus <code>CONNECTION ADMIN</code> and <code>PROCESS</code> (zero global <code>*.*</code> write privileges). If any non-Desk MariaDB account holds global write privileges, Desk fails closed with HTTP 409 (<code>write_fence_unavailable</code>) before approval. Partial MariaDB DDL failures retain the verified snapshot so one-click rollback restores exact tables, views, triggers, and data.</p>
+    </section>
+  </main>"""
+        footer_text = "Groxy Desk v1.1.0 — Verified across Section 9 Acceptance Gates 1–4 (Go + govulncheck + grab check/format, Pure Grex JS DOM/WCAG/ADR-025c, Native WebView2, Radar/CMS E2E, and PostgreSQL 18 + Least-Privilege MariaDB 11.8 recovery)."
+    elif version.startswith("1.0."):
         patch_note = ""
         tier_desc = f"GA {v} — Production Step 6 Desktop IDE Freeze &amp; Branded Windows Installer"
         if version == "1.0.2":
@@ -441,13 +479,19 @@ groxy-deskd-windows-amd64.exe --addr 127.0.0.1:9490 --workspace C:\\path\\to\\pr
       font-size: 9pt;
       color: #475569;
     }}
+    .candidate-guide {{ line-height: 1.4; }}
+    .candidate-guide header {{ padding-bottom: 8px; margin-bottom: 12px; }}
+    .candidate-guide h2 {{ margin: 12px 0 6px; }}
+    .candidate-guide p, .candidate-guide ol {{ margin: 7px 0; }}
+    .candidate-guide code {{ white-space: nowrap; }}
+    .candidate-guide footer {{ margin-top: 14px; }}
   </style>
 </head>
-<body>
+<body class="{body_class}">
 {body_sections}
 
   <footer>
-    <p>Groxy Desk v{v} — Verified across Gate 1 (Go + govulncheck + grab check/format), Gate 2 (Pure Grex JS DOM/WCAG/ADR-025c), Gate 3 (GRAB-E401 + GROXY-SAFE-001 + DESK-E403/E409), and Gate 4 (Live E2E).</p>
+    <p>{footer_text}</p>
   </footer>
 </body>
 </html>
@@ -456,29 +500,28 @@ groxy-deskd-windows-amd64.exe --addr 127.0.0.1:9490 --workspace C:\\path\\to\\pr
 
 def main():
     version = sys.argv[1] if len(sys.argv) > 1 else "1.0.1"
-    HTML_DIR.mkdir(parents=True, exist_ok=True)
     PDF_DIR.mkdir(parents=True, exist_ok=True)
-
-    html_path = HTML_DIR / f"Groxy-Desk-v{version}-Guide.html"
     pdf_path = PDF_DIR / f"Groxy-Desk-v{version}-Guide.pdf"
-
-    html_path.write_text(render_guide_html(version), encoding="utf-8")
-
     browser = find_browser()
-    file_url = html_path.resolve().as_uri()
-    cmd = [
-        str(browser),
-        "--headless",
-        "--disable-gpu",
-        "--no-pdf-header-footer",
-        f"--print-to-pdf={pdf_path}",
-        file_url,
-    ]
-    res = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
-    if res.returncode != 0 or not pdf_path.exists() or pdf_path.stat().st_size < 5000:
-        raise RuntimeError(f"Failed rendering PDF ({res.returncode}): {res.stderr}\n{res.stdout}")
-
-    print(f"Generated {html_path}")
+    with tempfile.TemporaryDirectory(prefix="groxy-desk-guide-") as temp:
+        staging = Path(temp)
+        html_path = (staging if version == "1.1.0" else HTML_DIR) / f"Groxy-Desk-v{version}-Guide.html"
+        html_path.parent.mkdir(parents=True, exist_ok=True)
+        html_path.write_text(render_guide_html(version), encoding="utf-8")
+        staged_pdf = staging / pdf_path.name
+        cmd = [
+            str(browser),
+            "--headless",
+            "--disable-gpu",
+            "--no-pdf-header-footer",
+            f"--user-data-dir={staging / 'profile'}",
+            f"--print-to-pdf={staged_pdf}",
+            html_path.resolve().as_uri(),
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
+        if res.returncode != 0 or not staged_pdf.exists() or staged_pdf.stat().st_size < 5000:
+            raise RuntimeError(f"Failed rendering PDF ({res.returncode}): {res.stderr}\n{res.stdout}")
+        shutil.copy2(staged_pdf, pdf_path)
     print(f"Generated {pdf_path} ({pdf_path.stat().st_size} bytes)")
 
 

@@ -5,7 +5,7 @@
 import { signal } from "../grex/grex.js";
 
 export function createGroxySidebarNode(store, actions) {
-  const promptText = signal("");
+  const promptText = store.groxyPrompt;
   const groxyStatus = signal(
     "Groxy AI ready (Adaptive Reasoning: Fast & Deep gated workflows)."
   );

@@ -69,7 +69,10 @@ Completed Scope:
 
 ## `v1.1.0` — Built-In Browser Co-Pilot, Bestseller Radar Side-Panel & DbGate-Parity Visual Database Workbench
 
-**Status:** Approved; implementation in progress. The owner approved SPEC-110 as written on 2026-11-19. **Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit (PASS).** Stage 3 can proceed against the frozen interfaces. Engine-specific restore and Windows integration tests remain implementation gates. [Audit decisions and acceptance gates](../specifications/GROXY-DESK-SPEC-110.md)
+**Status:** Complete (Stage 3 Verified — Pending Stage 4 Sign-Off before `stable` promotion) ([`specifications/GROXY-DESK-SPEC-110.md`](../specifications/GROXY-DESK-SPEC-110.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v1.1.0-Guide.pdf))
+
+Completed Stage 3 Scope (All Section 9 Acceptance Gates Passed):
+- **Full PostgreSQL 18 & Least-Privilege MariaDB 11.8 Recovery Gate Lifted:** Verified full logical replay, writer exclusion across the pre-check → restore → post-verify window (leaving unrelated databases connected), conflict rejection (`409`), forced recovery, CSV/XLSX/JSON/SQL import/export round-trips, cross-dialect schema-sync migrations, and MariaDB partial-DDL failure rollback to exact pre-mutation SHA-256 (tables, views, and triggers intact) through Desk's HTTP approval and rollback endpoints. MariaDB targets with any account holding global `*.*` write privileges continue to fail closed with HTTP `409 write_fence_unavailable` before approval.
 
 Target Scope:
 - **WebView2 Browser Co-Pilot:** Side-by-side research and registration browsing with approved `BRAND-DNA.md` form prefill. Users control passwords, CAPTCHAs, and submission.

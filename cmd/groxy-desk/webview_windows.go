@@ -5,13 +5,14 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"syscall"
 	"unsafe"
 
 	"groxy-desk/internal/server"
+	"groxy-desk/internal/workspace"
 
 	"github.com/wailsapp/go-webview2/pkg/edge"
 	"golang.org/x/sys/windows"
@@ -26,6 +27,7 @@ var (
 	procCreateWindowExW  = user32.NewProc("CreateWindowExW")
 	procDefWindowProcW   = user32.NewProc("DefWindowProcW")
 	procShowWindow       = user32.NewProc("ShowWindow")
+	procSetWindowTextW   = user32.NewProc("SetWindowTextW")
 	procUpdateWindow     = user32.NewProc("UpdateWindow")
 	procGetMessageW      = user32.NewProc("GetMessageW")
 	procTranslateMessage = user32.NewProc("TranslateMessage")
@@ -78,7 +80,15 @@ type winMsg struct {
 	pt      point
 }
 
-func launchWebViewWindow(sess server.SessionCredentials, stateDir string, debug bool) error {
+func launchWebViewWindow(sess server.SessionCredentials, stateDir, workspaceDir string, debug bool) error {
+	return launchWebViewWindowWithController(sess, stateDir, workspaceDir, debug, edge.NewChromium)
+}
+
+func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir, workspaceDir string, debug bool, newController func() *edge.Chromium) error {
+	files, err := workspace.NewManager(workspaceDir, "", "", nil)
+	if err != nil {
+		return err
+	}
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -91,7 +101,7 @@ func launchWebViewWindow(sess server.SessionCredentials, stateDir string, debug 
 	if err != nil {
 		return err
 	}
-	title, err := windows.UTF16PtrFromString("Groxy Desk v1.0.2 — Native Vibe-Coding IDE")
+	title, err := windows.UTF16PtrFromString("Groxy Desk v1.1.0 — Native Vibe-Coding IDE")
 	if err != nil {
 		return err
 	}
@@ -99,12 +109,34 @@ func launchWebViewWindow(sess server.SessionCredentials, stateDir string, debug 
 	hInst, _, _ := procGetModuleHandleW.Call(0)
 	hCursor, _, _ := procLoadCursorW.Call(0, uintptr(idcArrow))
 
-	var chromium *edge.Chromium
+	var chromium, research *edge.Chromium
+	var workbenchPane, researchPane uintptr
+	width := 45
+	activeOrigin := ""
+	var browserSession uint64
+	var brandPreview struct {
+		page, organization string
+	}
+	selectionHandler := &browserSelectionHandler{vtable: &browserSelectionVtable}
+	defer runtime.KeepAlive(selectionHandler)
+	resize := func(hwnd uintptr) {
+		percent := 0
+		if activeOrigin != "" {
+			percent = width
+		}
+		resizePanes(hwnd, workbenchPane, researchPane, percent)
+		if chromium != nil {
+			chromium.Resize()
+		}
+		if research != nil {
+			research.Resize()
+		}
+	}
 	wndProc := syscall.NewCallback(func(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		switch msg {
 		case wmSize:
-			if chromium != nil {
-				chromium.Resize()
+			if workbenchPane != 0 {
+				resize(hwnd)
 			}
 		case wmDestroy:
 			_, _, _ = procPostQuitMessage.Call(0)
@@ -147,53 +179,208 @@ func launchWebViewWindow(sess server.SessionCredentials, stateDir string, debug 
 		return callErr
 	}
 
-	chromium = edge.NewChromium()
-	chromium.Debug = debug
-	chromium.DataPath = filepath.Join(stateDir, "webview2-profile")
+	workbenchPane, err = childPane(hwnd, hInst)
+	if err != nil {
+		return err
+	}
+	researchPane, err = childPane(hwnd, hInst)
+	if err != nil {
+		return err
+	}
+	resize(hwnd)
 
-	var embedErr error
-	chromium.SetErrorCallback(func(cbErr error) {
-		embedErr = cbErr
-	})
-	chromium.MessageCallback = func(rawMsg string, sender *edge.ICoreWebView2, _ *edge.ICoreWebView2WebMessageReceivedEventArgs) {
-		if sender == nil {
-			return
+	openPane := func(parent uintptr, profile string, debug bool, args ...string) (*edge.Chromium, error) {
+		pane := newController()
+		pane.Debug = debug
+		pane.DataPath = filepath.Join(stateDir, profile)
+		pane.AdditionalBrowserArgs = append(pane.AdditionalBrowserArgs, args...)
+		var embedErr error
+		pane.SetErrorCallback(func(err error) { embedErr = err })
+		if !pane.Embed(parent) || embedErr != nil {
+			if embedErr != nil {
+				return nil, embedErr
+			}
+			return nil, errors.New("failed to embed WebView2 controller")
 		}
-		src, srcErr := sender.GetSource()
-		if srcErr != nil || (src != sess.URL && !strings.HasPrefix(src, sess.URL+"/")) {
-			return
+		return pane, nil
+	}
+	chromium, err = openPane(workbenchPane, "webview2-profile", debug)
+	if err != nil {
+		return err
+	}
+	releaseWorkbench, err := isolateBrowser(chromium,
+		func(raw string) bool { return trustedWorkbenchSource(raw, sess.URL) },
+		func(raw string) bool { return trustedWorkbenchResource(raw, sess.URL) }, false, nil)
+	if err != nil {
+		return err
+	}
+	defer releaseWorkbench()
+	origins := parseBrowserOrigins(os.Getenv("GROXY_DESK_BROWSER_ORIGINS"), os.Getenv("GROXY_DESK_CMS_ORIGIN"))
+	var proxy *researchProxy
+	if len(origins) > 0 {
+		proxy, err = startResearchProxy()
+		if err != nil {
+			return err
 		}
-		var incoming struct {
-			Type string `json:"type"`
+		defer proxy.close()
+		// Keep even loopback URLs behind the proxy and disable alternate
+		// transports or TLS connection coalescing across origins.
+		research, err = openPane(researchPane, "webview2-research-profile", false,
+			"--proxy-server=http://"+proxy.addr, "--proxy-bypass-list=<-loopback>",
+			"--disable-quic", "--disable-http2", "--force-webrtc-ip-handling-policy=disable_non_proxied_udp")
+		if err != nil {
+			return err
 		}
-		if json.Unmarshal([]byte(rawMsg), &incoming) != nil || incoming.Type != "groxy-desk-ready" {
-			return
+		research.SetGlobalPermission(edge.CoreWebView2PermissionStateDeny)
+		allowsResearch := func(raw string) bool {
+			return activeOrigin != "" && origins.match(raw) == activeOrigin
 		}
-		payload, _ := json.Marshal(struct {
-			Type        string `json:"type"`
-			URL         string `json:"url"`
-			BearerToken string `json:"bearer_token"`
-			CSRFToken   string `json:"csrf_token"`
-		}{
-			Type:        "groxy-desk-session",
-			URL:         sess.URL,
-			BearerToken: sess.BearerToken,
-			CSRFToken:   sess.CSRFToken,
+		releaseResearch, err := isolateBrowser(research, allowsResearch, allowsResearch, true, func() {
+			browserSession++
+			brandPreview.page, brandPreview.organization = "", ""
 		})
-		_ = sender.PostWebMessageAsString(string(payload))
+		if err != nil {
+			return err
+		}
+		defer releaseResearch()
+		_ = research.Hide()
+	}
+	notify := func(sender *edge.ICoreWebView2, payload any) {
+		raw, err := json.Marshal(payload)
+		if err == nil {
+			_ = sender.PostWebMessageAsString(string(raw))
+		}
+	}
+	setBrowserState := func(sender *edge.ICoreWebView2, origin, message string) {
+		browserSession++
+		brandPreview.page, brandPreview.organization = "", ""
+		activeOrigin = origin
+		if proxy != nil {
+			proxy.setOrigin(origin)
+		}
+		windowTitle := title
+		if origin != "" {
+			windowTitle, _ = windows.UTF16PtrFromString("Groxy Desk - " + origin)
+		}
+		_, _, _ = procSetWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(windowTitle)))
+		runtime.KeepAlive(windowTitle)
+		resize(hwnd)
+		notify(sender, map[string]string{"type": "groxy-browser-status", "origin": origin, "message": message})
 	}
 
-	if !chromium.Embed(hwnd) {
-		if embedErr != nil {
-			return embedErr
+	chromium.MessageCallback = func(raw string, sender *edge.ICoreWebView2, args *edge.ICoreWebView2WebMessageReceivedEventArgs) {
+		// WebMessageReceived on ICoreWebView2 is the top-level handler. Match both
+		// the message's document and the controller's current source.
+		if sender == nil || args == nil {
+			return
 		}
-		return errors.New("failed to embed WebView2 controller")
+		source, err := args.GetSource()
+		current, currentErr := sender.GetSource()
+		if err != nil || currentErr != nil || !trustedWorkbenchSource(source, sess.URL) || !trustedWorkbenchSource(current, sess.URL) {
+			return
+		}
+		cmd, ok := decodePaneCommand(raw)
+		if !ok {
+			return
+		}
+		switch cmd.Type {
+		case "groxy-desk-ready":
+			notify(sender, map[string]string{"type": "groxy-desk-session", "url": sess.URL, "bearer_token": sess.BearerToken, "csrf_token": sess.CSRFToken})
+		case "groxy-browser-open":
+			origin := origins.match(cmd.URL)
+			if origin == "" || research == nil {
+				notify(sender, map[string]string{"type": "groxy-browser-status", "origin": activeOrigin, "message": "GRAB-E402: This browser origin is outside the configured HTTPS allowlist."})
+				return
+			}
+			setBrowserState(sender, origin, "")
+			_ = research.Show()
+			research.Navigate(cmd.URL)
+		case "groxy-browser-close":
+			if research != nil {
+				_ = research.Hide()
+			}
+			setBrowserState(sender, "", "")
+		case "groxy-browser-resize":
+			width = cmd.Width
+			resize(hwnd)
+		case "groxy-browser-capture", "groxy-browser-brand-preview", "groxy-browser-brand-prefill":
+			if research == nil || activeOrigin == "" || selectionHandler.complete != nil {
+				return
+			}
+			view, err := research.GetController().GetCoreWebView2()
+			if err != nil {
+				return
+			}
+			defer view.Release()
+			page, err := view.GetSource()
+			origin := activeOrigin
+			if err != nil || origins.match(page) != origin {
+				return
+			}
+			operation := readBrowserSelection
+			switch cmd.Type {
+			case "groxy-browser-brand-preview":
+				brandPreview.page, brandPreview.organization = "", ""
+				file, readErr := files.ReadFile(brandDNAPath)
+				organization, parseErr := brandOrganization(file.Content)
+				if readErr != nil || parseErr != nil {
+					notify(sender, map[string]string{"type": "groxy-browser-brand", "message": "Set a business name in the Groxy AI Brand DNA wizard before using prefill."})
+					return
+				}
+				brandPreview.page, brandPreview.organization = page, organization
+				notify(sender, map[string]string{"type": "groxy-browser-brand", "origin": origin, "organization": organization})
+				return
+			case "groxy-browser-brand-prefill":
+				preview := brandPreview
+				brandPreview.page, brandPreview.organization = "", ""
+				if preview.page != page || preview.organization == "" {
+					notify(sender, map[string]string{"type": "groxy-browser-brand", "message": "The page changed. Review the business name again before filling."})
+					return
+				}
+				operation = prefillBrandOrganization(page, preview.organization)
+			}
+			session := browserSession
+			selectionHandler.complete = func(text string) {
+				if session != browserSession {
+					return
+				}
+				currentView, err := research.GetController().GetCoreWebView2()
+				if err != nil {
+					return
+				}
+				defer currentView.Release()
+				if current, err := currentView.GetSource(); err != nil || current != page {
+					return
+				}
+				workbenchView, err := chromium.GetController().GetCoreWebView2()
+				if err != nil {
+					return
+				}
+				defer workbenchView.Release()
+				if current, err := workbenchView.GetSource(); err != nil || !trustedWorkbenchSource(current, sess.URL) {
+					return
+				}
+				if cmd.Type == "groxy-browser-brand-prefill" {
+					message := "No single empty organization field was available."
+					if text == "filled" {
+						message = "Business name filled. Review the form in the browser before submitting."
+					}
+					notify(workbenchView, map[string]string{"type": "groxy-browser-brand", "message": message})
+					return
+				}
+				notify(workbenchView, map[string]string{"type": "groxy-browser-selection", "origin": origin, "text": text})
+			}
+			if err := runFixedBrowserOperation(view, operation, selectionHandler); err != nil {
+				selectionHandler.complete = nil
+				notify(sender, map[string]string{"type": "groxy-browser-status", "origin": origin, "message": "Could not complete the requested browser action."})
+			}
+		}
 	}
 
 	_, _, _ = procShowWindow.Call(hwnd, swShowDefault)
 	_, _, _ = procUpdateWindow.Call(hwnd)
 	_ = chromium.Show()
-	chromium.Resize()
+	resize(hwnd)
 	chromium.Navigate(sess.URL + "/")
 
 	var m winMsg

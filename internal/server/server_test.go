@@ -244,9 +244,9 @@ func TestHTTPGroxyPlanApplyReplayRestoreAndGrabmanPlanGate(t *testing.T) {
 
 	// Verify grabman init cannot run without valid approval_token
 	r, initFailBody, _ := doAPIReq(t, http.MethodPost, sess.URL+"/api/grabman/init", sess.BearerToken, sess.CSRFToken, map[string]any{
-		"target_dir":  "subproj",
-		"profile":     "app",
-		"edge_proxy":  "caddy",
+		"target_dir":     "subproj",
+		"profile":        "app",
+		"edge_proxy":     "caddy",
 		"approval_token": "",
 	})
 	if r.StatusCode != 403 {

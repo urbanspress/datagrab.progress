@@ -35,6 +35,8 @@ const (
 	CodeDeskE503 = "DESK-E503"
 )
 
+const CodeWriteFenceUnavailable = "write_fence_unavailable"
+
 // DeskError carries a stable diagnostic code, HTTP status, and plain-English message.
 type DeskError struct {
 	Code    string

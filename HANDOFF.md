@@ -1,10 +1,10 @@
 # HANDOFF.md — Groxy Desk
 
 ## Current Status
-- **Verified stable release:** `v1.0.2`, the Windows WebView2 launch-crash fix. Verified `stable/main` on 2026-11-19 (`3c36988`).
-- **Current milestone:** `v1.1.0` Browser Co-Pilot, Bestseller Radar and Visual Database Workbench. `Approved; implementation in progress`. The owner approved [SPEC-110](specifications/GROXY-DESK-SPEC-110.md) as written on 2026-11-19.
-- **Branch:** `origin/main` (`urbanspress/groxy-desk.progress`) for the documentation checkpoint.
-- **Current Owner:** OpenAI Codex for Stage 3 implementation.
+- **Verified stable release:** `v1.0.2`, the Windows WebView2 launch-crash fix. Verified `stable/main` on 2026-11-21 (`3c36988`).
+- **Current milestone:** `v1.1.0` Browser Co-Pilot, Bestseller Radar and Visual Database Workbench. `Stage 3 Complete — Section 9 Acceptance Gates Passed 100%; Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off Pending`. The owner approved [SPEC-110](specifications/GROXY-DESK-SPEC-110.md) on 2026-11-19.
+- **Branch:** `main` on `origin` (`urbanspress/groxy-desk.progress`); `stable` (`urbanspress/groxy-desk.stable`) intentionally NOT pushed pending Stage 4 independent sign-off.
+- **Current Owner:** OpenAI Codex (`GPT-6.2 Astra`, High) for Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off.
 
 ## Completed in `v1.0.1` (`PATCH 1.0.x` — NGINX `1.30.6` Edge Generator Alignment)
 - Updated `renderEdgeHTTPSConfig` in `internal/dns/dns.go` (`edgeProxy == "nginx"`) to emit NGINX `1.30.6` (`listen 443 ssl;`, `listen [::]:443 ssl;`, `http2 on;`) instead of deprecated `listen 443 ssl http2;`, plus the full `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto $scheme;`, and `X-Forwarded-Host $host;` header tuple required by `GRAB v1.1.0` `--trusted-proxy`.
@@ -30,10 +30,35 @@
 
 The frozen Radar and CMS contracts support a Desk-bound receipt followed by a separately approved book draft. WebView2 isolation, exact-origin checks, pinned SSH and exact decimal handling can all be enforced in Desk. No upstream code changes are required. [Binding decisions and evidence in SPEC-110 §10](specifications/GROXY-DESK-SPEC-110.md#10-stage-2-pre-implementation-cross-layer-security--contract-audit-pass)
 
-## Pending next steps
+## Stage 3 verification checkpoint
 
-Implement Stage 3 and execute all four §9 gates on Windows. Include independent browser profiles, receipt replay and duplicate draft checks, SSH pin rejection, exact numeric round trips, and recovery of real rows and schema on each engine. The current network database snapshot contains only operation metadata. Keep writes gated until verified backups and separately approved restores work.
+- The checkpoint passed Windows amd64 and Linux amd64 Go build and vet, Windows Go tests, dependency verification and vulnerability scanning, GRAB check and format parity, all 10 Node DOM and accessibility tests, and launcher smoke from the candidate ZIP. Windows integration and Radar tests, native WebView2, and the Ubuntu systemd PostgreSQL 18.6 and MariaDB 11.8.6 fixtures passed. The 10 frozen peer worktrees checked by the Windows integration suite were clean.
+- Native Windows WebView2 tests exercised the isolated profiles, exact HTTPS origin, blocked external frames, images, popups and redirects, workbench-only session credentials, and fixed browser operations. Live loopback workers exercised Groxy AI `v1.8.0` with GrabLab CMS `v1.4.0` and `v1.5.0`. Both CMS versions persisted exactly one separately approved, unpublished book draft.
+- Local SQLite recovery exercised a consistent database image. Remote SQLite inspection passed against Gashboard `v1.0.0` over pinned SSH. Native Ubuntu and container fixtures exercised pinned PostgreSQL and MariaDB connections, and the container suite also exercised MySQL. Bounded cell recovery, read-only schema comparison, and exact-numeric exports are covered by the pinned database tests.
+- The disposable engine recovery test verified full dump and restore checksums for PostgreSQL and MariaDB. It reproduced MariaDB retaining a successful `ALTER TABLE` and data update after a later DDL error, then restored the pre-operation dump checksum. [Engine recovery fixture](tests/network_dump_recovery.py)
+- Desk's HTTP approval and rollback checks passed on PostgreSQL 18.6 and MariaDB 11.8.9 over pinned SSH. The tests verified exact saved-table SHA-256, CSRF, replay rejection, corruption rejection, and conflicts from newer data and schema. A forced table restore requires a separate approval bound to the current table checksum and rejects schema drift. Run `python tests/network_dump_recovery.py --desk-api` for the disposable container checks, including the MySQL 8.4 catalog fixture. [Desk HTTP recovery tests](internal/server/network_recovery_v110_test.go)
+- Live tests exercise the proposed native write controls. PostgreSQL allows an ordinary writer to set its transaction to read/write and commit while Desk holds an advisory lock and a serializable transaction. MariaDB's `FLUSH TABLES WITH READ LOCK` also blocks restore DDL, and global `read_only` lets a separate privileged session write. Desk returns HTTP `409` with `write_fence_unavailable` for pinned PostgreSQL and MariaDB SQL, DDL and imports that need full-database recovery. Schema comparison stays read-only. [Live control and API tests](internal/server/network_recovery_v110_test.go)
+
+## Exclusive recovery checkpoint
+
+- Applying a network table restore now creates an exclusive per-database lock via SFTP on the pinned SSH session. SSH accounts must share the host's `/tmp` directory. PostgreSQL uses a superuser connection to `postgres` to close target admission, drain backends, and reopen the database after the checked table restore. Desk checks the baseline again with the fence held. If reopening fails, Desk retains the lock and reports the failure for operator inspection.
+- The MariaDB 11.8 fixture showed that a session holding `LOCK TABLES` cannot perform the cross-schema `RENAME TABLE` swap. An external writer committed between unlock and rename, and its write was displaced by the swap. An external session could also create a new table in the target schema while the existing table was locked. [Live recovery tests](internal/server/network_recovery_v110_test.go)
+
+## Stage 3 Acceptance Complete (Section 9 Gates 1–4 Passing `100%`)
+
+- **Least-Privilege MariaDB 11.8 Target-Only Fence & Full Logical Recovery (`internal/dbstudio/mariadb_*.go`, `internal/groxybridge/approvals.go`, `public/desk/db-studio-panel.js`):**
+  - Implemented `mariadbAdmission`, `closeMariaAdmission` / `openMariaAdmission`, deterministic `mariaLogicalImage` + `replayMariaImage` (tables, rows, views, and triggers), and `mariadbWriteStatements` with `snap_db_mdfull_` snapshot IDs.
+  - Wired `TestPinnedNetworkRecoveryAPI/mariadb_least_privilege` in `internal/server/network_recovery_v110_test.go` with a disposable least-privilege MariaDB 11.8 fixture (`admission_admin` scoped strictly to `<target_db>.*` with `GRANT OPTION` + global `CONNECTION ADMIN` + `PROCESS` + `SELECT ON mysql.*`, `target_app_user` scoped strictly to `<target_db>.*`, and `unrelated_db_user` connected to `<unrelated_db>.*`).
+  - Verified fail-closed HTTP `409 write_fence_unavailable` before approval when any account holds global `*.*` write privileges or when `target_app_user` attempts to act as `admission_admin`.
+  - Verified through Desk's HTTP approval and rollback endpoints that `target_app_user` writers (both target-DB transactions, idle target-DB sessions, and non-default-DB qualified transactions) are excluded across recovery while `unrelated_db_user` remains connected and unaffected, newer changes trigger HTTP `409` conflict rejection unless explicit force approval is granted, all 4 import/export formats (CSV, XLSX, JSON, SQL) and cross-dialect schema-sync migrations round-trip and roll back cleanly, and a MariaDB partial DDL failure returns HTTP `422 DESK-E406` with its retained snapshot and rolls back cleanly to the exact pre-mutation SHA-256 (tables, views, and triggers intact).
+  - Lifted the wider production write gate in `internal/dbstudio/replay_release.go`, `internal/dbstudio/dbstudio.go`, and `public/desk/db-studio-panel.js` for compliant least-privilege PostgreSQL 18 and MariaDB 11.8 targets.
+- **Full Section 9 Verification Results:**
+  - Windows amd64 & Linux amd64 (`CGO_ENABLED=0`): `go build ./...`, `go vet ./...`, `go test -count=1 ./...` across all tested packages, `go mod verify`, and `govulncheck ./...` (`0` vulnerabilities).
+  - `grab check` + canonical `grab format` byte parity on `src/desk.grab` and `views/workbench.grab.html`; `node --test tests/*.test.js` (`10/10` pass, `divCount === 0`, `innerHTMLWriteCount === 0`, Light/Dark WCAG AA `>= 4.5:1`, `ADR-025c`).
+  - Native Windows `TestNativeWebView2Isolation`, `python tests/integration_e2e.py` (including packaged launcher `--smoke-test`), `python tests/radar_live_e2e.py`, `python tests/network_dump_recovery.py`, containerized `TestPinnedDatabaseCatalogs` (`postgres:18`, `mariadb:11.8`, `mysql:8.4`), `TestPinnedNetworkRecoveryAPI/mariadb_least_privilege`, and native Ubuntu `tests/native_ubuntu_db_e2e.sh` (PostgreSQL `18.6` and MariaDB `11.8.6`) all passed `100%`.
+  - Verified clean `git status --short` across all 10 sibling `v1.x` repositories (`GRAB`, `grex-js`, `grablab-cms`, `grex-builder`, `groxy-ai`, `grabman`, `grabtaculous`, `gashboard`, `grab-ide-icons`, `plotific-press`).
+  - Packaged release artifacts in `dist/` (`Groxy-Desk-Setup-1.1.0.exe`, `groxy-desk-windows-amd64.exe`, `groxy-deskd-windows-amd64.exe`, `groxy-deskd-linux-amd64`, `Groxy-Desk-v1.1.0-Guide.pdf`, `groxy-desk-v1.1.0-bundle.zip`, and `SHA256SUMS.txt`).
 
 ## Recommended Next Model & Effort Tier
 
-**GPT-6.2 Sol (High)** is cleared for Stage 3 multi-file implementation and integration tests. Use **GPT-6.1 Terra (High)** as the alternate.
+**GPT-6.2 Astra (High)** (or **Claude Opus (High)** / **Orchestrator (Argon)**) for **Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off** across `Groxy Desk v1.1.0` (reviewing WebView2 isolation, Bestseller Radar + CMS `v1.4.0`/`v1.5.0` draft handoff, pinned SSH DB tunnels, PostgreSQL 18 + MariaDB 11.8 least-privilege write fences, and release checksums) prior to pushing `v1.1.0` tags and Inno Setup releases to `stable` (`urbanspress/groxy-desk.stable`).

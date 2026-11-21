@@ -3,16 +3,26 @@
 ![Built with GRAB v1.1.0](docs/badges/built-with-grab.svg)
 ![Powered by Grex JS v1.0.0](docs/badges/powered-by-grex-js.svg)
 ![GRAB Ecosystem Step 6 — Groxy Desk](docs/badges/ecosystem-step-6.svg)
-![Release v1.0.1 GA](docs/badges/release-v1.0.1.svg)
+![Release v1.2.0](docs/badges/release-v1.2.0.svg)
 
 **Groxy Desk** is the native desktop vibe-coding IDE, local `Grisp` (`grab.exe`) multi-worker supervisor, `grabman v1.0.0` workspace manager, Unified **`Groxy AI`** Adaptive Reasoning studio, and Step 5 Fleet / DB Explorer / DNS / Author Workbench for **Step 6 of the Post-1.0 GRAB Ecosystem**.
 
-- **Current Status:** `v1.0.1` GA (`PATCH 1.0.x`) — **Approved & Frozen — Complete** (See [`CHANGELOG.md`](CHANGELOG.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), [`specifications/GROXY-DESK-SPEC-101.md`](specifications/GROXY-DESK-SPEC-101.md), [`specifications/GROXY-DESK-SPEC-100.md`](specifications/GROXY-DESK-SPEC-100.md), and the [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.0.1-Guide.pdf))
-- **Built Strictly Upon Frozen Baselines:** `GRAB v1.1.0`, `Grex JS v1.0.0`, `GrabLab CMS v1.0.1`, `Grex Theme Builder v1.0.0`, `Groxy AI v1.0.0`, `grabman v1.0.0`, `Grabtaculous v1.1.0`, and `Gashboard v1.0.0`.
+- **Current Status:** `v1.2.0` (`MINOR 1.x.0`) — **Stage 3 Implementation & Verification Complete (Stage 4 Sign-Off Pending)** (See [`CHANGELOG.md`](CHANGELOG.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), [`specifications/GROXY-DESK-SPEC-120.md`](specifications/GROXY-DESK-SPEC-120.md), and the [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.2.0-Guide.pdf))
+- **Built Strictly Upon Frozen Baselines:** `GRAB v1.1.0`, `Grex JS v1.0.0`, `GrabLab CMS v1.0.1`, `Grex Theme Builder v1.0.0`, `Groxy AI v1.0.0`, `grabman v1.0.0`, `Grabtaculous v1.1.0`, and `Gashboard v1.0.0` (with optional `Groxy AI v1.8.0` Bestseller Radar & `GrabLab CMS v1.4.0`/`v1.5.0` draft handoff).
 
 ---
 
-## Key Features (`v1.0.1` Production Patch & `v1.0.0` GA)
+## Key Features (`v1.2.0` — 3-Tab Dedicated Workspace Studio)
+- **Sticky Top 3-Tab Workspace Switcher & Offline `Urbanist` Typography (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`):**
+  - Sticky `.desk-header` with locally bundled `Urbanist` (`.woff2`) UI typography (zero external CDN requests), Light/Dark WCAG AA (`>= 4.5:1`) toggle, wrapping `ArrowLeft`/`ArrowRight` + `Home`/`End` WAI-ARIA tablist navigation, and strictly allowlisted `#studio=database|browser|code` URL hash + `sessionStorage` persistence (`browser_policy.go` fragment-aware IPC).
+- **Tab 1 — `Database Studio` (DbGate 3-Pane Full-Height Workspace):**
+  - Saved/active `PostgreSQL`, `MariaDB`, and `SQLite` connections + expandable `Tables`/`Views`/`Triggers` schema tree on the left; focused action toolbar + multi-tab autocomplete SQL editor over spreadsheet-style data grid in the center; `ADR-025c` exact-decimal row/cell editor + `GROXY-SAFE-001` snapshot guard & approval drawer on the right.
+- **Tab 2 — `Browser & Radar` (Full-Height 50/50 Split Pane):**
+  - Isolated WebView2 allowlisted browser with live `GRAB-E402` origin-lock badge on the left; Bestseller Radar niche explorer, `BRAND-DNA.md` organization prefill preview, and separately approved `GrabLab CMS` draft handoff (`status_enforced: "draft"`) on the right.
+- **Tab 3 — `Code & Grex Studio` (Clean 3-Pane Vibe-Coding Studio):**
+  - Confined workspace explorer, `grabman v1.0.0` tools, and collapsible `Grisp` / Step 5 / DNS / Author accordions on the left; `.grab`/`.html` workbench + responsive `Grex` preview canvas in the center; Unified `Groxy AI` co-pilot, 22-rule audit scorecard, and Pre-Mutation Snapshots on the right.
+
+## Key Features (`v1.1.0`, `v1.0.1` & `v1.0.0` GA)
 - **NGINX `1.30.6` (`http2 on;`) & `GRAB v1.1.0` `--trusted-proxy` Edge Alignment (`v1.0.1` / `GROXY-DESK-SPEC-101.md`):**
   - Updated `renderEdgeHTTPSConfig` in `internal/dns/dns.go` to emit `listen 443 ssl;`, `listen [::]:443 ssl;`, `http2 on;`, and the complete `Host` / `X-Real-IP` / `X-Forwarded-For` / `X-Forwarded-Proto` / `X-Forwarded-Host` header tuple for seamless compatibility with **Grabtaculous `v1.1.0`** official `nginx.org` NGINX `1.30.6`.
 - **Branded Windows Inno Setup 6 Installer (`dist/Groxy-Desk-Setup-1.0.1.exe` / `installer/groxy-desk.iss`):**
@@ -52,7 +62,7 @@
 
 ```powershell
 # Install on Windows via Branded Inno Setup 6 Installer (.exe only, never .msi)
-.\dist\Groxy-Desk-Setup-1.0.1.exe
+.\dist\Groxy-Desk-Setup-1.2.0.exe
 
 # Launch headless smoke verification
 go run ./cmd/groxy-desk --smoke-test --addr 127.0.0.1:0
@@ -85,5 +95,5 @@ node --test tests/*.test.js
 python tests/integration_e2e.py
 
 # Build dist binaries, PDF walkthrough guide, Inno Setup installer, bundle zip, and SHA256SUMS.txt
-python scripts/package_release.py --version 1.0.1
+python scripts/package_release.py --version 1.2.0 --grabman-bin dist/grabman-v1.0.0.exe
 ```

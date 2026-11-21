@@ -203,6 +203,12 @@ class ShimElement {
     await this.dispatchEvent({ type: "click" });
   }
 
+  focus() {
+    if (this.ownerDocument) {
+      this.ownerDocument.activeElement = this;
+    }
+  }
+
   querySelectorAll(selector) {
     const results = [];
     const parts = String(selector)

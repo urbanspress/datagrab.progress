@@ -266,3 +266,31 @@ func TestHTTPGroxyPlanApplyReplayRestoreAndGrabmanPlanGate(t *testing.T) {
 		t.Fatalf("grabman/init/plan failed: %d %v", r.StatusCode, planBody)
 	}
 }
+
+func TestStaticPublicServesWoff2WithCorrectMIME(t *testing.T) {
+	srv, _, _ := setupTestServer(t)
+	srv.publicFS = os.DirFS(filepath.Join("..", "..", "public"))
+	sess := srv.Session()
+
+	for _, rel := range []string{
+		"/public/desk/fonts/urbanist-latin-400-normal.woff2",
+		"/public/desk/fonts/urbanist-latin-500-normal.woff2",
+		"/public/desk/fonts/urbanist-latin-600-normal.woff2",
+		"/public/desk/fonts/urbanist-latin-700-normal.woff2",
+	} {
+		resp, err := http.Get(sess.URL + rel)
+		if err != nil {
+			t.Fatalf("GET %s failed: %v", rel, err)
+		}
+		_ = resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("GET %s status=%d, want 200", rel, resp.StatusCode)
+		}
+		if got := resp.Header.Get("Content-Type"); got != "font/woff2" {
+			t.Fatalf("GET %s Content-Type=%q, want font/woff2", rel, got)
+		}
+		if got := resp.Header.Get("X-Content-Type-Options"); got != "nosniff" {
+			t.Fatalf("GET %s X-Content-Type-Options=%q, want nosniff", rel, got)
+		}
+	}
+}

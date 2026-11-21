@@ -366,7 +366,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, map[string]any{
 		"status":       "ok",
 		"service":      "groxy-desk",
-		"version":      "1.1.0",
+		"version":      "1.2.0",
 		"bind":         s.Addr(),
 		"worker_count": strconv.Itoa(len(workers)),
 	})
@@ -429,6 +429,10 @@ func (s *Server) handleStaticPublic(w http.ResponseWriter, r *http.Request) {
 		ctype = "text/css; charset=utf-8"
 	case ".svg":
 		ctype = "image/svg+xml"
+	case ".woff2":
+		ctype = "font/woff2"
+	case ".woff":
+		ctype = "font/woff"
 	default:
 		if ctype == "" {
 			ctype = "application/octet-stream"

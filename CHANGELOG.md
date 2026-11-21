@@ -4,6 +4,33 @@ All notable releases of **Groxy Desk** (Step 6 of the GRAB Post-1.0 Ecosystem) a
 
 ---
 
+## `v1.2.0` — 2026-11-21
+
+### Release Type & Affected Layers
+- **Release Version & SemVer Tier:** `v1.2.0` (`MINOR 1.x.0` — Backwards-Compatible Feature Release)
+- **Affected Layer(s):** `Groxy Desk` (`urbanspress/groxy-desk`)
+- **Neighboring Layer Upgrade Required?** `No — 100% drop-in compatible`
+
+| Ecosystem Layer | Repository | Required Version Range | Touched in This Release? | Neighbor Upgrade Required? |
+|---|---|---|---|---|
+| **Core Language, Bytecode VM & Grisp Server** | `urbanspress/grab` | `>= v1.1.0 (< v2.0.0)` | `No` | `No` |
+| **Reactive Frontend Runtime & 20-Element Library** | `urbanspress/grex-js` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Flagship Zero-Plugin CMS** | `urbanspress/grablab-cms` | `>= v1.0.1 (< v2.0.0)` (`v1.4.0`/`v1.5.0` for optional book drafts) | `No` | `No` |
+| **Exclusive `mode: "visual"` Theme & Studio** | `urbanspress/grex-builder` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Autonomous Design, Content & SEO Agent** | `urbanspress/groxy-ai` | `>= v1.0.0 (< v2.0.0)` (`v1.8.0` for optional Bestseller Radar) | `No` | `No` |
+| **Scaffolder, Orchestrator & Discreet VPS Panel** | `urbanspress/grabman`, `urbanspress/grabtaculous`, `urbanspress/gashboard` | `>= v1.0.0 (< v2.0.0)` (bundle pins `grabman v1.0.0`) | `No` | `No` |
+| **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v1.2.0 (< v2.0.0)` | `Yes` | `No` |
+
+### Added & Verified (`SPEC-120` Stage 3 Acceptance Complete — Stage 4 Sign-Off Pending)
+- **Sticky Top 3-Tab Studio Switcher & Offline `Urbanist` Typography (`views/workbench.grab.html`, `public/desk/workbench.js`, `public/desk/desk.css`, `internal/server/server.go`, `cmd/groxy-desk/browser_policy.go`):**
+  - Bundled `Urbanist` (`400`/`500`/`600`/`700`) `.woff2` fonts locally under `public/desk/fonts/`, added `font/woff2` + `font/woff` MIME mapping in `handleStaticPublic`, and replaced `--desk-border` with `var(--grex-border)` in `public/desk/desk.css`.
+  - Built sticky top `.desk-header` with `nav[role="tablist"]` (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`), wrapping `ArrowLeft`/`ArrowRight` + `Home`/`End` keyboard navigation, allowlisted `#studio=database|browser|code` URL hash + `sessionStorage` (`groxy_desk_active_studio`) persistence, and fragment-allowlisted `trustedWorkbenchSource` validation in `browser_policy.go`.
+- **Three Full-Viewport Semantic Tabpanels (`<main id="desk-workspace-stage">`, Pure `Grex JS v1.0.0`, `divCount === 0`):**
+  - **Tab 1 (`#desk-panel-database`):** DbGate-parity 3-pane Database Studio with saved/active connections + expandable `Tables`/`Views`/`Triggers` tree on the left, focused action toolbar (`Run Query`, `Browse table rows`, `Inspect schema`, `Export CSV/XLSX/JSON/SQL`, `ER Diagram`, `Schema Diff`, `Undo Snapshot`) + multi-tab SQL editor & spreadsheet grid in the center (fixing `<h4>` -> `<h5>` ER heading hierarchy), and `ADR-025c` exact-decimal cell editor + `GROXY-SAFE-001` approval/rollback drawer on the right.
+  - **Tab 2 (`#desk-panel-browser`):** 50/50 split pane with isolated WebView2 browser + `GRAB-E402` origin lock badge on the left, and Bestseller Radar + `BRAND-DNA.md` prefill preview + `GrabLab CMS` draft handoff on the right.
+  - **Tab 3 (`#desk-panel-code`):** Clean 3-pane vibe-coding studio with workspace explorer + `grabman` + collapsible `Grisp`/Step 5/DNS/Author accordions on the left, `.grab`/`.html` workbench + responsive `Grex` preview canvas in the center, and Unified `Groxy AI` + 22-rule scorecard + Pre-Mutation Snapshots on the right.
+- Verified `100%` across Go build/vet (Windows & Linux `CGO_ENABLED=0`), `go mod verify`, `govulncheck ./...` (`0` vulnerabilities), `go test -count=1 ./...`, `grab check` + `grab format` byte parity, `node --test tests/*.test.js` (`13/13` pass), `TestNativeWebView2Isolation`, `tests/integration_e2e.py`, `tests/radar_live_e2e.py`, `tests/network_dump_recovery.py`, and clean `git status --short` across all 10 sibling repositories. [Release Notes](docs/releases/pdf/Groxy-Desk-v1.2.0-RELEASE-NOTES.md)
+
 ## `v1.1.0` — 2026-11-21
 
 ### Release Type & Affected Layers

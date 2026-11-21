@@ -1,5 +1,5 @@
 /**
- * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.1.0.
+ * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.2.0.
  * Zero wrapper elements, zero raw DOM writes, zero unsafe script calls, sole Groxy AI identity.
  */
 import { ForEach, effect, renderNode, signal } from "../grex/grex.js";
@@ -20,6 +20,36 @@ import {
 import { createSupervisorPanelNode } from "./supervisor-panel.js";
 import { applyDeskTheme, resolveInitialTheme } from "./theme.js";
 import { createWorkspacePanelNode } from "./workspace-panel.js";
+
+const STUDIO_MODES = ["database", "browser", "code"];
+const STUDIO_SET = new Set(STUDIO_MODES);
+const STUDIO_STORAGE_KEY = "groxy_desk_active_studio";
+
+export function parseStudioHash(rawHash) {
+  const m = /^#studio=(database|browser|code)$/.exec(String(rawHash || "").trim());
+  return m ? m[1] : "";
+}
+
+function resolveInitialStudio(options, win) {
+  if (options && STUDIO_SET.has(options.initialStudio)) {
+    return options.initialStudio;
+  }
+  const fromHash = win && win.location ? parseStudioHash(win.location.hash) : "";
+  if (fromHash) {
+    return fromHash;
+  }
+  if (win && win.sessionStorage && typeof win.sessionStorage.getItem === "function") {
+    try {
+      const saved = win.sessionStorage.getItem(STUDIO_STORAGE_KEY);
+      if (STUDIO_SET.has(saved)) {
+        return saved;
+      }
+    } catch {
+      // Ignore storage failures in restricted contexts.
+    }
+  }
+  return "code";
+}
 
 const DEFAULT_STYLE_PACKS = [
   { id: "emerald-editorial", label: "Emerald Editorial" },
@@ -42,6 +72,7 @@ const DEFAULT_BLUEPRINTS = [
 
 export function mountGroxyDeskWorkbench(rootEl, options = {}) {
   const doc = options.document || globalThis.document;
+  const win = options.window || globalThis.window;
   if (!rootEl) {
     throw new Error("mountGroxyDeskWorkbench requires a root DOM element.");
   }
@@ -57,6 +88,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
 
   const store = {
     themeMode: signal(resolveInitialTheme(doc)),
+    activeStudio: signal(resolveInitialStudio(options, win)),
     sessionReady: signal(apiClient.hasSession()),
     treeEntries: signal(options.initialEntries || []),
     activePath: signal(options.initialActivePath || "src/desk.grab"),
@@ -94,6 +126,62 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     authorPlan: signal(null),
     ollamaStatus: signal(null),
   };
+
+  function setActiveStudio(nextStudio, persist = true) {
+    if (!STUDIO_SET.has(nextStudio)) {
+      return false;
+    }
+    store.activeStudio.set(nextStudio);
+    if (persist) {
+      if (win && win.sessionStorage && typeof win.sessionStorage.setItem === "function") {
+        try {
+          win.sessionStorage.setItem(STUDIO_STORAGE_KEY, nextStudio);
+        } catch {
+          // Ignore storage failures in restricted contexts.
+        }
+      }
+      if (win && win.location) {
+        try {
+          const targetHash = `#studio=${nextStudio}`;
+          if (win.location.hash !== targetHash) {
+            win.location.hash = targetHash;
+          }
+        } catch {
+          // Ignore location hash failures in restricted contexts.
+        }
+      }
+    }
+    return true;
+  }
+
+  function handleTablistKeydown(ev) {
+    const key = ev && ev.key;
+    if (!key) return;
+    const current = store.activeStudio.peek();
+    const idx = Math.max(0, STUDIO_MODES.indexOf(current));
+    let nextIdx = null;
+    if (key === "ArrowRight") {
+      nextIdx = (idx + 1) % STUDIO_MODES.length;
+    } else if (key === "ArrowLeft") {
+      nextIdx = (idx - 1 + STUDIO_MODES.length) % STUDIO_MODES.length;
+    } else if (key === "Home") {
+      nextIdx = 0;
+    } else if (key === "End") {
+      nextIdx = STUDIO_MODES.length - 1;
+    }
+    if (nextIdx === null) return;
+    if (typeof ev.preventDefault === "function") {
+      ev.preventDefault();
+    }
+    const targetStudio = STUDIO_MODES[nextIdx];
+    setActiveStudio(targetStudio);
+    if (doc && typeof doc.querySelector === "function") {
+      const targetBtn = doc.querySelector(`#desk-tab-${targetStudio}`);
+      if (targetBtn && typeof targetBtn.focus === "function") {
+        targetBtn.focus();
+      }
+    }
+  }
 
   async function refreshTree(dir = ".") {
     if (!apiClient.hasSession()) return [];
@@ -418,6 +506,124 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     store.themeMode.set(applied);
   };
 
+  const studioTab = (id, label) => ({
+    type: "Button",
+    id: `desk-tab-${id}`,
+    attrs: {
+      id: `desk-tab-${id}`,
+      role: "tab",
+      "aria-controls": `desk-panel-${id}`,
+      "aria-selected": () => (store.activeStudio.get() === id ? "true" : "false"),
+      tabindex: () => (store.activeStudio.get() === id ? "0" : "-1"),
+    },
+    className: () => (store.activeStudio.get() === id ? "desk-tab desk-tab-active" : "desk-tab"),
+    props: {
+      type: "button",
+      text: label,
+      onClick: () => setActiveStudio(id),
+    },
+  });
+
+  const studioTabpanel = (id, title, children) => ({
+    type: "Section",
+    tag: "section",
+    id: `desk-panel-${id}`,
+    attrs: {
+      id: `desk-panel-${id}`,
+      role: "tabpanel",
+      "aria-labelledby": `desk-tab-${id}`,
+      tabindex: "0",
+      hidden: () => store.activeStudio.get() !== id,
+      "aria-hidden": () => (store.activeStudio.get() !== id ? "true" : "false"),
+    },
+    className: "desk-tabpanel",
+    children: [
+      {
+        type: "Heading",
+        className: "desk-tabpanel-heading",
+        props: { level: 2, text: title },
+      },
+      ...children,
+    ],
+  });
+
+  const snapshotsCard = {
+    type: "Card",
+    tag: "section",
+    id: "desk-snapshots-card",
+    attrs: { id: "desk-snapshots-card" },
+    className: "desk-card",
+    children: [
+      {
+        type: "Heading",
+        props: { level: 3, text: "Pre-Mutation Snapshots" },
+      },
+      ForEach(
+        {
+          items: store.snapshots,
+          key: (s) => s.snapshot_id,
+          parent: {
+            type: "Section",
+            tag: "section",
+            className: "desk-list",
+            props: { label: "Recorded Safety Snapshots" },
+          },
+          empty: () => ({
+            type: "Text",
+            tag: "p",
+            className: "desk-muted",
+            props: { text: "No pre-mutation snapshots captured yet." },
+          }),
+          render: (snapSig) => {
+            const snapId = snapSig.peek().snapshot_id;
+            return {
+              type: "Card",
+              tag: "article",
+              className: "desk-card",
+              children: [
+                {
+                  type: "Text",
+                  tag: "strong",
+                  props: {
+                    text: () => {
+                      const s = snapSig.get();
+                      return `${s.snapshot_id} -> ${s.target_path}`;
+                    },
+                  },
+                },
+                {
+                  type: "Text",
+                  tag: "span",
+                  className: "desk-muted",
+                  props: {
+                    text: () => {
+                      const s = snapSig.get();
+                      return `Bytes: ${s.byte_length} | Restored: ${s.restored}`;
+                    },
+                  },
+                },
+                {
+                  type: "Button",
+                  props: {
+                    type: "button",
+                    text: "1-Click Rollback Snapshot",
+                    onClick: () =>
+                      actions
+                        .restoreSnapshot(snapId)
+                        .catch((e) =>
+                          store.checkDiagnostics.set(e.message)
+                        ),
+                  },
+                },
+              ],
+            };
+          },
+        },
+        { document: doc }
+      ),
+    ],
+  };
+
   const appTree = {
     type: "Section",
     tag: "section",
@@ -430,8 +636,36 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
         className: "desk-header",
         children: [
           {
-            type: "Heading",
-            props: { level: 1, text: "Groxy Desk" },
+            type: "Stack",
+            tag: "section",
+            className: "desk-brand-group",
+            children: [
+              {
+                type: "Heading",
+                props: { level: 1, text: "Groxy Desk" },
+              },
+              {
+                type: "Text",
+                tag: "span",
+                className: "desk-version-tag",
+                props: { text: "v1.2.0" },
+              },
+            ],
+          },
+          {
+            type: "Stack",
+            tag: "nav",
+            className: "desk-studio-tabs",
+            attrs: {
+              role: "tablist",
+              "aria-label": "Workspace Studio Modes",
+            },
+            on: { keydown: handleTablistKeydown },
+            children: [
+              studioTab("database", "Database Studio"),
+              studioTab("browser", "Browser & Radar"),
+              studioTab("code", "Code & Grex Studio"),
+            ],
           },
           {
             type: "Stack",
@@ -471,171 +705,157 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       },
       {
         type: "Section",
-        tag: "section",
-        className: "desk-workspace-grid",
-        props: { label: "Three-Pane IDE Grid" },
+        tag: "main",
+        id: "desk-workspace-stage",
+        attrs: { id: "desk-workspace-stage" },
+        className: "desk-main",
+        props: { label: "Groxy Desk Studio Workspace" },
         children: [
-          createWorkspacePanelNode(store, actions, doc),
-          {
-            type: "Section",
-            tag: "main",
-            id: "desk-main-stage",
-            attrs: { id: "desk-main-stage" },
-            className: "desk-panel",
-            props: { label: "Editor and Diagnostics" },
-            children: [
-              {
-                type: "Heading",
-                props: { level: 2, text: "Code Workbench & Grisp Supervisor" },
-              },
-              {
-                type: "Card",
-                tag: "section",
-                id: "desk-editor-card",
-                attrs: { id: "desk-editor-card" },
-                className: "desk-card",
-                children: [
-                  {
-                    type: "Heading",
-                    props: { level: 3, text: "Active File Preview" },
-                  },
-                  {
-                    type: "Text",
-                    tag: "p",
-                    id: "desk-active-file-meta",
-                    attrs: { id: "desk-active-file-meta" },
-                    className: "desk-muted",
-                    props: {
-                      text: () =>
-                        `${store.activePath.get()} (${store.activeSizeBytes.get()} B)`,
-                    },
-                  },
-                  {
-                    type: "Stack",
-                    tag: "section",
-                    className: "desk-badge-row",
-                    children: [
-                      {
-                        type: "Button",
-                        id: "desk-run-grab-check-btn",
-                        attrs: { id: "desk-run-grab-check-btn" },
-                        className: "desk-btn-primary",
-                        props: {
-                          type: "button",
-                          text: "Run grab check & format",
-                          onClick: () =>
-                            runActiveFileCheck().catch((e) =>
-                              store.checkDiagnostics.set(e.message)
-                            ),
-                        },
-                      },
-                    ],
-                  },
-                  {
-                    type: "Text",
-                    tag: "code",
-                    id: "desk-editor-code",
-                    attrs: { id: "desk-editor-code" },
-                    className: "desk-code-block",
-                    props: { text: store.activeFileContent },
-                  },
-                  {
-                    type: "Text",
-                    tag: "p",
-                    id: "desk-check-diagnostics",
-                    attrs: { id: "desk-check-diagnostics" },
-                    className: "desk-muted",
-                    props: { text: store.checkDiagnostics },
-                  },
-                ],
-              },
-              createStudioPanelNode(store, actions, doc),
-              createScorecardPanelNode(store, actions, doc),
-              createSupervisorPanelNode(store, actions, doc),
-              createFleetPanelNode(store, actions, doc),
-              createRadarPanelNode(store, apiClient, doc),
-              createDBStudioPanelNode(store, actions, doc),
-              createDNSPanelNode(store, actions, doc),
-              createAuthorPanelNode(store, actions, doc),
-              {
-                type: "Card",
-                tag: "section",
-                id: "desk-snapshots-card",
-                attrs: { id: "desk-snapshots-card" },
-                className: "desk-card",
-                children: [
-                  {
-                    type: "Heading",
-                    props: { level: 3, text: "Pre-Mutation Snapshots" },
-                  },
-                  ForEach(
+          studioTabpanel("database", "Database Studio", [
+            createDBStudioPanelNode(store, actions, doc),
+          ]),
+          studioTabpanel("browser", "Browser & Radar", [
+            createRadarPanelNode(store, apiClient, doc),
+          ]),
+          studioTabpanel("code", "Code & Grex Studio", [
+            {
+              type: "Section",
+              tag: "section",
+              className: "desk-workspace-grid",
+              props: { label: "Three-Pane Code and Grex Studio" },
+              children: [
+                {
+                  type: "Section",
+                  tag: "section",
+                  className: "desk-code-left-rail",
+                  props: { label: "Workspace Explorer, grabman, Grisp and Step 5 Tools" },
+                  children: [
+                    createWorkspacePanelNode(store, actions, doc),
                     {
-                      items: store.snapshots,
-                      key: (s) => s.snapshot_id,
-                      parent: {
-                        type: "Section",
-                        tag: "section",
-                        className: "desk-list",
-                        props: { label: "Recorded Safety Snapshots" },
+                      type: "Accordion",
+                      className: "desk-collapsible-group",
+                      props: {
+                        label: "Supervisor and Step 5 Tools",
+                        items: [
+                          {
+                            id: "grisp-supervisor",
+                            summary: "Local Grisp Multi-Worker Supervisor",
+                            open: true,
+                            content: createSupervisorPanelNode(store, actions, doc),
+                          },
+                          {
+                            id: "step5-fleet",
+                            summary: "Step 5 Fleet & Grabtaculous Bridge",
+                            open: false,
+                            content: createFleetPanelNode(store, actions, doc),
+                          },
+                          {
+                            id: "step5-dns",
+                            summary: "Namecheap DNS Vault & Auto-HTTPS Wizard",
+                            open: false,
+                            content: createDNSPanelNode(store, actions, doc),
+                          },
+                          {
+                            id: "step5-author",
+                            summary: "1-Click Local Author Mode & Open-Weights Runtime",
+                            open: false,
+                            content: createAuthorPanelNode(store, actions, doc),
+                          },
+                        ],
                       },
-                      empty: () => ({
-                        type: "Text",
-                        tag: "p",
-                        className: "desk-muted",
-                        props: { text: "No pre-mutation snapshots captured yet." },
-                      }),
-                      render: (snapSig) => {
-                        const snapId = snapSig.peek().snapshot_id;
-                        return {
-                          type: "Card",
-                          tag: "article",
-                          className: "desk-card",
+                    },
+                  ],
+                },
+                {
+                  type: "Section",
+                  tag: "section",
+                  id: "desk-main-stage",
+                  attrs: { id: "desk-main-stage" },
+                  className: "desk-panel",
+                  props: { label: "Editor and Grex Preview Canvas" },
+                  children: [
+                    {
+                      type: "Heading",
+                      props: { level: 2, text: "Code Workbench & Grex Preview" },
+                    },
+                    {
+                      type: "Card",
+                      tag: "section",
+                      id: "desk-editor-card",
+                      attrs: { id: "desk-editor-card" },
+                      className: "desk-card",
+                      children: [
+                        {
+                          type: "Heading",
+                          props: { level: 3, text: "Active File Preview" },
+                        },
+                        {
+                          type: "Text",
+                          tag: "p",
+                          id: "desk-active-file-meta",
+                          attrs: { id: "desk-active-file-meta" },
+                          className: "desk-muted",
+                          props: {
+                            text: () =>
+                              `${store.activePath.get()} (${store.activeSizeBytes.get()} B)`,
+                          },
+                        },
+                        {
+                          type: "Stack",
+                          tag: "section",
+                          className: "desk-badge-row",
                           children: [
                             {
-                              type: "Text",
-                              tag: "strong",
-                              props: {
-                                text: () => {
-                                  const s = snapSig.get();
-                                  return `${s.snapshot_id} -> ${s.target_path}`;
-                                },
-                              },
-                            },
-                            {
-                              type: "Text",
-                              tag: "span",
-                              className: "desk-muted",
-                              props: {
-                                text: () => {
-                                  const s = snapSig.get();
-                                  return `Bytes: ${s.byte_length} | Restored: ${s.restored}`;
-                                },
-                              },
-                            },
-                            {
                               type: "Button",
+                              id: "desk-run-grab-check-btn",
+                              attrs: { id: "desk-run-grab-check-btn" },
+                              className: "desk-btn-primary",
                               props: {
                                 type: "button",
-                                text: "1-Click Rollback Snapshot",
+                                text: "Run grab check & format",
                                 onClick: () =>
-                                  actions
-                                    .restoreSnapshot(snapId)
-                                    .catch((e) =>
-                                      store.checkDiagnostics.set(e.message)
-                                    ),
+                                  runActiveFileCheck().catch((e) =>
+                                    store.checkDiagnostics.set(e.message)
+                                  ),
                               },
                             },
                           ],
-                        };
-                      },
+                        },
+                        {
+                          type: "Text",
+                          tag: "code",
+                          id: "desk-editor-code",
+                          attrs: { id: "desk-editor-code" },
+                          className: "desk-code-block",
+                          props: { text: store.activeFileContent },
+                        },
+                        {
+                          type: "Text",
+                          tag: "p",
+                          id: "desk-check-diagnostics",
+                          attrs: { id: "desk-check-diagnostics" },
+                          className: "desk-muted",
+                          props: { text: store.checkDiagnostics },
+                        },
+                      ],
                     },
-                    { document: doc }
-                  ),
-                ],
-              },
-            ],
-          },
-          createGroxySidebarNode(store, actions),
+                    createStudioPanelNode(store, actions, doc),
+                  ],
+                },
+                {
+                  type: "Section",
+                  tag: "section",
+                  className: "desk-code-right-rail",
+                  props: { label: "Unified Groxy AI Co-Pilot, 22-Rule Scorecard and Safety Snapshots" },
+                  children: [
+                    createGroxySidebarNode(store, actions),
+                    createScorecardPanelNode(store, actions, doc),
+                    snapshotsCard,
+                  ],
+                },
+              ],
+            },
+          ]),
         ],
       },
       {
@@ -647,7 +867,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
             type: "Text",
             tag: "p",
             props: {
-              text: "Groxy Desk v1.1.0 — Pure Grex JS v1.0.0 | Zero Wrapper Elements | Unified Groxy AI",
+              text: "Groxy Desk v1.2.0 — Pure Grex JS v1.0.0 | Zero Wrapper Elements | Unified Groxy AI",
             },
           },
         ],
@@ -676,7 +896,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
   try {
     previewBridge = createStudioPreviewBridge({
       allowedOrigins: buildAllowedPreviewOrigins(options.baseUrl || "", store.workers.peek()),
-      targetWindow: options.window || globalThis.window,
+      targetWindow: win,
       root: doc,
       signals: {
         activeFileContent: store.activeFileContent,
@@ -699,6 +919,17 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       }
     };
     doc.addEventListener("keydown", onUndoKeydown);
+  }
+
+  let onHashChange = null;
+  if (win && typeof win.addEventListener === "function") {
+    onHashChange = () => {
+      const fromHash = win.location ? parseStudioHash(win.location.hash) : "";
+      if (fromHash && fromHash !== store.activeStudio.peek()) {
+        setActiveStudio(fromHash, true);
+      }
+    };
+    win.addEventListener("hashchange", onHashChange);
   }
 
   applyDeskTheme(store.themeMode.peek(), doc, null).catch(() => {});
@@ -752,6 +983,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     apiClient,
     previewBridge,
     hydrateWorkspace,
+    setActiveStudio,
     toggleTheme,
     element: rendered.element,
     dispose() {
@@ -761,6 +993,9 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       }
       if (doc && onUndoKeydown && typeof doc.removeEventListener === "function") {
         doc.removeEventListener("keydown", onUndoKeydown);
+      }
+      if (win && onHashChange && typeof win.removeEventListener === "function") {
+        win.removeEventListener("hashchange", onHashChange);
       }
       if (
         webview &&

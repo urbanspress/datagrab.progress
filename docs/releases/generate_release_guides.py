@@ -32,9 +32,36 @@ def find_browser() -> Path:
 
 def render_guide_html(version: str) -> str:
     v = html.escape(version)
-    body_class = "candidate-guide" if version == "1.1.0" else ""
+    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0") else ""
     footer_text = f"Groxy Desk v{v} — Verified across Gate 1 (Go + govulncheck + grab check/format), Gate 2 (Pure Grex JS DOM/WCAG/ADR-025c), Gate 3 (GRAB-E401 + GROXY-SAFE-001 + DESK-E403/E409), and Gate 4 (Live E2E)."
-    if version == "1.1.0":
+    if version == "1.2.0":
+        body_sections = """
+  <header>
+    <h1>Groxy Desk v1.2.0</h1>
+    <p>DbGate-Parity 3-Tab Dedicated Workspace Studio &amp; Visual Polish</p>
+    <p><strong>Complete &middot; Section 9 Acceptance Gates Verified</strong></p>
+  </header>
+  <main>
+    <section>
+      <h2>Sticky Top 3-Tab Studio Switcher &amp; Offline Urbanist Typography</h2>
+      <p>Groxy Desk v1.2.0 introduces a sticky top <code>role="tablist"</code> switcher across three dedicated full-viewport studio workspaces: <strong>Database Studio</strong>, <strong>Browser &amp; Radar</strong>, and <strong>Code &amp; Grex Studio</strong>. Keyboard navigation supports wrapping <code>ArrowLeft</code>/<code>ArrowRight</code> plus <code>Home</code>/<code>End</code>, with strictly allowlisted URL hash (<code>#studio=database|browser|code</code>) and <code>sessionStorage</code> persistence while keeping shared reactive state, active SSH tunnels, and local Grisp workers alive.</p>
+      <p>The entire desktop IDE renders with locally bundled <code>Urbanist</code> (<code>.woff2</code>) geometric UI typography and monospace code/data fonts with zero external CDN requests and full Light/Dark WCAG AA (&ge; 4.5:1) parity.</p>
+    </section>
+    <section>
+      <h2>Tab 1 &mdash; Database Studio (DbGate 3-Pane Workspace)</h2>
+      <p>Database Studio provides a full-height 3-pane layout: saved/active connections (PostgreSQL, MariaDB, SQLite) and an expandable <code>Tables</code> / <code>Views</code> / <code>Triggers</code> schema tree on the left; a focused action toolbar (<code>Run Query</code>, <code>Browse table rows</code>, <code>Inspect schema</code>, <code>Export CSV/XLSX/JSON/SQL</code>, <code>ER Diagram</code>, <code>Schema Diff</code>, <code>Undo Snapshot</code>) above a multi-tab autocomplete SQL editor and spreadsheet-style data grid in the center; and an <code>ADR-025c</code> exact-decimal row/cell inspector plus <code>GROXY-SAFE-001</code> pre-mutation snapshot guard &amp; approval drawer on the right.</p>
+    </section>
+    <section>
+      <h2>Tab 2 &mdash; Browser &amp; Radar (50/50 Split Pane)</h2>
+      <p>Browser &amp; Radar pairs the isolated WebView2 allowlisted browser pane and live <code>GRAB-E402</code> origin-lock badge on the left with the Bestseller Radar niche explorer, <code>BRAND-DNA.md</code> organization prefill preview, and separately approved <code>GrabLab CMS</code> draft handoff (<code>status_enforced: "draft"</code>) on the right.</p>
+    </section>
+    <section>
+      <h2>Tab 3 &mdash; Code &amp; Grex Studio (3-Pane Vibe-Coding Studio)</h2>
+      <p>Code &amp; Grex Studio organizes workspace file exploration, <code>grabman v1.0.0</code> diagnostics, and collapsible Local <code>Grisp</code> Supervisor / Step 5 Fleet / Namecheap DNS / Author Mode accordions on the left; the active <code>.grab</code>/<code>.html</code> workbench and live responsive <code>Grex</code> split-preview canvas in the center; and Unified <code>Groxy AI</code> (Adaptive Reasoning, zero model-switching dropdowns), the 22-rule audit scorecard, and Pre-Mutation Snapshots on the right.</p>
+    </section>
+  </main>"""
+        footer_text = "Groxy Desk v1.2.0 — Verified across Section 9 Acceptance Gates 1–4 (Go + govulncheck + grab check/format, Pure Grex JS v1.0.0 DOM/WCAG/ADR-025c, Native WebView2, Radar/CMS E2E, and Database Recovery)."
+    elif version == "1.1.0":
         body_sections = """
   <header>
     <h1>Groxy Desk v1.1.0</h1>

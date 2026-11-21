@@ -2,7 +2,7 @@
 
 **DbGate-Parity 3-Tab Dedicated Workspace Studio & Visual Polish (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`)**
 
-- **Status:** Approved; implementation in progress (**Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit: PASS**)
+- **Status:** Stage 3 Implementation & Section 7 Acceptance Gates Complete (Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off Pending; **Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit: PASS**)
 - **Release tier:** Backwards-compatible minor feature (`ADR-027c`)
 - **Base Frozen Release:** `v1.1.0` (`9aa3ff4`, in-sync across `origin` and `stable`)
 

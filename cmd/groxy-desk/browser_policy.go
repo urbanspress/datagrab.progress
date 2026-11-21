@@ -17,15 +17,20 @@ type paneCommand struct {
 }
 
 func trustedWorkbenchSource(raw, base string) bool {
-	if raw != base+"/" {
-		return false
-	}
 	u, err := url.Parse(raw)
-	if err != nil {
+	if err != nil || u.Path != "/" || u.RawQuery != "" || u.User != nil {
 		return false
 	}
-	_, err = security.ExactOrigin(u)
-	return err == nil
+	origin, err := security.ExactOrigin(u)
+	if err != nil || origin != base {
+		return false
+	}
+	switch u.Fragment {
+	case "", "studio=database", "studio=browser", "studio=code", "desk-workspace-stage":
+		return true
+	default:
+		return false
+	}
 }
 
 func trustedWorkbenchResource(raw, base string) bool {

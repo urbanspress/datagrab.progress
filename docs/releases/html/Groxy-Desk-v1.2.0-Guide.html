@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Groxy Desk v1.2.0 — Walkthrough & Architecture Guide</title>
+  <style>
+    @page {
+      size: Letter;
+      margin: 0.7in 0.75in;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.55;
+      font-size: 10.5pt;
+      margin: 0;
+    }
+    header {
+      border-bottom: 3px solid #2563eb;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 20pt;
+      color: #0f172a;
+    }
+    h2 {
+      font-size: 13pt;
+      color: #1d4ed8;
+      margin: 18px 0 8px 0;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+    h3 {
+      font-size: 11pt;
+      color: #1e293b;
+      margin: 12px 0 4px 0;
+    }
+    p, li {
+      color: #334155;
+    }
+    code, pre {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      color: #0f172a;
+    }
+    code {
+      padding: 1px 5px;
+      font-size: 9.2pt;
+    }
+    pre {
+      padding: 10px 12px;
+      font-size: 8.8pt;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 9.2pt;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    section {
+      page-break-inside: avoid;
+    }
+    footer {
+      margin-top: 22px;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 8px;
+      font-size: 9pt;
+      color: #475569;
+    }
+    .candidate-guide { line-height: 1.4; }
+    .candidate-guide header { padding-bottom: 8px; margin-bottom: 12px; }
+    .candidate-guide h2 { margin: 12px 0 6px; }
+    .candidate-guide p, .candidate-guide ol { margin: 7px 0; }
+    .candidate-guide code { white-space: nowrap; }
+    .candidate-guide footer { margin-top: 14px; }
+  </style>
+</head>
+<body class="candidate-guide">
+
+  <header>
+    <h1>Groxy Desk v1.2.0</h1>
+    <p>DbGate-Parity 3-Tab Dedicated Workspace Studio &amp; Visual Polish</p>
+    <p><strong>Complete &middot; Section 9 Acceptance Gates Verified</strong></p>
+  </header>
+  <main>
+    <section>
+      <h2>Sticky Top 3-Tab Studio Switcher &amp; Offline Urbanist Typography</h2>
+      <p>Groxy Desk v1.2.0 introduces a sticky top <code>role="tablist"</code> switcher across three dedicated full-viewport studio workspaces: <strong>Database Studio</strong>, <strong>Browser &amp; Radar</strong>, and <strong>Code &amp; Grex Studio</strong>. Keyboard navigation supports wrapping <code>ArrowLeft</code>/<code>ArrowRight</code> plus <code>Home</code>/<code>End</code>, with strictly allowlisted URL hash (<code>#studio=database|browser|code</code>) and <code>sessionStorage</code> persistence while keeping shared reactive state, active SSH tunnels, and local Grisp workers alive.</p>
+      <p>The entire desktop IDE renders with locally bundled <code>Urbanist</code> (<code>.woff2</code>) geometric UI typography and monospace code/data fonts with zero external CDN requests and full Light/Dark WCAG AA (&ge; 4.5:1) parity.</p>
+    </section>
+    <section>
+      <h2>Tab 1 &mdash; Database Studio (DbGate 3-Pane Workspace)</h2>
+      <p>Database Studio provides a full-height 3-pane layout: saved/active connections (PostgreSQL, MariaDB, SQLite) and an expandable <code>Tables</code> / <code>Views</code> / <code>Triggers</code> schema tree on the left; a focused action toolbar (<code>Run Query</code>, <code>Browse table rows</code>, <code>Inspect schema</code>, <code>Export CSV/XLSX/JSON/SQL</code>, <code>ER Diagram</code>, <code>Schema Diff</code>, <code>Undo Snapshot</code>) above a multi-tab autocomplete SQL editor and spreadsheet-style data grid in the center; and an <code>ADR-025c</code> exact-decimal row/cell inspector plus <code>GROXY-SAFE-001</code> pre-mutation snapshot guard &amp; approval drawer on the right.</p>
+    </section>
+    <section>
+      <h2>Tab 2 &mdash; Browser &amp; Radar (50/50 Split Pane)</h2>
+      <p>Browser &amp; Radar pairs the isolated WebView2 allowlisted browser pane and live <code>GRAB-E402</code> origin-lock badge on the left with the Bestseller Radar niche explorer, <code>BRAND-DNA.md</code> organization prefill preview, and separately approved <code>GrabLab CMS</code> draft handoff (<code>status_enforced: "draft"</code>) on the right.</p>
+    </section>
+    <section>
+      <h2>Tab 3 &mdash; Code &amp; Grex Studio (3-Pane Vibe-Coding Studio)</h2>
+      <p>Code &amp; Grex Studio organizes workspace file exploration, <code>grabman v1.0.0</code> diagnostics, and collapsible Local <code>Grisp</code> Supervisor / Step 5 Fleet / Namecheap DNS / Author Mode accordions on the left; the active <code>.grab</code>/<code>.html</code> workbench and live responsive <code>Grex</code> split-preview canvas in the center; and Unified <code>Groxy AI</code> (Adaptive Reasoning, zero model-switching dropdowns), the 22-rule audit scorecard, and Pre-Mutation Snapshots on the right.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Groxy Desk v1.2.0 — Verified across Section 9 Acceptance Gates 1–4 (Go + govulncheck + grab check/format, Pure Grex JS v1.0.0 DOM/WCAG/ADR-025c, Native WebView2, Radar/CMS E2E, and Database Recovery).</p>
+  </footer>
+</body>
+</html>

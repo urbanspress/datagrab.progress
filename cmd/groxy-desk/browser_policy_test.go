@@ -36,13 +36,31 @@ func TestBrowserPaneExactOriginAndWorkbenchMessages(t *testing.T) {
 		}
 	}
 	const base = "http://127.0.0.1:9490"
-	for _, source := range []string{base, base + "/api", base + "/?x=1", "http://127.0.0.1:9491/", "https://example.com/"} {
+	for _, source := range []string{
+		base,
+		base + "/api",
+		base + "/?x=1",
+		base + "/?x=1#studio=code",
+		base + "/#evil",
+		base + "/#studio=other",
+		"http://user@127.0.0.1:9490/#studio=code",
+		"http://127.0.0.1:9491/",
+		"https://example.com/",
+	} {
 		if trustedWorkbenchSource(source, base) {
 			t.Errorf("browser source allowed to send commands: %s", source)
 		}
 	}
-	if !trustedWorkbenchSource(base+"/", base) {
-		t.Fatal("workbench origin rejected")
+	for _, allowedSource := range []string{
+		base + "/",
+		base + "/#studio=database",
+		base + "/#studio=browser",
+		base + "/#studio=code",
+		base + "/#desk-workspace-stage",
+	} {
+		if !trustedWorkbenchSource(allowedSource, base) {
+			t.Fatalf("workbench origin rejected: %s", allowedSource)
+		}
 	}
 	for _, message := range []string{
 		`{"type":"groxy-browser-open","url":"https://example.com","script":"alert(1)"}`,

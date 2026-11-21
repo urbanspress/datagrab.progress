@@ -47,8 +47,8 @@ function sameTarget(a, b) {
 }
 
 const paragraph = (text, attrs) => ({ type: "Text", tag: "p", attrs, props: { text } });
-const button = (id, text, onClick, disabled) => ({
-  type: "Button", attrs: id ? { id } : {}, props: { type: "button", text, onClick, disabled },
+const button = (id, text, onClick, disabled, className) => ({
+  type: "Button", attrs: id ? { id } : {}, className, props: { type: "button", text, onClick, disabled },
 });
 const input = (name, label, value, type = "text") => ({
   type: "Input", attrs: { id: name }, props: { name, label, value, type },
@@ -95,13 +95,16 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
 
   function renderTab(tab) {
     const disabled = tab.busy;
-    const catalogForTarget = () => {
+    const currentCatalog = () => {
       const catalog = tab.catalog.get();
       for (const field of [tab.engine, tab.path, tab.tunnel, tab.user, tab.password, tab.database, tab.schema, tab.bridgeBearer]) field.get();
-      return sameTarget(catalog?.target, targetFor(tab)) ? catalog?.tables : [];
+      return sameTarget(catalog?.target, targetFor(tab)) ? catalog : null;
     };
-    const fullPostgres = () => catalogForTarget() === tab.catalog.get()?.tables && tab.catalog.get()?.fullPostgres === true;
-    const fullMariaDB = () => catalogForTarget() === tab.catalog.get()?.tables && tab.catalog.get()?.fullMariaDB === true;
+    const catalogForTarget = () => currentCatalog()?.tables || [];
+    const viewsForTarget = () => currentCatalog()?.views || [];
+    const triggersForTarget = () => currentCatalog()?.triggers || [];
+    const fullPostgres = () => currentCatalog()?.fullPostgres === true;
+    const fullMariaDB = () => currentCatalog()?.fullMariaDB === true;
     const fullWriteTarget = () => {
       const target = targetFor(tab);
       if (target.engine === "postgres" && fullPostgres()) {
@@ -119,12 +122,40 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
       tab.cell.set(null);
     }
 
+    const inspectSchema = () => run(tab, async () => {
+      const target = targetFor(tab);
+      const res = await actions.dbSchema(target);
+      tab.catalog.set({
+        id: ++nextRender,
+        target,
+        tables: res.tables || [],
+        views: res.views || [],
+        triggers: res.triggers || [],
+        fullPostgres: res.postgres_replay_candidate,
+        fullMariaDB: res.mariadb_replay_candidate,
+      });
+      tab.message.set(`Loaded ${res.tables?.length || 0} tables from ${labelTarget(target)}.`);
+    });
+
     const browse = () => run(tab, async () => {
       const target = targetFor(tab);
       const table = tab.table.peek().trim();
       const res = await actions.dbRows({ target, table, page: tab.page.peek().trim(), limit: tab.limit.peek().trim() });
       setQueryResult(res, target, table);
       tab.message.set(`Page ${res.page} of ${res.total_pages}, ${res.total_rows} rows in ${res.table}.`);
+    });
+
+    const runReadOnlyQuery = () => run(tab, async () => {
+      const target = targetFor(tab);
+      const controller = new AbortController();
+      tab.query = controller;
+      try {
+        const res = await actions.dbQuery({ target, sql: tab.sql.peek() }, controller.signal);
+        setQueryResult(res, target, null);
+        tab.message.set(`Read-only query returned ${res.row_count} rows.`);
+      } finally {
+        tab.query = null;
+      }
     });
 
     async function planWrite(operation, target = targetFor(tab)) {
@@ -236,257 +267,453 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
         .slice(0, 8).map((word) => ({ id: word }));
     };
 
-    return { type: "Section", tag: "section", props: { label: `Database tab ${tab.id}` },
-      on: { keydown: (event) => {
-        if (event.key !== "Escape") return;
-        if (tab.query) tab.query.abort();
-        else if (tab.plan.peek()) tab.plan.set(null);
-        else tab.cell.set(null);
-      } },
+    const focusSectionControl = (selector) => {
+      if (doc && typeof doc.querySelector === "function") {
+        const el = doc.querySelector(selector);
+        if (el && typeof el.focus === "function") {
+          el.focus();
+        }
+      }
+    };
+
+    const leftSidebar = {
+      type: "Section",
+      tag: "aside",
+      className: "desk-db-sidebar",
+      props: { label: "Connections and Schema Object Tree" },
       children: [
-      targetControls,
-      {
-        type: "Accordion", props: { items: [{
-          id: `ssh-options-${tab.id}`, summary: "Connect to a database over pinned SSH",
-          content: [controls("Pinned SSH connection", [
-            input("db-ssh-host", "SSH host", sshHost), input("db-ssh-port", "SSH port", sshPort),
-            input("db-ssh-user", "SSH user", sshUser), input("db-ssh-known-hosts", "known_hosts file path", knownHosts),
-            input("db-ssh-pin", "SSH host fingerprint (SHA256:…)", pin),
-            input("db-ssh-key", "SSH private key file path (optional)", privateKey),
-            input("db-ssh-password", "SSH password or key passphrase", sshPassword, "password"),
-            input("db-ssh-target-port", "Remote loopback database or Gashboard bridge port", targetPort),
-            button(null, "Open pinned SSH tunnel", () => run(tab, async () => {
-              const engine = tab.engine.peek();
-              const credentials = sshPassword.peek();
-              sshPassword.set("");
-              const { tunnel } = await actions.dbTunnelOpen({ engine, ssh_host: sshHost.peek().trim(), ssh_port: sshPort.peek().trim(),
-                ssh_user: sshUser.peek().trim(), known_hosts_path: knownHosts.peek().trim(), pinned_fingerprint: pin.peek().trim(),
-                ssh_private_key_path: privateKey.peek().trim(), ssh_password: credentials,
-                remote_db_host: "127.0.0.1", remote_db_port: targetPort.peek().trim() });
-              tab.tunnel.set(tunnel.tunnel_id);
-              tab.message.set(`Opened a pinned SSH tunnel to ${tunnel.remote_target}.`);
-            }), () => tab.busy.get() || tab.engine.get() === "sqlite"),
-            button(null, "Close this SSH tunnel", () => run(tab, async () => {
-              await actions.dbTunnelClose({ tunnel_id: tab.tunnel.peek() });
-              tab.tunnel.set("");
-              tab.message.set("SSH tunnel closed.");
-            }), () => tab.busy.get() || !tab.tunnel.get()),
-          ])],
-        }] },
-      },
-      controls("SQL editor and table browsing", [
-        input("db-ro-sql", "Read-only SQL", tab.sql, "textarea"),
-        input("db-table-name", "Table name", tab.table),
-        input("db-page-num", "Page", tab.page),
-        input("db-limit-num", "Page limit (maximum 100)", tab.limit),
-      ]),
-      repeat(completion, (entry) => button(null, () => entry.get().id, () => {
-        tab.sql.set(tab.sql.peek().replace(/[a-z_][a-z0-9_]*$/i, () => entry.peek().id) + " ");
-        doc.querySelector("#db-ro-sql textarea")?.focus();
-      }), "SQL completions"),
-      controls("Database actions", [
-        button("db-schema-btn", "Inspect schema", () => run(tab, async () => {
-          const target = targetFor(tab);
-          const res = await actions.dbSchema(target);
-          tab.catalog.set({ id: ++nextRender, target, tables: res.tables || [], fullPostgres: res.postgres_replay_candidate, fullMariaDB: res.mariadb_replay_candidate });
-          tab.message.set(`Loaded ${res.tables?.length || 0} tables from ${labelTarget(target)}.`);
-        }), disabled),
-        button("db-rows-btn", "Browse table rows", browse, disabled),
-        button("db-query-btn", "Run read-only query", () => run(tab, async () => {
-          const target = targetFor(tab);
-          const controller = new AbortController();
-          tab.query = controller;
-          try {
-            const res = await actions.dbQuery({ target, sql: tab.sql.peek() }, controller.signal);
-            setQueryResult(res, target, null);
-            tab.message.set(`Read-only query returned ${res.row_count} rows.`);
-          } finally {
-            tab.query = null;
-          }
-        }), () => tab.busy.get() || tab.engine.get() === "sqlite-bridge"),
-        button(null, "Cancel query", () => tab.query?.abort(), () => !tab.busy.get()),
-      ]),
-      repeat(() => {
-        const catalog = tab.catalog.get();
-        return catalog ? [{ id: catalog.id, tables: catalog.tables }] : [];
-      }, (entry) => {
-        const { id, tables } = entry.peek();
-        const entities = new Map(tables.map((table, index) => [`${table.schema}.${table.name}`, `db-entity-${tab.id}-${id}-${index}`]));
-        return { tag: "section", attrs: { "aria-label": "Entity-relationship diagram", class: "desk-db-diagram" },
-          children: tables.map((table) => {
-            const name = `${table.schema}.${table.name}`;
-            const elementId = entities.get(name);
-            return { tag: "article", attrs: { id: elementId, class: "desk-db-entity", "aria-labelledby": `${elementId}-title` }, children: [
-              { tag: "h5", attrs: { id: `${elementId}-title`, tabindex: "-1" }, text: name },
-              { tag: "ul", attrs: { "aria-label": "Columns" }, children: (table.columns || []).map((col) => ({
-                tag: "li", text: [col.name, col.type, col.primary_key ? "primary key" : "", col.nullable ? "nullable" : ""].filter(Boolean).join(" · "),
-              })) },
-              { tag: "ul", attrs: { "aria-label": "Foreign keys", class: "desk-db-relationships" }, children: (table.foreign_keys || []).map((key) => {
-                const linked = `${key.ref_schema || table.schema}.${key.ref_table}`;
-                const target = entities.get(linked);
-                const label = `${key.column} → ${linked}.${key.ref_column}`;
-                return { tag: "li", children: [target ? button(null, label,
-                  () => doc.getElementById(`${target}-title`)?.focus()) : { tag: "span", text: label }] };
-              }) },
-              { tag: "p", text: `Indexes: ${(table.indexes || []).join(", ") || "none"}` },
-              button(null, `Select table ${table.name}`, () => tab.table.set(table.name)),
-            ] };
-          }) };
-      }, "Database tables and relationships"),
-      repeat(() => {
-        const result = tab.result.get();
-        if (!result) return [];
-        const revision = tab.catalog.get()?.id || 0;
-        return [{ ...result, id: `${result.id}-${revision}` }];
-      }, (entry) => renderResults(entry.peek()), "Result set"),
-      controls("Export a table page", [
-        input("db-export-path", "Workspace output path (.csv, .xlsx, .json, or .sql)", tab.exportPath),
-        button(null, "Export table page", () => run(tab, async () => {
-          const target = targetFor(tab);
-          const saved = await actions.dbExportPage({ target, path: tab.exportPath.peek().trim(), table: tab.table.peek().trim(),
-            page: tab.page.peek().trim(), limit: tab.limit.peek().trim() });
-          tab.message.set(`Exported ${saved.rows_exported} rows from ${saved.table} on ${labelTarget(target)} to ${saved.path}.`);
-        }), disabled),
-      ]),
-      controls("Export the relationship diagram", [
-        input("db-diagram-path", "Workspace diagram path (.html)", tab.diagramPath),
-        button(null, "Export relationship diagram", () => run(tab, async () => {
-          const target = targetFor(tab);
-          const saved = await actions.dbExportDiagram({ target, path: tab.diagramPath.peek().trim() });
-          tab.message.set(`Exported the diagram for ${labelTarget(target)} to ${saved.path}.`);
-        }), disabled),
-      ]),
-      repeat(() => fullPostgres() ? [tab] : [], () => controls("PostgreSQL database maintenance", [
-        input("db-maintenance-user", "Admission administrator on the postgres database", tab.maintenanceUser),
-        input("db-maintenance-password", "Maintenance password", tab.maintenancePassword, "password"),
-      ]), "PostgreSQL recovery credentials"),
-      controls("Import rows or SQL", [
-        input("db-import-path", "Workspace import path (.csv, .xlsx, .json, or .sql)", tab.importPath),
-        button(null, "Review import", () => run(tab, async () => {
-          tab.plan.set(null);
-          const request = { target: fullWriteTarget(), path: tab.importPath.peek().trim(), table: tab.table.peek().trim() };
-          const plan = await actions.dbImportPlan(request);
-          tab.plan.set({ type: "import", plan, request });
-          tab.message.set(plan.plain_summary);
-        }), () => tab.busy.get() || !canReviewWrite()),
-      ]),
-      controls("Inline cell edit", [
-        paragraph(() => {
-          const cell = tab.cell.get();
-          if (!cell) return "Inspect the schema and browse rows to select an editable cell.";
-          const before = cell.before === null ? "NULL" : JSON.stringify(cell.before);
-          return `${cell.result.table}.${cell.name}, key ${JSON.stringify(cell.key)}, current value ${before}.`;
-        }),
-        input("db-cell-value", "Replacement value", tab.replacement),
-        select("db-cell-type", "Value type", tab.format, ["text", "integer", "decimal", "null"].map((value) => ({ value, label: value }))),
-        button(null, "Review cell change", () => run(tab, async () => {
-          const cell = tab.cell.peek();
-          if (!cell) return;
-          const kind = tab.format.peek();
-          await planWrite({ edit: { table: cell.result.table, column: cell.name, key: cell.key, before: cell.before,
-            value: kind === "null" ? null : tab.replacement.peek(), value_kind: kind === "null" ? "" : kind } }, cell.result.target);
-        }), () => tab.busy.get() || !tab.cell.get()),
-        button(null, "Cancel cell edit", () => tab.cell.set(null), () => !tab.cell.get()),
-      ]),
-      controls("Guarded database changes", [
-        input("db-mutate-sql", "Write SQL", tab.write, "textarea"),
-        button("db-mutate-plan-btn", "Review SQL write", () => run(tab, () => planWrite({ sql: tab.write.peek() }, fullWriteTarget())),
-          () => tab.busy.get() || !canReviewWrite()),
-        button(null, "Undo last database change", () => run(tab, () => reviewRestore()),
-          () => tab.busy.get() || !tab.applied.get()),
-        button(null, "Review forced restore", () => run(tab, () => reviewRestore(true)), () => {
-          const engine = tab.applied.get()?.target.engine;
-          return tab.busy.get() || !tab.restoreConflict.get() || !["postgres", "mariadb"].includes(engine);
-        }),
-        paragraph(() => {
-          const pending = tab.plan.get();
-          if (!pending) return "";
-          const { request } = pending;
-          const detail = request.sql || pending.plan.reviewed_sql || (request.path
-            ? `${request.path} · ${pending.plan.plain_summary}`
-            : request.edit ? JSON.stringify(request.edit) : pending.plan.plain_summary);
-          return `${labelTarget(request.target)} — ${detail}`;
-        }),
-        button("db-mutate-apply-btn", () => {
-          const pending = tab.plan.get();
-          if (pending?.type !== "restore") return "Approve database change";
-          return pending.request.force ? "Approve overwriting the reviewed changes" : "Approve restore";
+        { type: "Heading", props: { level: 4, text: "Connections & Schema" } },
+        {
+          type: "Accordion",
+          className: "desk-db-accordion",
+          props: {
+            items: [
+              {
+                id: `db-connections-${tab.id}`,
+                summary: "Saved & Active Connections (PostgreSQL, MariaDB, SQLite)",
+                open: true,
+                content: [
+                  targetControls,
+                  {
+                    type: "Accordion",
+                    props: {
+                      items: [
+                        {
+                          id: `ssh-options-${tab.id}`,
+                          summary: "Connect to a database over pinned SSH",
+                          content: [
+                            controls("Pinned SSH connection", [
+                              input("db-ssh-host", "SSH host", sshHost),
+                              input("db-ssh-port", "SSH port", sshPort),
+                              input("db-ssh-user", "SSH user", sshUser),
+                              input("db-ssh-known-hosts", "known_hosts file path", knownHosts),
+                              input("db-ssh-pin", "SSH host fingerprint (SHA256:…)", pin),
+                              input("db-ssh-key", "SSH private key file path (optional)", privateKey),
+                              input("db-ssh-password", "SSH password or key passphrase", sshPassword, "password"),
+                              input("db-ssh-target-port", "Remote loopback database or Gashboard bridge port", targetPort),
+                              button(
+                                null,
+                                "Open pinned SSH tunnel",
+                                () =>
+                                  run(tab, async () => {
+                                    const engine = tab.engine.peek();
+                                    const credentials = sshPassword.peek();
+                                    sshPassword.set("");
+                                    const { tunnel } = await actions.dbTunnelOpen({
+                                      engine,
+                                      ssh_host: sshHost.peek().trim(),
+                                      ssh_port: sshPort.peek().trim(),
+                                      ssh_user: sshUser.peek().trim(),
+                                      known_hosts_path: knownHosts.peek().trim(),
+                                      pinned_fingerprint: pin.peek().trim(),
+                                      ssh_private_key_path: privateKey.peek().trim(),
+                                      ssh_password: credentials,
+                                      remote_db_host: "127.0.0.1",
+                                      remote_db_port: targetPort.peek().trim(),
+                                    });
+                                    tab.tunnel.set(tunnel.tunnel_id);
+                                    tab.message.set(`Opened a pinned SSH tunnel to ${tunnel.remote_target}.`);
+                                  }),
+                                () => tab.busy.get() || tab.engine.get() === "sqlite"
+                              ),
+                              button(
+                                null,
+                                "Close this SSH tunnel",
+                                () =>
+                                  run(tab, async () => {
+                                    await actions.dbTunnelClose({ tunnel_id: tab.tunnel.peek() });
+                                    tab.tunnel.set("");
+                                    tab.message.set("SSH tunnel closed.");
+                                  }),
+                                () => tab.busy.get() || !tab.tunnel.get()
+                              ),
+                            ]),
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                  repeat(
+                    () => store.dbTunnels.get().map((tunnel) => ({ ...tunnel, id: tunnel.tunnel_id })),
+                    (entry) =>
+                      paragraph(() => {
+                        const tunnel = entry.get();
+                        return `${tunnel.tunnel_id} · ${tunnel.engine} · ${tunnel.local_bind_addr}`;
+                      }),
+                    "Active SSH database tunnels"
+                  ),
+                ],
+              },
+              {
+                id: `db-tree-tables-${tab.id}`,
+                summary: "Schema Tree: Tables",
+                open: true,
+                content: [
+                  paragraph(() => `Tables (${catalogForTarget().length})`),
+                  repeat(
+                    () => catalogForTarget().map((table) => ({ ...table, id: `tbl-${table.schema || "main"}-${table.name}` })),
+                    (entry) => {
+                      const table = entry.peek();
+                      return button(null, `${table.name} (${(table.columns || []).length} cols)`, () => {
+                        tab.table.set(table.name);
+                        tab.message.set(`Selected table ${table.name}.`);
+                      });
+                    },
+                    "Tables list"
+                  ),
+                ],
+              },
+              {
+                id: `db-tree-views-${tab.id}`,
+                summary: "Schema Tree: Views",
+                open: false,
+                content: [
+                  paragraph(() => `Views (${viewsForTarget().length})`),
+                  repeat(
+                    () => viewsForTarget().map((v, idx) => ({ id: `view-${idx}-${v.name || v}`, label: v.name || String(v) })),
+                    (entry) => paragraph(() => entry.get().label),
+                    "Views list"
+                  ),
+                ],
+              },
+              {
+                id: `db-tree-triggers-${tab.id}`,
+                summary: "Schema Tree: Triggers",
+                open: false,
+                content: [
+                  paragraph(() => `Triggers (${triggersForTarget().length})`),
+                  repeat(
+                    () => triggersForTarget().map((tr, idx) => ({ id: `trig-${idx}-${tr.name || tr}`, label: tr.name || String(tr) })),
+                    (entry) => paragraph(() => entry.get().label),
+                    "Triggers list"
+                  ),
+                ],
+              },
+            ],
+          },
         },
-          approve, () => tab.busy.get() || !tab.plan.get()),
-        button(null, "Discard approval", () => tab.plan.set(null), () => !tab.plan.get()),
-      ]),
-      controls("Compare database schemas", [
-        input("db-compare-source", "Source tab number", sourceTab),
-        button(null, "Compare source with this tab", () => run(tab, async () => {
-          const id = sourceTab.peek().trim();
-          const other = tabs.peek().find((candidate) => String(candidate.id) === id && candidate !== tab);
-          if (!other) throw new Error("Enter the number of another open SQL tab.");
-          const destination = targetFor(tab);
-          const comparison = await actions.dbCompare({ source: targetFor(other), destination });
-          tab.compare.set({ id: ++nextRender, comparison, destination });
-          tab.message.set(`Found ${comparison.changes.length} schema differences.`);
-        }), disabled),
-      ]),
-      repeat(() => tab.compare.get() ? [tab.compare.get()] : [], (entry) => {
-        const { comparison, destination } = entry.peek();
-        return { tag: "table", children: [
-          { tag: "caption", text: `Schema comparison from ${comparison.source.engine} to ${comparison.destination.engine}` },
-          { tag: "thead", children: [{ tag: "tr", children: ["Object", "Source", "Destination", "Migration review"].map((text) =>
-            ({ tag: "th", attrs: { scope: "col" }, text })) }] },
-          { tag: "tbody", children: comparison.changes.map((change) => ({ tag: "tr", children: [
-            { tag: "th", attrs: { scope: "row" }, text: `${change.table}${change.object ? "." + change.object : ""}` },
-            { tag: "td", text: change.source === undefined ? "—" : JSON.stringify(change.source) },
-            { tag: "td", text: change.destination === undefined ? "—" : JSON.stringify(change.destination) },
-            { tag: "td", children: [
-              paragraph([change.proposed_sql, change.review].filter(Boolean).join(" · ") || "Manual review"),
-              ...(change.proposed_sql && (comparison.destination.postgres_replay_candidate || comparison.destination.mariadb_replay_candidate) ? [
-                button(null, "Review migration", () => run(tab, () => {
-                  if (!sameTarget(destination, targetFor(tab))) throw new Error("Compare the current target before reviewing a migration.");
-                  return planWrite({ sql: change.proposed_sql }, fullWriteTarget());
-                }), () => tab.busy.get() || !canReviewWrite()),
-              ] : []),
-            ] },
-          ] })) },
-        ] };
-      }, "Schema comparison results"),
-      paragraph(tab.message, { role: "status", "aria-live": "polite" }),
-    ] };
+      ],
+    };
+
+    const centerWorkspace = {
+      type: "Section",
+      tag: "section",
+      className: "desk-db-center",
+      props: { label: "SQL Editor, Action Toolbar and Spreadsheet Data Grid" },
+      children: [
+        { type: "Heading", props: { level: 4, text: "SQL Editor & Data Grid" } },
+        {
+          type: "Section",
+          tag: "section",
+          className: "desk-db-toolbar",
+          props: { label: "Database actions" },
+          children: [
+            button("db-query-btn", "Run Query", runReadOnlyQuery, () => tab.busy.get() || tab.engine.get() === "sqlite-bridge", "desk-btn-primary"),
+            button("db-rows-btn", "Browse table rows", browse, disabled),
+            button("db-schema-btn", "Inspect schema", inspectSchema, disabled),
+            button(null, "Cancel query", () => tab.query?.abort(), () => !tab.busy.get()),
+            button("db-toolbar-export-btn", "Export CSV/XLSX/JSON/SQL", () => focusSectionControl("#db-export-path input")),
+            button("db-toolbar-er-btn", "ER Diagram", () => {
+              if (!currentCatalog()) {
+                inspectSchema();
+              } else {
+                focusSectionControl("#db-diagram-path input");
+              }
+            }),
+            button("db-toolbar-diff-btn", "Schema Diff", () => focusSectionControl("#db-compare-source input")),
+            button("db-toolbar-undo-btn", "Undo Snapshot", () => run(tab, () => reviewRestore()), () => tab.busy.get() || !tab.applied.get()),
+          ],
+        },
+        controls("SQL editor and table browsing", [
+          input("db-ro-sql", "Read-only SQL", tab.sql, "textarea"),
+          input("db-table-name", "Table name", tab.table),
+          input("db-page-num", "Page", tab.page),
+          input("db-limit-num", "Page limit (maximum 100)", tab.limit),
+        ]),
+        repeat(completion, (entry) => button(null, () => entry.get().id, () => {
+          tab.sql.set(tab.sql.peek().replace(/[a-z_][a-z0-9_]*$/i, () => entry.peek().id) + " ");
+          doc.querySelector("#db-ro-sql textarea")?.focus();
+        }), "SQL completions"),
+        repeat(() => {
+          const result = tab.result.get();
+          if (!result) return [];
+          const revision = tab.catalog.get()?.id || 0;
+          return [{ ...result, id: `${result.id}-${revision}` }];
+        }, (entry) => renderResults(entry.peek()), "Result set"),
+        repeat(() => {
+          const catalog = tab.catalog.get();
+          return catalog ? [{ id: catalog.id, tables: catalog.tables }] : [];
+        }, (entry) => {
+          const { id, tables } = entry.peek();
+          const entities = new Map(tables.map((table, index) => [`${table.schema}.${table.name}`, `db-entity-${tab.id}-${id}-${index}`]));
+          return {
+            type: "Section",
+            tag: "section",
+            props: { label: "Entity-relationship diagram" },
+            children: [
+              { type: "Heading", props: { level: 4, text: "Entity-Relationship Diagram" } },
+              {
+                type: "Section",
+                tag: "section",
+                className: "desk-db-diagram",
+                children: tables.map((table) => {
+                  const name = `${table.schema}.${table.name}`;
+                  const elementId = entities.get(name);
+                  return { tag: "article", attrs: { id: elementId, class: "desk-db-entity", "aria-labelledby": `${elementId}-title` }, children: [
+                    { tag: "h5", attrs: { id: `${elementId}-title`, tabindex: "-1" }, text: name },
+                    { tag: "ul", attrs: { "aria-label": "Columns" }, children: (table.columns || []).map((col) => ({
+                      tag: "li", text: [col.name, col.type, col.primary_key ? "primary key" : "", col.nullable ? "nullable" : ""].filter(Boolean).join(" · "),
+                    })) },
+                    { tag: "ul", attrs: { "aria-label": "Foreign keys", class: "desk-db-relationships" }, children: (table.foreign_keys || []).map((key) => {
+                      const linked = `${key.ref_schema || table.schema}.${key.ref_table}`;
+                      const target = entities.get(linked);
+                      const label = `${key.column} → ${linked}.${key.ref_column}`;
+                      return { tag: "li", children: [target ? { tag: "button", attrs: { type: "button", class: "grex-button" }, text: label,
+                        on: { click: () => doc.getElementById(`${target}-title`)?.focus() } } : { tag: "span", text: label }] };
+                    }) },
+                    { tag: "p", text: `Indexes: ${(table.indexes || []).join(", ") || "none"}` },
+                    { tag: "button", attrs: { type: "button", class: "grex-button" }, text: `Select table ${table.name}`, on: { click: () => tab.table.set(table.name) } },
+                  ] };
+                }),
+              },
+            ],
+          };
+        }, "Database tables and relationships"),
+        {
+          type: "Accordion",
+          className: "desk-db-accordion",
+          props: {
+            items: [
+              {
+                id: `db-export-import-${tab.id}`,
+                summary: "Export CSV/XLSX/JSON/SQL, ER HTML & Import",
+                open: true,
+                content: [
+                  controls("Export a table page", [
+                    input("db-export-path", "Workspace output path (.csv, .xlsx, .json, or .sql)", tab.exportPath),
+                    button(null, "Export table page", () => run(tab, async () => {
+                      const target = targetFor(tab);
+                      const saved = await actions.dbExportPage({ target, path: tab.exportPath.peek().trim(), table: tab.table.peek().trim(),
+                        page: tab.page.peek().trim(), limit: tab.limit.peek().trim() });
+                      tab.message.set(`Exported ${saved.rows_exported} rows from ${saved.table} on ${labelTarget(target)} to ${saved.path}.`);
+                    }), disabled),
+                  ]),
+                  controls("Export the relationship diagram", [
+                    input("db-diagram-path", "Workspace diagram path (.html)", tab.diagramPath),
+                    button(null, "Export relationship diagram", () => run(tab, async () => {
+                      const target = targetFor(tab);
+                      const saved = await actions.dbExportDiagram({ target, path: tab.diagramPath.peek().trim() });
+                      tab.message.set(`Exported the diagram for ${labelTarget(target)} to ${saved.path}.`);
+                    }), disabled),
+                  ]),
+                  controls("Import rows or SQL", [
+                    input("db-import-path", "Workspace import path (.csv, .xlsx, .json, or .sql)", tab.importPath),
+                    button(null, "Review import", () => run(tab, async () => {
+                      tab.plan.set(null);
+                      const request = { target: fullWriteTarget(), path: tab.importPath.peek().trim(), table: tab.table.peek().trim() };
+                      const plan = await actions.dbImportPlan(request);
+                      tab.plan.set({ type: "import", plan, request });
+                      tab.message.set(plan.plain_summary);
+                    }), () => tab.busy.get() || !canReviewWrite()),
+                  ]),
+                ],
+              },
+              {
+                id: `db-schema-diff-${tab.id}`,
+                summary: "Cross-Environment Schema Diff",
+                open: true,
+                content: [
+                  controls("Compare database schemas", [
+                    input("db-compare-source", "Source tab number", sourceTab),
+                    button(null, "Compare source with this tab", () => run(tab, async () => {
+                      const id = sourceTab.peek().trim();
+                      const other = tabs.peek().find((candidate) => String(candidate.id) === id && candidate !== tab);
+                      if (!other) throw new Error("Enter the number of another open SQL tab.");
+                      const destination = targetFor(tab);
+                      const comparison = await actions.dbCompare({ source: targetFor(other), destination });
+                      tab.compare.set({ id: ++nextRender, comparison, destination });
+                      tab.message.set(`Found ${comparison.changes.length} schema differences.`);
+                    }), disabled),
+                  ]),
+                  repeat(() => tab.compare.get() ? [tab.compare.get()] : [], (entry) => {
+                    const { comparison, destination } = entry.peek();
+                    return { tag: "table", children: [
+                      { tag: "caption", text: `Schema comparison from ${comparison.source.engine} to ${comparison.destination.engine}` },
+                      { tag: "thead", children: [{ tag: "tr", children: ["Object", "Source", "Destination", "Migration review"].map((text) =>
+                        ({ tag: "th", attrs: { scope: "col" }, text })) }] },
+                      { tag: "tbody", children: comparison.changes.map((change) => ({ tag: "tr", children: [
+                        { tag: "th", attrs: { scope: "row" }, text: `${change.table}${change.object ? "." + change.object : ""}` },
+                        { tag: "td", text: change.source === undefined ? "—" : JSON.stringify(change.source) },
+                        { tag: "td", text: change.destination === undefined ? "—" : JSON.stringify(change.destination) },
+                        { tag: "td", children: [
+                          paragraph([change.proposed_sql, change.review].filter(Boolean).join(" · ") || "Manual review"),
+                          ...(change.proposed_sql && (comparison.destination.postgres_replay_candidate || comparison.destination.mariadb_replay_candidate) ? [
+                            button(null, "Review migration", () => run(tab, () => {
+                              if (!sameTarget(destination, targetFor(tab))) throw new Error("Compare the current target before reviewing a migration.");
+                              return planWrite({ sql: change.proposed_sql }, fullWriteTarget());
+                            }), () => tab.busy.get() || !canReviewWrite()),
+                          ] : []),
+                        ] },
+                      ] })) },
+                    ] };
+                  }, "Schema comparison results"),
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    const rightInspector = {
+      type: "Section",
+      tag: "aside",
+      className: "desk-db-inspector",
+      props: { label: "Row Inspector, Pre-Mutation Snapshot Guard and GROXY-SAFE-001 Drawer" },
+      children: [
+        { type: "Heading", props: { level: 4, text: "Row Inspector & Safety Gate" } },
+        controls("Inline cell edit", [
+          paragraph(() => {
+            const cell = tab.cell.get();
+            if (!cell) return "Inspect the schema and browse rows to select an editable cell (ADR-025c exact base-10).";
+            const before = cell.before === null ? "NULL" : JSON.stringify(cell.before);
+            return `${cell.result.table}.${cell.name}, key ${JSON.stringify(cell.key)}, current value ${before}.`;
+          }),
+          input("db-cell-value", "Replacement value", tab.replacement),
+          select("db-cell-type", "Value type", tab.format, ["text", "integer", "decimal", "null"].map((value) => ({ value, label: value }))),
+          button(null, "Review cell change", () => run(tab, async () => {
+            const cell = tab.cell.peek();
+            if (!cell) return;
+            const kind = tab.format.peek();
+            await planWrite({ edit: { table: cell.result.table, column: cell.name, key: cell.key, before: cell.before,
+              value: kind === "null" ? null : tab.replacement.peek(), value_kind: kind === "null" ? "" : kind } }, cell.result.target);
+          }), () => tab.busy.get() || !tab.cell.get()),
+          button(null, "Cancel cell edit", () => tab.cell.set(null), () => !tab.cell.get()),
+        ]),
+        repeat(() => fullPostgres() ? [tab] : [], () => controls("PostgreSQL database maintenance", [
+          input("db-maintenance-user", "Admission administrator on the postgres database", tab.maintenanceUser),
+          input("db-maintenance-password", "Maintenance password", tab.maintenancePassword, "password"),
+        ]), "PostgreSQL recovery credentials"),
+        {
+          type: "Text",
+          tag: "p",
+          className: "desk-status-banner",
+          props: {
+            text: () => {
+              const engine = tab.engine.get();
+              if (engine === "mariadb") {
+                return "Pre-Mutation Snapshot Guard: MariaDB requires target-only least-privilege grants (409 write_fence_unavailable if any global *.* write exists).";
+              }
+              if (engine === "postgres") {
+                return "Pre-Mutation Snapshot Guard: PostgreSQL writes require a maintenance login to fence target admission with SHA-256 recovery.";
+              }
+              return "Pre-Mutation Snapshot Guard: GROXY-SAFE-001 captures a verified SHA-256 snapshot before any approved write.";
+            },
+          },
+        },
+        controls("Guarded database changes", [
+          input("db-mutate-sql", "Write SQL", tab.write, "textarea"),
+          button("db-mutate-plan-btn", "Review SQL write", () => run(tab, () => planWrite({ sql: tab.write.peek() }, fullWriteTarget())),
+            () => tab.busy.get() || !canReviewWrite()),
+          button(null, "Undo last database change", () => run(tab, () => reviewRestore()),
+            () => tab.busy.get() || !tab.applied.get()),
+          button(null, "Review forced restore", () => run(tab, () => reviewRestore(true)), () => {
+            const engine = tab.applied.get()?.target.engine;
+            return tab.busy.get() || !tab.restoreConflict.get() || !["postgres", "mariadb"].includes(engine);
+          }),
+          paragraph(() => {
+            const pending = tab.plan.get();
+            if (!pending) return "";
+            const { request } = pending;
+            const detail = request.sql || pending.plan.reviewed_sql || (request.path
+              ? `${request.path} · ${pending.plan.plain_summary}`
+              : request.edit ? JSON.stringify(request.edit) : pending.plan.plain_summary);
+            return `${labelTarget(request.target)} — ${detail}`;
+          }),
+          button("db-mutate-apply-btn", () => {
+            const pending = tab.plan.get();
+            if (pending?.type !== "restore") return "Approve database change";
+            return pending.request.force ? "Approve overwriting the reviewed changes" : "Approve restore";
+          },
+            approve, () => tab.busy.get() || !tab.plan.get(), "desk-btn-primary"),
+          button(null, "Discard approval", () => tab.plan.set(null), () => !tab.plan.get()),
+        ]),
+        paragraph(tab.message, { role: "status", "aria-live": "polite" }),
+      ],
+    };
+
+    return {
+      type: "Section",
+      tag: "section",
+      className: "desk-db-three-pane",
+      props: { label: `Database tab ${tab.id}` },
+      on: {
+        keydown: (event) => {
+          if (event.key !== "Escape") return;
+          if (tab.query) tab.query.abort();
+          else if (tab.plan.peek()) tab.plan.set(null);
+          else tab.cell.set(null);
+        },
+      },
+      children: [leftSidebar, centerWorkspace, rightInspector],
+    };
   }
 
-  return { type: "Card", tag: "section", attrs: { id: "desk-db-studio-panel" }, className: "desk-card", children: [
-    { type: "Heading", props: { level: 3, text: "Visual Database Workbench" } },
-    controls("SQL tabs", [
-      button(null, "New SQL tab", () => {
-        const tab = makeTab(++nextTab);
-        tabs.set([...tabs.peek(), tab]);
-        active.set(tab.id);
-      }),
-      button(null, "Close current SQL tab", async () => {
-        const current = tabs.peek().find((tab) => tab.id === active.peek());
-        const remaining = tabs.peek().filter((tab) => tab !== current);
-        if (!remaining.length) return;
-        current.query?.abort();
-        tabs.set(remaining);
-        const next = remaining.at(-1);
-        active.set(next.id);
-        const tunnel = current.tunnel.peek().trim();
-        if (tunnel && !remaining.some((tab) => tab.tunnel.peek().trim() === tunnel)) {
-          try {
-            await actions.dbTunnelClose({ tunnel_id: tunnel });
-          } catch (error) {
-            next.message.set(error.message);
+  return {
+    type: "Card",
+    tag: "section",
+    attrs: { id: "desk-db-studio-panel" },
+    className: "desk-card desk-db-studio-root",
+    children: [
+      { type: "Heading", props: { level: 3, text: "Visual Database Workbench" } },
+      controls("SQL tabs", [
+        button(null, "New SQL tab", () => {
+          const tab = makeTab(++nextTab);
+          tabs.set([...tabs.peek(), tab]);
+          active.set(tab.id);
+        }),
+        button(null, "Close current SQL tab", async () => {
+          const current = tabs.peek().find((tab) => tab.id === active.peek());
+          const remaining = tabs.peek().filter((tab) => tab !== current);
+          if (!remaining.length) return;
+          current.query?.abort();
+          tabs.set(remaining);
+          const next = remaining.at(-1);
+          active.set(next.id);
+          const tunnel = current.tunnel.peek().trim();
+          if (tunnel && !remaining.some((tab) => tab.tunnel.peek().trim() === tunnel)) {
+            try {
+              await actions.dbTunnelClose({ tunnel_id: tunnel });
+            } catch (error) {
+              next.message.set(error.message);
+            }
           }
-        }
-      }, () => tabs.get().length < 2),
-      repeat(tabs, (entry) => button(null,
-        () => `Tab ${entry.get().id}${active.get() === entry.get().id ? " (active)" : ""}`,
-        () => active.set(entry.peek().id)), "Open SQL tabs"),
-    ]),
-    repeat(onlyActive, (entry) => renderTab(entry.peek()), "Active SQL workspace"),
-    repeat(() => store.dbTunnels.get().map((tunnel) => ({ ...tunnel, id: tunnel.tunnel_id })),
-      (entry) => paragraph(() => {
-        const tunnel = entry.get();
-        return `${tunnel.tunnel_id} · ${tunnel.engine} · ${tunnel.local_bind_addr}`;
-      }), "Active SSH database tunnels"),
-  ] };
+        }, () => tabs.get().length < 2),
+        repeat(tabs, (entry) => button(null,
+          () => `Tab ${entry.get().id}${active.get() === entry.get().id ? " (active)" : ""}`,
+          () => active.set(entry.peek().id)), "Open SQL tabs"),
+      ]),
+      repeat(onlyActive, (entry) => renderTab(entry.peek()), "Active SQL workspace"),
+    ],
+  };
 }

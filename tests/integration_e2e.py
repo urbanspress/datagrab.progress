@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Gate 4 Cross-Layer End-to-End Integration Suite for Groxy Desk v1.1.0.
+Gate 4 Cross-Layer End-to-End Integration Suite for Groxy Desk v1.2.0.
 Verifies compiled binaries + GRAB v1.1.0 + Grex JS v1.0.0 + GrabLab CMS v1.0.1 + Grex Builder v1.0.0 + grabman v1.0.0 + Unified Groxy AI.
 """
 import hashlib
@@ -168,7 +168,7 @@ def main():
 
             # Verify /_health, /_ready, /, and static bundle
             st, hdrs, raw_health = http_req("GET", f"{base_url}/_health")
-            assert st == 200 and json.loads(raw_health)["version"] == "1.1.0", f"/_health failed: {st} {raw_health}"
+            assert st == 200 and json.loads(raw_health)["version"] == "1.2.0", f"/_health failed: {st} {raw_health}"
             assert hdrs.get("X-Frame-Options") == "DENY"
             assert hdrs.get("X-Content-Type-Options") == "nosniff"
             assert "script-src 'self'" in hdrs.get("Content-Security-Policy", "")
@@ -194,11 +194,15 @@ def main():
                 "/public/desk/scorecard-panel.js",
                 "/public/desk/fleet-panel.js",
                 "/public/desk/db-studio-panel.js",
+                "/public/desk/radar-panel.js",
                 "/public/desk/dns-panel.js",
                 "/public/desk/author-panel.js",
             ):
                 st, _, _ = http_req("GET", f"{base_url}{asset}")
                 assert st == 200, f"Missing embedded asset {asset}: {st}"
+
+            st, font_hdrs, _ = http_req("GET", f"{base_url}/public/desk/fonts/urbanist-latin-400-normal.woff2")
+            assert st == 200 and font_hdrs.get("Content-Type") == "font/woff2", f"Font check failed: {st} {font_hdrs}"
 
             # 4. Auth & CSRF enforcement (403 DESK-E403)
             print("[Gate 4] Checking Bearer + CSRF 403 enforcement...")

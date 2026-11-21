@@ -100,6 +100,7 @@ test("Static view and all public/desk modules forbid <div>, innerHTML, eval, and
     path.join(repoRoot, "public", "desk", "scorecard-panel.js"),
     path.join(repoRoot, "public", "desk", "fleet-panel.js"),
     path.join(repoRoot, "public", "desk", "db-studio-panel.js"),
+    path.join(repoRoot, "public", "desk", "radar-panel.js"),
     path.join(repoRoot, "public", "desk", "dns-panel.js"),
     path.join(repoRoot, "public", "desk", "author-panel.js"),
     path.join(repoRoot, "public", "desk", "workbench.js"),

@@ -21,7 +21,7 @@ All notable releases of **Groxy Desk** (Step 6 of the GRAB Post-1.0 Ecosystem) a
 | **Scaffolder, Orchestrator & Discreet VPS Panel** | `urbanspress/grabman`, `urbanspress/grabtaculous`, `urbanspress/gashboard` | `>= v1.0.0 (< v2.0.0)` (bundle pins `grabman v1.0.0`) | `No` | `No` |
 | **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v1.3.0 (< v2.0.0)` | `Yes` | `No` |
 
-### Added & Verified (`Stage 3 Acceptance Complete — All 4 Gates Passing 100%`)
+### Added & Verified (`Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off: PASS`)
 - **Locked `100vh` High-Density Desktop IDE Shell & Dark Obsidian / Clean Light Palettes (`public/desk/desk.css`, `public/desk/theme.js`, `views/workbench.grab.html`):**
   - Locked `html, body, #desk-root` to `height: 100vh; max-height: 100vh; overflow: hidden;` with `display: flex; flex-direction: column;` so outer viewports never scroll.
   - Added WCAG AA (`>= 4.5:1` text, `>= 3.0:1` UI) CSS tokens for **Dark Obsidian** (`--grex-base: #0f1115`, `--grex-surface: #181b20`) and **Clean Light** (`--grex-base: #f8fafc`, `--grex-surface: #ffffff`), layout spacing variables (`--desk-header-h: 32px`, `--desk-statusbar-h: 24px`, `--desk-rail-w: 48px`, `--desk-sidebar-w: 240px`, `--desk-inspector-w: 280px`, `--desk-row-h: 28px`), and `26px–28px` monospace form controls.

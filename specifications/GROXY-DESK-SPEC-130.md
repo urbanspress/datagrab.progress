@@ -2,7 +2,7 @@
 
 **VS Code / DbGate / Coolify High-Density Desktop IDE Shell**
 
-- **Status:** Approved; Stage 3 Acceptance Complete (**Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit: PASS | Stage 3 Gates 1–4: PASS**)
+- **Status:** Approved & Frozen — Complete (**Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit: PASS | Stage 3 Gates 1–4: PASS | Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off: PASS — Released as `v1.3.0`**)
 - **Release tier:** Backwards-compatible minor feature (`ADR-027c`, `MINOR 1.x.0`)
 - **Base Frozen Release:** `v1.2.0` (`dbd957a`, verified via `git ls-remote stable refs/heads/main` and `git describe --tags --abbrev=0 stable/main`, in-sync across `origin` and `stable`)
 
@@ -190,3 +190,13 @@ On 2026-11-21, the project owner approved `GROXY-DESK-SPEC-130.md` for Stage 1 &
   - Gate 1: `CGO_ENABLED=0` `go build ./...` & `go vet ./...` (Windows amd64 & Linux amd64), `go mod verify`, `govulncheck ./...` (`0` vulnerabilities), `go test -count=1 ./...`, and `grab check` + `grab format` byte parity.
   - Gate 2: `node --test tests/*.test.js` (`14/14` pass, `divCount === 0`, `innerHTMLWriteCount === 0`, `auditDom()` `0` issues, Light & Dark WCAG AA, `ADR-025c`, and all 21 frozen `v1.2.0` DOM IDs + 17 additive `v1.3.0` shell IDs verified).
   - Gate 3 & Gate 4: `GROXY_DESK_TEST_WEBVIEW2=1` `TestNativeWebView2Isolation`, `python tests/integration_e2e.py`, `python tests/radar_live_e2e.py`, `python tests/network_dump_recovery.py`, packaged `--smoke-test`, and clean `git status --short` across all 10 sibling `v1.x` repositories.
+
+---
+
+## 8. Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off (PASS)
+
+- **Sign-Off Status & Baseline Commit:** `PASS` (`Approved & Frozen — Complete` on 2026-11-21; implementation verified at `7df23c8`).
+- **Locked `100vh` Desktop IDE Shell, Dark Obsidian / Clean Light Palettes & 5 Chrome Layers (`§§2, 3, 6.1, 6.3, 6.4`):** Verified `html, body, #desk-root` `100vh` lock (`height: 100vh; max-height: 100vh; overflow: hidden;`), Dark Obsidian (`#0f1115` / `#181b20`) and Clean Light (`#f8fafc` / `#ffffff`) token palettes passing `verifyPaletteContrast()` (`>= 4.5:1` text, `>= 3.0:1` UI), `32px` `#desk-header` (`<nav role="menubar">`, `#desk-command-search`, `#desk-workspace-badge`, `#desk-host-status-badge` + `#desk-connection-badge`, `#desk-theme-toggle`), `48px` `#desk-activity-rail` (`role="tablist"`, `grab-ide-icons` SVG buttons via Pure Grex JS `Icon` `createElementNS`, WAI-ARIA `ArrowRight`/`ArrowLeft`/`Home`/`End` keyboard nav, `#studio=database|browser|code` hash + `sessionStorage` persistence), locked `.desk-stage-locked` main stage (`#desk-db-sidebar`, `#desk-db-object-filter`, `28px`-row `.desk-grid-table` with `tabular-nums`, `#desk-db-center`, `#desk-db-inspector`), `24px` `#desk-status-bar` (`#desk-status-db`, `#desk-status-ssh`, `#desk-status-safety`, `#desk-status-grisp`, `#desk-status-adr025c`), and 100% preservation of all 21 frozen `v1.2.0` DOM element IDs.
+- **Pure `Grex JS v1.0.0`, WebView2 Isolation (`GRAB-E402`), `ADR-025c`, `GROXY-SAFE-001` & Cross-Layer E2E Parity (`§§1.2, 4, 5, 6.2, 6.4, 6.5`):** Verified `grab check src/desk.grab views/workbench.grab.html`, canonical `grab format` byte parity, `14/14` Node DOM/WCAG AA tests (`divCount === 0`, `innerHTMLWriteCount === 0`, zero `eval()`, `auditDom()` `0` issues, sequential `h1` -> `h2` -> `h3` -> `h4` -> `h5` heading hierarchy, single `<main id="desk-workspace-stage">` landmark, byte-for-byte unmodified `public/grex/grex.js` + `public/grex/grex.elements.json`, zero `<select>` model pickers), `trustedWorkbenchSource` fragment allowlisting in `cmd/groxy-desk/browser_policy.go`, `TestNativeWebView2Isolation`, `python tests/integration_e2e.py`, `python tests/radar_live_e2e.py`, and `python tests/network_dump_recovery.py` at `100%` pass.
+- **Release Packaging & Cross-Repo Hygiene:** Verified `dist/SHA256SUMS.txt` byte-for-byte across all 6 packaged assets (`Groxy-Desk-Setup-1.3.0.exe`, `Groxy-Desk-v1.3.0-Guide.pdf`, `groxy-desk-v1.3.0-bundle.zip`, `groxy-desk-windows-amd64.exe`, `groxy-deskd-linux-amd64`, `groxy-deskd-windows-amd64.exe`) and clean `git status --short` across all 10 sibling `v1.x` repositories (`GRAB`, `grex-js`, `grablab-cms`, `grex-builder`, `groxy-ai`, `grabman`, `grabtaculous`, `gashboard`, `grab-ide-icons`, `plotific-press`).
+

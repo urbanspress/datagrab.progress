@@ -32,8 +32,9 @@
 - **`24px` Pinned Bottom IDE Status Bar (`<footer id="desk-status-bar" class="desk-footer desk-ide-statusbar" role="status">`):**
   - Live `#desk-status-db` connection pill (1-click switch to Database Studio), `#desk-status-ssh` pinned `SHA256:...` fingerprint, `#desk-status-safety` (`GROXY-SAFE-001` snapshot guard), `#desk-status-grisp` active worker pool, and `#desk-status-adr025c` exact-wire indicator.
 
-### Stage 3 Verification Summary (`SPEC-130` Acceptance Gates 1–4 Passing `100%`)
+### Stage 3 & Stage 4 Verification Summary (`SPEC-130` Acceptance Gates 1–4 & Stage 4 Sign-Off: `PASS`)
 
+- **Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off (`PASS` — `Approved & Frozen — Complete`):** Verified `7df23c8` implementation baseline, `dist/SHA256SUMS.txt` byte-for-byte parity across all 6 packaged assets (`Groxy-Desk-Setup-1.3.0.exe`, `Groxy-Desk-v1.3.0-Guide.pdf`, `groxy-desk-v1.3.0-bundle.zip`, `groxy-desk-windows-amd64.exe`, `groxy-deskd-linux-amd64`, `groxy-deskd-windows-amd64.exe`), byte-for-byte unmodified `public/grex/grex.js` + `public/grex/grex.elements.json`, `trustedWorkbenchSource` fragment allowlisting (`cmd/groxy-desk/browser_policy.go`), and clean `git status --short` across all 10 sibling `v1.x` repositories.
 - `CGO_ENABLED=0` `go build ./...` and `go vet ./...` (Windows amd64 & Linux amd64), `go mod verify`, `govulncheck ./...` (`0` vulnerabilities), and `go test -count=1 ./...` across all tested Go packages passed `100%`.
 - `grab check src/desk.grab views/workbench.grab.html` and canonical `grab format` byte-for-byte parity passed `100%`.
 - `node --test tests/*.test.js` (`14/14` pass) verified `divCount === 0`, `innerHTMLWriteCount === 0`, zero `eval()` / `new Function()`, Dark Obsidian & Clean Light WCAG AA (`>= 4.5:1` text, `>= 3.0:1` UI), `auditDom()` zero issues/zero heading skips, `ADR-025c` fidelity, `100vh` shell tokens, 5 chrome layers, live object filtering, and 100% preservation of all 21 frozen `v1.2.0` DOM IDs.

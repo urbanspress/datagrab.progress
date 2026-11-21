@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Groxy Desk v1.3.0 — Walkthrough & Architecture Guide</title>
+  <style>
+    @page {
+      size: Letter;
+      margin: 0.7in 0.75in;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.55;
+      font-size: 10.5pt;
+      margin: 0;
+    }
+    header {
+      border-bottom: 3px solid #2563eb;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 20pt;
+      color: #0f172a;
+    }
+    h2 {
+      font-size: 13pt;
+      color: #1d4ed8;
+      margin: 18px 0 8px 0;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+    h3 {
+      font-size: 11pt;
+      color: #1e293b;
+      margin: 12px 0 4px 0;
+    }
+    p, li {
+      color: #334155;
+    }
+    code, pre {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      color: #0f172a;
+    }
+    code {
+      padding: 1px 5px;
+      font-size: 9.2pt;
+    }
+    pre {
+      padding: 10px 12px;
+      font-size: 8.8pt;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 9.2pt;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    section {
+      page-break-inside: avoid;
+    }
+    footer {
+      margin-top: 22px;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 8px;
+      font-size: 9pt;
+      color: #475569;
+    }
+    .candidate-guide { line-height: 1.4; }
+    .candidate-guide header { padding-bottom: 8px; margin-bottom: 12px; }
+    .candidate-guide h2 { margin: 12px 0 6px; }
+    .candidate-guide p, .candidate-guide ol { margin: 7px 0; }
+    .candidate-guide code { white-space: nowrap; }
+    .candidate-guide footer { margin-top: 14px; }
+  </style>
+</head>
+<body class="candidate-guide">
+
+  <header>
+    <h1>Groxy Desk v1.3.0</h1>
+    <p>VS Code / DbGate / Coolify High-Density 100vh Desktop IDE Shell</p>
+    <p><strong>Complete &middot; All 4 Acceptance Gates Verified</strong></p>
+  </header>
+  <main>
+    <section>
+      <h2>1. Locked 100vh Desktop IDE Shell &amp; Dark Obsidian / Clean Light Palettes</h2>
+      <p>Groxy Desk v1.3.0 locks <code>html, body, #desk-root</code> to <code>height: 100vh; max-height: 100vh; overflow: hidden;</code> so outer viewports never scroll and every operational tool remains visible above the fold. Both the <strong>Dark Obsidian</strong> (<code>#0f1115</code> / <code>#181b20</code>) and <strong>Clean Light</strong> (<code>#f8fafc</code> / <code>#ffffff</code>) palettes enforce WCAG AA contrast (&ge; 4.5:1 text, &ge; 3.0:1 UI components), <code>1px solid var(--grex-border)</code> hairline pane dividers, and compact <code>26px&ndash;28px</code> semantic monospace form controls.</p>
+    </section>
+    <section>
+      <h2>2. 32px Top IDE Menu &amp; Command Bar + 48px Vertical Activity Icon Rail</h2>
+      <p>The <code>32px</code> top bar (<code>#desk-header</code>) provides an application menu bar (<code>File</code>, <code>Edit</code>, <code>View</code>, <code>Database</code>, <code>Browser</code>, <code>Tools</code>, <code>Help</code>), a centered <code>Ctrl+K</code> command search bar (<code>#desk-command-search</code>), active workspace badge, authenticated loopback badge (<code>#desk-host-status-badge</code> / <code>#desk-connection-badge</code>), and theme toggle (<code>#desk-theme-toggle</code>).</p>
+      <p>The <code>48px</code> far-left vertical activity icon rail (<code>#desk-activity-rail</code>, <code>role="tablist"</code>) renders crisp <code>grab-ide-icons</code> SVG vectors via Pure Grex JS <code>Icon</code> (<code>createElementNS</code>) for <strong>Explorer &amp; Code</strong> (<code>#desk-tab-code</code>), <strong>Database Studio</strong> (<code>#desk-tab-database</code>), <strong>Browser &amp; Radar</strong> (<code>#desk-tab-browser</code>), <strong>Grex Visual Builder</strong> (<code>#desk-tab-grex</code>), <strong>Server &amp; Fleet</strong> (<code>#desk-tab-fleet</code>), plus bottom-anchored <strong>Settings</strong> (<code>#desk-action-settings</code>) and <strong>Shortcuts</strong> (<code>#desk-action-shortcuts</code>).</p>
+    </section>
+    <section>
+      <h2>3. Locked Edge-to-Edge Studios &amp; 28px Tabular Spreadsheet Grid</h2>
+      <p><strong>Database Studio</strong> (<code>#desk-panel-database</code>) pairs a <code>240px</code> collapsible connection/schema tree with live object filtering (<code>#desk-db-object-filter</code>), multi-tab autocomplete SQL, a <code>28px</code>-row-height sticky-header zebra-striped spreadsheet grid (<code>.desk-grid-table</code>, <code>tabular-nums</code>, exact <code>ADR-025c</code> wire strings), and a <code>280px</code> <code>GROXY-SAFE-001</code> inspector drawer (<code>#desk-db-inspector</code>). <strong>Browser &amp; Radar</strong> (<code>#desk-panel-browser</code>) provides an edge-to-edge 50/50 split pane, and <strong>Code &amp; Grex Studio</strong> (<code>#desk-panel-code</code>) combines workspace exploration, Coolify-density Server &amp; Fleet pills, live Grex split-preview canvas, and Unified <strong>Groxy AI</strong> (zero model-switching dropdowns).</p>
+    </section>
+    <section>
+      <h2>4. 24px Pinned Bottom IDE Status Bar</h2>
+      <p>The <code>24px</code> status bar (<code>#desk-status-bar</code>) surfaces five live indicators at all times: <code>#desk-status-db</code> (1-click database connection pill), <code>#desk-status-ssh</code> (pinned <code>SHA256:...</code> host fingerprint), <code>#desk-status-safety</code> (<code>GROXY-SAFE-001</code> snapshot guard), <code>#desk-status-grisp</code> (active local worker pool), and <code>#desk-status-adr025c</code> (exact-wire runtime badge).</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Groxy Desk v1.3.0 — Verified across Acceptance Gates 1–4 (Go + govulncheck + grab check/format, Pure Grex JS v1.0.0 DOM/WCAG/ADR-025c, Native WebView2, Radar/CMS E2E, and Database Recovery).</p>
+  </footer>
+</body>
+</html>

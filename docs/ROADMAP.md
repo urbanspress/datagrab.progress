@@ -99,7 +99,7 @@ Target Scope:
 
 ## `v1.3.0` — VS Code / DbGate / Coolify High-Density Desktop IDE Shell
 
-**Status:** Approved; implementation in progress (**Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit: PASS**) ([`specifications/GROXY-DESK-SPEC-130.md`](../specifications/GROXY-DESK-SPEC-130.md))
+**Status:** Approved; Stage 3 Acceptance Complete (**All 4 Acceptance Gates Verified — Ready for Stage 4 Sign-Off**) ([`specifications/GROXY-DESK-SPEC-130.md`](../specifications/GROXY-DESK-SPEC-130.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v1.3.0-Guide.pdf))
 
 Target Scope:
 - **Locked `100vh` High-Density IDE Shell & Dark Obsidian / Clean Light Palettes (`public/desk/desk.css`, `public/desk/theme.js`):** Zero page scroll (`height: 100vh; max-height: 100vh; overflow: hidden` on `html, body, #desk-root`), Dark Obsidian (`#0f1115` / `#181b20`) and Clean Light (`#f8fafc` / `#ffffff`) token system with WCAG AA `>= 4.5:1` text and `>= 3.0:1` UI contrast, `1px solid var(--grex-border)` hairline pane dividers, and custom `26px–28px` dark/light semantic inputs (zero unstyled white browser inputs).

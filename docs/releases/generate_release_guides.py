@@ -32,9 +32,36 @@ def find_browser() -> Path:
 
 def render_guide_html(version: str) -> str:
     v = html.escape(version)
-    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0") else ""
+    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0", "1.3.0") else ""
     footer_text = f"Groxy Desk v{v} — Verified across Gate 1 (Go + govulncheck + grab check/format), Gate 2 (Pure Grex JS DOM/WCAG/ADR-025c), Gate 3 (GRAB-E401 + GROXY-SAFE-001 + DESK-E403/E409), and Gate 4 (Live E2E)."
-    if version == "1.2.0":
+    if version == "1.3.0":
+        body_sections = """
+  <header>
+    <h1>Groxy Desk v1.3.0</h1>
+    <p>VS Code / DbGate / Coolify High-Density 100vh Desktop IDE Shell</p>
+    <p><strong>Complete &middot; All 4 Acceptance Gates Verified</strong></p>
+  </header>
+  <main>
+    <section>
+      <h2>1. Locked 100vh Desktop IDE Shell &amp; Dark Obsidian / Clean Light Palettes</h2>
+      <p>Groxy Desk v1.3.0 locks <code>html, body, #desk-root</code> to <code>height: 100vh; max-height: 100vh; overflow: hidden;</code> so outer viewports never scroll and every operational tool remains visible above the fold. Both the <strong>Dark Obsidian</strong> (<code>#0f1115</code> / <code>#181b20</code>) and <strong>Clean Light</strong> (<code>#f8fafc</code> / <code>#ffffff</code>) palettes enforce WCAG AA contrast (&ge; 4.5:1 text, &ge; 3.0:1 UI components), <code>1px solid var(--grex-border)</code> hairline pane dividers, and compact <code>26px&ndash;28px</code> semantic monospace form controls.</p>
+    </section>
+    <section>
+      <h2>2. 32px Top IDE Menu &amp; Command Bar + 48px Vertical Activity Icon Rail</h2>
+      <p>The <code>32px</code> top bar (<code>#desk-header</code>) provides an application menu bar (<code>File</code>, <code>Edit</code>, <code>View</code>, <code>Database</code>, <code>Browser</code>, <code>Tools</code>, <code>Help</code>), a centered <code>Ctrl+K</code> command search bar (<code>#desk-command-search</code>), active workspace badge, authenticated loopback badge (<code>#desk-host-status-badge</code> / <code>#desk-connection-badge</code>), and theme toggle (<code>#desk-theme-toggle</code>).</p>
+      <p>The <code>48px</code> far-left vertical activity icon rail (<code>#desk-activity-rail</code>, <code>role="tablist"</code>) renders crisp <code>grab-ide-icons</code> SVG vectors via Pure Grex JS <code>Icon</code> (<code>createElementNS</code>) for <strong>Explorer &amp; Code</strong> (<code>#desk-tab-code</code>), <strong>Database Studio</strong> (<code>#desk-tab-database</code>), <strong>Browser &amp; Radar</strong> (<code>#desk-tab-browser</code>), <strong>Grex Visual Builder</strong> (<code>#desk-tab-grex</code>), <strong>Server &amp; Fleet</strong> (<code>#desk-tab-fleet</code>), plus bottom-anchored <strong>Settings</strong> (<code>#desk-action-settings</code>) and <strong>Shortcuts</strong> (<code>#desk-action-shortcuts</code>).</p>
+    </section>
+    <section>
+      <h2>3. Locked Edge-to-Edge Studios &amp; 28px Tabular Spreadsheet Grid</h2>
+      <p><strong>Database Studio</strong> (<code>#desk-panel-database</code>) pairs a <code>240px</code> collapsible connection/schema tree with live object filtering (<code>#desk-db-object-filter</code>), multi-tab autocomplete SQL, a <code>28px</code>-row-height sticky-header zebra-striped spreadsheet grid (<code>.desk-grid-table</code>, <code>tabular-nums</code>, exact <code>ADR-025c</code> wire strings), and a <code>280px</code> <code>GROXY-SAFE-001</code> inspector drawer (<code>#desk-db-inspector</code>). <strong>Browser &amp; Radar</strong> (<code>#desk-panel-browser</code>) provides an edge-to-edge 50/50 split pane, and <strong>Code &amp; Grex Studio</strong> (<code>#desk-panel-code</code>) combines workspace exploration, Coolify-density Server &amp; Fleet pills, live Grex split-preview canvas, and Unified <strong>Groxy AI</strong> (zero model-switching dropdowns).</p>
+    </section>
+    <section>
+      <h2>4. 24px Pinned Bottom IDE Status Bar</h2>
+      <p>The <code>24px</code> status bar (<code>#desk-status-bar</code>) surfaces five live indicators at all times: <code>#desk-status-db</code> (1-click database connection pill), <code>#desk-status-ssh</code> (pinned <code>SHA256:...</code> host fingerprint), <code>#desk-status-safety</code> (<code>GROXY-SAFE-001</code> snapshot guard), <code>#desk-status-grisp</code> (active local worker pool), and <code>#desk-status-adr025c</code> (exact-wire runtime badge).</p>
+    </section>
+  </main>"""
+        footer_text = "Groxy Desk v1.3.0 — Verified across Acceptance Gates 1–4 (Go + govulncheck + grab check/format, Pure Grex JS v1.0.0 DOM/WCAG/ADR-025c, Native WebView2, Radar/CMS E2E, and Database Recovery)."
+    elif version == "1.2.0":
         body_sections = """
   <header>
     <h1>Groxy Desk v1.2.0</h1>

@@ -4,6 +4,34 @@ All notable releases of **Groxy Desk** (Step 6 of the GRAB Post-1.0 Ecosystem) a
 
 ---
 
+## `v1.3.0` — 2026-11-21
+
+### Release Type & Affected Layers
+- **Release Version & SemVer Tier:** `v1.3.0` (`MINOR 1.x.0` — Backwards-Compatible Feature Release)
+- **Affected Layer(s):** `Groxy Desk` (`urbanspress/groxy-desk`)
+- **Neighboring Layer Upgrade Required?** `No — 100% drop-in compatible`
+
+| Ecosystem Layer | Repository | Required Version Range | Touched in This Release? | Neighbor Upgrade Required? |
+|---|---|---|---|---|
+| **Core Language, Bytecode VM & Grisp Server** | `urbanspress/grab` | `>= v1.1.0 (< v2.0.0)` | `No` | `No` |
+| **Reactive Frontend Runtime & 20-Element Library** | `urbanspress/grex-js` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Flagship Zero-Plugin CMS** | `urbanspress/grablab-cms` | `>= v1.0.1 (< v2.0.0)` (`v1.4.0`/`v1.5.0` for optional book drafts) | `No` | `No` |
+| **Exclusive `mode: "visual"` Theme & Studio** | `urbanspress/grex-builder` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Autonomous Design, Content & SEO Agent** | `urbanspress/groxy-ai` | `>= v1.0.0 (< v2.0.0)` (`v1.8.0` for optional Bestseller Radar) | `No` | `No` |
+| **Scaffolder, Orchestrator & Discreet VPS Panel** | `urbanspress/grabman`, `urbanspress/grabtaculous`, `urbanspress/gashboard` | `>= v1.0.0 (< v2.0.0)` (bundle pins `grabman v1.0.0`) | `No` | `No` |
+| **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v1.3.0 (< v2.0.0)` | `Yes` | `No` |
+
+### Added & Verified (`Stage 3 Acceptance Complete — All 4 Gates Passing 100%`)
+- **Locked `100vh` High-Density Desktop IDE Shell & Dark Obsidian / Clean Light Palettes (`public/desk/desk.css`, `public/desk/theme.js`, `views/workbench.grab.html`):**
+  - Locked `html, body, #desk-root` to `height: 100vh; max-height: 100vh; overflow: hidden;` with `display: flex; flex-direction: column;` so outer viewports never scroll.
+  - Added WCAG AA (`>= 4.5:1` text, `>= 3.0:1` UI) CSS tokens for **Dark Obsidian** (`--grex-base: #0f1115`, `--grex-surface: #181b20`) and **Clean Light** (`--grex-base: #f8fafc`, `--grex-surface: #ffffff`), layout spacing variables (`--desk-header-h: 32px`, `--desk-statusbar-h: 24px`, `--desk-rail-w: 48px`, `--desk-sidebar-w: 240px`, `--desk-inspector-w: 280px`, `--desk-row-h: 28px`), and `26px–28px` monospace form controls.
+- **Five Coordinated IDE Chrome & Studio Layers (`public/desk/workbench.js`, `public/desk/db-studio-panel.js`, Pure `Grex JS v1.0.0`, `divCount === 0`, `innerHTMLWriteCount === 0`):**
+  - **`32px` Top IDE Menu & Command Bar (`#desk-header`):** Compact `<nav role="menubar">` (`File`, `Edit`, `View`, `Database`, `Browser`, `Tools`, `Help`), centered `#desk-command-search` (`Ctrl+K`), workspace badge, `#desk-host-status-badge` (`#desk-connection-badge`), and `#desk-theme-toggle`.
+  - **`48px` Far-Left Vertical Activity Icon Rail (`#desk-activity-rail`):** `grab-ide-icons` SVG navigation buttons via Pure Grex JS `Icon` (`#desk-tab-code`, `#desk-tab-database`, `#desk-tab-browser`, `#desk-tab-grex`, `#desk-tab-fleet`, `#desk-action-settings`, `#desk-action-shortcuts`) with keyboard navigation and allowlisted `#studio=database|browser|code` + `sessionStorage` persistence.
+  - **Main Locked Stage (`.desk-stage-locked`):** Database Studio (`#desk-db-sidebar` with `#desk-db-object-filter`, `28px`-row `.desk-grid-table` with `tabular-nums`, `#desk-db-inspector`), Browser & Radar (`50/50` split pane), and Code & Grex Studio (3-pane workbench with Coolify-density Server & Fleet tools and Unified `Groxy AI`).
+  - **`24px` Pinned Bottom IDE Status Bar (`#desk-status-bar`):** Live `#desk-status-db`, `#desk-status-ssh`, `#desk-status-safety`, `#desk-status-grisp`, and `#desk-status-adr025c`, preserving 100% of all 21 frozen `v1.2.0` DOM IDs.
+- Verified `100%` across Go build/vet (Windows & Linux `CGO_ENABLED=0`), `go mod verify`, `govulncheck ./...` (`0` vulnerabilities), `go test -count=1 ./...`, `grab check` + `grab format` byte parity, `node --test tests/*.test.js` (`14/14` pass), `TestNativeWebView2Isolation`, `tests/integration_e2e.py`, `tests/radar_live_e2e.py`, `tests/network_dump_recovery.py`, and clean `git status --short` across all 10 sibling repositories. [Release Notes](docs/releases/pdf/Groxy-Desk-v1.3.0-RELEASE-NOTES.md)
+
 ## `v1.2.0` — 2026-11-21
 
 ### Release Type & Affected Layers

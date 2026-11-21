@@ -229,3 +229,157 @@ test("Database Studio ER diagram, Views/Triggers schema tree, and 3-pane layout 
   assert.equal(shim.innerHTMLWriteCount, 0);
   mounted.dispose();
 });
+
+test("v1.3.0 High-Density 100vh Desktop IDE Shell, 5 coordinated chrome layers, object filter, and 21 frozen v1.2.0 IDs", async () => {
+  const css = fs.readFileSync(path.join(repoRoot, "public", "desk", "desk.css"), "utf8");
+  for (const token of [
+    "--desk-header-h: 32px",
+    "--desk-statusbar-h: 24px",
+    "--desk-rail-w: 48px",
+    "--desk-sidebar-w: 240px",
+    "--desk-inspector-w: 280px",
+    "--desk-row-h: 28px",
+    "--grex-base: #0f1115",
+    "--grex-surface: #181b20",
+    "--grex-base: #f8fafc",
+    "--grex-surface: #ffffff",
+    "height: 100vh;",
+    "max-height: 100vh;",
+    "overflow: hidden;",
+    "font-variant-numeric: tabular-nums;",
+  ]) {
+    assert.equal(css.includes(token), true, `desk.css missing v1.3.0 rule/token: ${token}`);
+  }
+
+  const shim = createDomShim("dark");
+  const root = shim.document.createElement("section");
+  root.setAttribute("id", "desk-root");
+  shim.document.body.appendChild(root);
+
+  const mockApi = {
+    hasSession: () => true,
+    getTheme: async () => ({ theme: "dark" }),
+    setTheme: async (next) => ({ ok: true, theme: next }),
+    workspaceTree: async () => ({ entries: [] }),
+    listWorkers: async () => ({
+      workers: [{ id: "w1", port: "8765", pid: "1234", status: "running", url: "http://127.0.0.1:8765" }],
+    }),
+    groxySnapshots: async () => ({
+      snapshots: [{ snapshot_id: "snap-1", target_path: "src/desk.grab", byte_length: "312", restored: false }],
+    }),
+    mcpTools: async () => ({ tools: [] }),
+    studioDesignSystem: async () => ({ style_packs: [], blueprints: [] }),
+    fleetNodes: async () => ({ nodes: [] }),
+    dbTunnels: async () => ({
+      tunnels: [
+        {
+          tunnel_id: "tun-pg",
+          engine: "postgres",
+          local_bind_addr: "127.0.0.1:15432",
+          pinned_fingerprint: "SHA256:verifiedPin123",
+        },
+      ],
+    }),
+    authorOllamaStatus: async () => ({ ok: true, running: false, loopback_url: "http://127.0.0.1:11434" }),
+    dbSchema: async () => ({
+      ok: true,
+      engine: "sqlite",
+      tables: [
+        { schema: "main", name: "authors", columns: [{ name: "id", type: "INTEGER", primary_key: true }] },
+        { schema: "main", name: "books", columns: [{ name: "id", type: "INTEGER", primary_key: true }] },
+      ],
+      views: [{ name: "priced_books" }],
+      triggers: [{ name: "books_audit_trig" }],
+    }),
+  };
+
+  const win = createWindowMock("#studio=code");
+  const mounted = mountGroxyDeskWorkbench(root, {
+    document: shim.document,
+    window: win,
+    apiClient: mockApi,
+    autoHydrate: false,
+  });
+  await mounted.hydrateWorkspace();
+
+  // Verify 100% of the 21 frozen v1.2.0 IDs + v1.3.0 additive shell IDs exist
+  const requiredIds = [
+    "desk-root",
+    "desk-header",
+    "desk-workspace-stage",
+    "desk-theme-toggle",
+    "desk-main-stage",
+    "desk-tab-database",
+    "desk-tab-browser",
+    "desk-tab-code",
+    "desk-panel-database",
+    "desk-panel-browser",
+    "desk-panel-code",
+    "desk-db-studio-panel",
+    "desk-editor-card",
+    "desk-active-file-meta",
+    "desk-run-grab-check-btn",
+    "desk-editor-code",
+    "desk-check-diagnostics",
+    "desk-preview-surface",
+    "desk-snapshots-card",
+    "desk-groxy-sidebar",
+    "desk-author-panel",
+    "desk-connection-badge",
+    "desk-host-status-badge",
+    "desk-command-search",
+    "desk-activity-rail",
+    "desk-tab-grex",
+    "desk-tab-fleet",
+    "desk-action-settings",
+    "desk-action-shortcuts",
+    "desk-db-sidebar",
+    "desk-db-object-filter",
+    "desk-db-center",
+    "desk-db-inspector",
+    "desk-status-bar",
+    "desk-status-db",
+    "desk-status-ssh",
+    "desk-status-safety",
+    "desk-status-grisp",
+    "desk-status-adr025c",
+  ];
+  for (const id of requiredIds) {
+    assert.ok(shim.document.querySelector(`#${id}`), `Missing required DOM ID #${id}`);
+  }
+
+  // Verify 32px Top Menu Bar & Command Search
+  const menubar = root.querySelector('nav[role="menubar"]');
+  assert.ok(menubar, "Missing nav[role=menubar]");
+  assert.equal(menubar.querySelectorAll('button[role="menuitem"]').length, 7);
+
+  // Verify 48px Activity Rail renders SVG icons via createElementNS
+  const rail = root.querySelector("#desk-activity-rail");
+  assert.ok(rail);
+  assert.equal(rail.querySelectorAll("svg").length, 7);
+
+  // Verify 24px Status Bar live indicators and 1-click DB studio navigation
+  assert.equal(root.querySelector("#desk-status-db").textContent.includes("postgres (127.0.0.1:15432)"), true);
+  assert.equal(root.querySelector("#desk-status-ssh").textContent.includes("SHA256:verifiedPin123"), true);
+  assert.equal(root.querySelector("#desk-status-safety").textContent.includes("1 Snapshots"), true);
+  assert.equal(root.querySelector("#desk-status-grisp").textContent.includes("1 Active (:8765)"), true);
+  assert.equal(root.querySelector("#desk-status-adr025c").textContent.includes("v1.3.0"), true);
+
+  await root.querySelector("#desk-status-db").click();
+  assert.equal(mounted.store.activeStudio.peek(), "database");
+
+  // Verify Database Studio object filter (#desk-db-object-filter) filters tables live
+  await root.querySelector("#db-schema-btn").click();
+  const filterInput = root.querySelector("#desk-db-object-filter");
+  filterInput.value = "authors";
+  await filterInput.dispatchEvent({ type: "input", target: filterInput });
+  const sidebarText = root.querySelector("#desk-db-sidebar").textContent;
+  assert.equal(sidebarText.includes("authors (1 cols)"), true);
+  assert.equal(sidebarText.includes("books (1 cols)"), false);
+
+  const domAudit = auditDom(root);
+  assert.equal(domAudit.ok, true, JSON.stringify(domAudit.issues));
+  assert.equal(root.querySelectorAll("*").filter((e) => e.localName === "div").length, 0);
+  assert.equal(shim.innerHTMLWriteCount, 0);
+  mounted.dispose();
+});

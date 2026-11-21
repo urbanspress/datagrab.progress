@@ -3,14 +3,23 @@
 ![Built with GRAB v1.1.0](docs/badges/built-with-grab.svg)
 ![Powered by Grex JS v1.0.0](docs/badges/powered-by-grex-js.svg)
 ![GRAB Ecosystem Step 6 — Groxy Desk](docs/badges/ecosystem-step-6.svg)
-![Release v1.2.0](docs/badges/release-v1.2.0.svg)
+![Release v1.3.0](docs/badges/release-v1.3.0.svg)
 
 **Groxy Desk** is the native desktop vibe-coding IDE, local `Grisp` (`grab.exe`) multi-worker supervisor, `grabman v1.0.0` workspace manager, Unified **`Groxy AI`** Adaptive Reasoning studio, and Step 5 Fleet / DB Explorer / DNS / Author Workbench for **Step 6 of the Post-1.0 GRAB Ecosystem**.
 
-- **Current Status:** `v1.2.0` (`MINOR 1.x.0`) — **Approved & Frozen — Complete (Released as `v1.2.0`)** (See [`CHANGELOG.md`](CHANGELOG.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), [`specifications/GROXY-DESK-SPEC-120.md`](specifications/GROXY-DESK-SPEC-120.md), and the [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.2.0-Guide.pdf))
+- **Current Status:** `v1.3.0` (`MINOR 1.x.0`) — **Stage 3 Acceptance Complete (Gates 1–4 Passing `100%`; Ready for Stage 4 Sign-Off)** (See [`CHANGELOG.md`](CHANGELOG.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), [`specifications/GROXY-DESK-SPEC-130.md`](specifications/GROXY-DESK-SPEC-130.md), and the [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.3.0-Guide.pdf))
 - **Built Strictly Upon Frozen Baselines:** `GRAB v1.1.0`, `Grex JS v1.0.0`, `GrabLab CMS v1.0.1`, `Grex Theme Builder v1.0.0`, `Groxy AI v1.0.0`, `grabman v1.0.0`, `Grabtaculous v1.1.0`, and `Gashboard v1.0.0` (with optional `Groxy AI v1.8.0` Bestseller Radar & `GrabLab CMS v1.4.0`/`v1.5.0` draft handoff).
 
 ---
+
+## Key Features (`v1.3.0` — VS Code / DbGate / Coolify High-Density `100vh` Desktop IDE Shell)
+- **Locked `100vh` High-Density IDE Shell & Dark Obsidian / Clean Light Palettes (`public/desk/desk.css`, `public/desk/theme.js`):**
+  - Zero outer document scroll (`height: 100vh; max-height: 100vh; overflow: hidden;` on `html, body, #desk-root`), Dark Obsidian (`#0f1115` / `#181b20`) and Clean Light (`#f8fafc` / `#ffffff`) WCAG AA palettes (`>= 4.5:1` text, `>= 3.0:1` UI), `1px solid var(--grex-border)` hairline pane dividers, and compact `26px–28px` monospace form controls.
+- **Five Coordinated IDE Chrome & Studio Layers (`Pure Grex JS v1.0.0`, `divCount === 0`, `innerHTMLWriteCount === 0`):**
+  - **`32px` Top IDE Menu & Command Bar (`#desk-header`):** Application `<nav role="menubar">` (`File`, `Edit`, `View`, `Database`, `Browser`, `Tools`, `Help`), centered `#desk-command-search` (`Ctrl+K`), workspace badge, `#desk-host-status-badge` (`#desk-connection-badge`), and `#desk-theme-toggle`.
+  - **`48px` Far-Left Vertical Activity Icon Rail (`#desk-activity-rail`):** Crisp `grab-ide-icons` SVG navigation buttons via Pure Grex JS `Icon` (`#desk-tab-code`, `#desk-tab-database`, `#desk-tab-browser`, `#desk-tab-grex`, `#desk-tab-fleet`, `#desk-action-settings`, `#desk-action-shortcuts`) with WAI-ARIA keyboard navigation and `#studio=database|browser|code` + `sessionStorage` persistence.
+  - **Locked Main Stage (`.desk-stage-locked`):** Database Studio (`240px` `#desk-db-sidebar` with `#desk-db-object-filter`, `28px`-row `.desk-grid-table` with `tabular-nums`, `280px` `#desk-db-inspector`), Browser & Radar (`50/50` split pane), and Code & Grex Studio (3-pane workbench with Coolify-density Server & Fleet tools and Unified `Groxy AI`).
+  - **`24px` Pinned Bottom IDE Status Bar (`#desk-status-bar`):** Live `#desk-status-db`, `#desk-status-ssh`, `#desk-status-safety`, `#desk-status-grisp`, and `#desk-status-adr025c`.
 
 ## Key Features (`v1.2.0` — 3-Tab Dedicated Workspace Studio)
 - **Sticky Top 3-Tab Workspace Switcher & Offline `Urbanist` Typography (`Database Studio` | `Browser & Radar` | `Code & Grex Studio`):**
@@ -62,7 +71,7 @@
 
 ```powershell
 # Install on Windows via Branded Inno Setup 6 Installer (.exe only, never .msi)
-.\dist\Groxy-Desk-Setup-1.2.0.exe
+.\dist\Groxy-Desk-Setup-1.3.0.exe
 
 # Launch headless smoke verification
 go run ./cmd/groxy-desk --smoke-test --addr 127.0.0.1:0
@@ -95,5 +104,5 @@ node --test tests/*.test.js
 python tests/integration_e2e.py
 
 # Build dist binaries, PDF walkthrough guide, Inno Setup installer, bundle zip, and SHA256SUMS.txt
-python scripts/package_release.py --version 1.2.0 --grabman-bin dist/grabman-v1.0.0.exe
+python scripts/package_release.py --version 1.3.0 --grabman-bin dist/grabman-v1.0.0.exe
 ```

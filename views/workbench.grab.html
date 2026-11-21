@@ -10,7 +10,7 @@
 </head>
 <body class="desk-shell">
   <section id="desk-root" class="desk-root" aria-label="Groxy Desk IDE Root">
-    <header class="desk-header">
+    <header id="desk-header" class="desk-header desk-ide-header" role="banner">
       <h1>Groxy Desk</h1>
       <nav aria-label="Quick Theme Navigation">
         <a href="#desk-workspace-stage">Workspace Stage</a>
@@ -22,8 +22,8 @@
         <p>Connecting securely to loopback daemon 127.0.0.1:9490 using Pure Grex JS v1.0.0.</p>
       </section>
     </main>
-    <footer class="desk-footer">
-      <p>Groxy Desk v1.2.0 — Loopback Only, Zero Wrapper Elements, Unified Groxy AI</p>
+    <footer id="desk-status-bar" class="desk-footer desk-ide-statusbar" role="status">
+      <p>Groxy Desk v1.3.0 — Loopback Only, Zero Wrapper Elements, Unified Groxy AI</p>
     </footer>
   </section>
   <script type="module" src="/public/desk/workbench.js"></script>

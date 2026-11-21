@@ -74,6 +74,7 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
   const privateKey = signal("");
   const sshPassword = signal("");
   const targetPort = signal("");
+  const objectFilter = signal("");
   const onlyActive = () => tabs.get().filter((tab) => tab.id === active.get());
   const repeat = (items, render, label) => ForEach({
     items, key: (item) => item.id, render,
@@ -226,7 +227,7 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
         ? catalogForTarget()?.find((entry) => entry.name === result.table) : null;
       const columns = new Map((table?.columns || []).map((col) => [col.name, col]));
       return { tag: "section", attrs: { class: "desk-db-grid" }, children: [
-        { tag: "table", children: [
+        { tag: "table", attrs: { class: "desk-grid-table" }, children: [
           { tag: "caption", text: `${result.table || "Query"} results on ${labelTarget(result.target)}` },
           { tag: "thead", children: [{ tag: "tr", children: result.columns.map((col) =>
             ({ tag: "th", attrs: { scope: "col" }, text: col.name })) }] },
@@ -276,13 +277,35 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
       }
     };
 
+    const matchesFilter = (name) => {
+      const q = String(objectFilter.get() || "").trim().toLowerCase();
+      if (!q) return true;
+      return String(name || "").toLowerCase().includes(q);
+    };
+
     const leftSidebar = {
       type: "Section",
       tag: "aside",
+      id: "desk-db-sidebar",
+      attrs: { id: "desk-db-sidebar" },
       className: "desk-db-sidebar",
       props: { label: "Connections and Schema Object Tree" },
       children: [
         { type: "Heading", props: { level: 4, text: "Connections & Schema" } },
+        {
+          type: "Input",
+          id: "desk-db-object-filter-field",
+          className: "desk-db-filter-field",
+          props: {
+            inputId: "desk-db-object-filter",
+            name: "db-object-filter",
+            label: "Filter schema objects",
+            type: "search",
+            placeholder: "Filter tables, views, triggers...",
+            value: objectFilter,
+            bare: true,
+          },
+        },
         {
           type: "Accordion",
           className: "desk-db-accordion",
@@ -371,7 +394,10 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
                 content: [
                   paragraph(() => `Tables (${catalogForTarget().length})`),
                   repeat(
-                    () => catalogForTarget().map((table) => ({ ...table, id: `tbl-${table.schema || "main"}-${table.name}` })),
+                    () =>
+                      catalogForTarget()
+                        .filter((table) => matchesFilter(table.name))
+                        .map((table) => ({ ...table, id: `tbl-${table.schema || "main"}-${table.name}` })),
                     (entry) => {
                       const table = entry.peek();
                       return button(null, `${table.name} (${(table.columns || []).length} cols)`, () => {
@@ -390,7 +416,10 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
                 content: [
                   paragraph(() => `Views (${viewsForTarget().length})`),
                   repeat(
-                    () => viewsForTarget().map((v, idx) => ({ id: `view-${idx}-${v.name || v}`, label: v.name || String(v) })),
+                    () =>
+                      viewsForTarget()
+                        .filter((v) => matchesFilter(v.name || v))
+                        .map((v, idx) => ({ id: `view-${idx}-${v.name || v}`, label: v.name || String(v) })),
                     (entry) => paragraph(() => entry.get().label),
                     "Views list"
                   ),
@@ -403,7 +432,10 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
                 content: [
                   paragraph(() => `Triggers (${triggersForTarget().length})`),
                   repeat(
-                    () => triggersForTarget().map((tr, idx) => ({ id: `trig-${idx}-${tr.name || tr}`, label: tr.name || String(tr) })),
+                    () =>
+                      triggersForTarget()
+                        .filter((tr) => matchesFilter(tr.name || tr))
+                        .map((tr, idx) => ({ id: `trig-${idx}-${tr.name || tr}`, label: tr.name || String(tr) })),
                     (entry) => paragraph(() => entry.get().label),
                     "Triggers list"
                   ),
@@ -418,6 +450,8 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
     const centerWorkspace = {
       type: "Section",
       tag: "section",
+      id: "desk-db-center",
+      attrs: { id: "desk-db-center" },
       className: "desk-db-center",
       props: { label: "SQL Editor, Action Toolbar and Spreadsheet Data Grid" },
       children: [
@@ -588,6 +622,8 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
     const rightInspector = {
       type: "Section",
       tag: "aside",
+      id: "desk-db-inspector",
+      attrs: { id: "desk-db-inspector" },
       className: "desk-db-inspector",
       props: { label: "Row Inspector, Pre-Mutation Snapshot Guard and GROXY-SAFE-001 Drawer" },
       children: [

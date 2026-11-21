@@ -2,7 +2,7 @@
 
 **VS Code / DbGate / Coolify High-Density Desktop IDE Shell**
 
-- **Status:** Approved; implementation in progress (**Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit: PASS**)
+- **Status:** Approved; Stage 3 Acceptance Complete (**Stage 2 Pre-Implementation Cross-Layer Security & Contract Audit: PASS | Stage 3 Gates 1–4: PASS**)
 - **Release tier:** Backwards-compatible minor feature (`ADR-027c`, `MINOR 1.x.0`)
 - **Base Frozen Release:** `v1.2.0` (`dbd957a`, verified via `git ls-remote stable refs/heads/main` and `git describe --tags --abbrev=0 stable/main`, in-sync across `origin` and `stable`)
 
@@ -176,3 +176,17 @@ On 2026-11-21, the project owner approved `GROXY-DESK-SPEC-130.md` for Stage 1 &
 5. **Sequential Heading Hierarchy (`GREX-A11Y-004`), Single `<main>` Landmark, `ADR-025c` & `GROXY-SAFE-001` (`§§3.3, 3.4, 4`):**
    - `auditDom(root)` enforces a single `<h1>` (in `#desk-header`) followed by sequential `<h2>` -> `<h3>` -> `<h4>` -> `<h5>` headings across the entire mounted DOM without level skips. Each tabpanel (`#desk-panel-database`, `#desk-panel-browser`, `#desk-panel-code`) MUST open with its `<h2>` heading before any `<h3>`/`<h4>` subheadings, and neither `#desk-header`, `#desk-activity-rail`, nor `#desk-status-bar` may introduce an `<h3>`+ heading before the first `<h2>`.
    - Maintain a single `<main id="desk-workspace-stage">` landmark, keep `#desk-db-studio-panel` wrapping `#desk-db-sidebar` (`with #desk-db-object-filter`), `#desk-db-center` (with `.desk-grid-table`), and `#desk-db-inspector`, preserve exact `ADR-025c` base-10 wire strings (`"0.00"`), and preserve all `GROXY-SAFE-001` single-use `approval_token` + SHA-256 Pre-Mutation Snapshot and rollback workflows.
+
+---
+
+## 7. Stage 3 Implementation & Verification Evidence (PASS)
+
+- **Locked `100vh` High-Density IDE Shell & Palettes (`public/desk/desk.css`, `public/desk/theme.js`, `views/workbench.grab.html`):**
+  - Locked `html, body, #desk-root` to `height: 100vh; max-height: 100vh; overflow: hidden; display: flex; flex-direction: column;`.
+  - Configured Dark Obsidian (`#0f1115` / `#181b20`) and Clean Light (`#f8fafc` / `#ffffff`) tokens + layout dimension variables (`--desk-header-h: 32px`, `--desk-statusbar-h: 24px`, `--desk-rail-w: 48px`, `--desk-sidebar-w: 240px`, `--desk-inspector-w: 280px`, `--desk-row-h: 28px`) and `26px–28px` monospace form controls passing `verifyPaletteContrast()` (`>= 4.5:1` text, `>= 3.0:1` UI).
+- **Five Coordinated IDE Chrome & Studio Layers (`public/desk/workbench.js`, `public/desk/db-studio-panel.js`):**
+  - Built `32px` top `#desk-header` (`<nav role="menubar">` with `File`, `Edit`, `View`, `Database`, `Browser`, `Tools`, `Help`, `#desk-command-search` `Ctrl+K`, `#desk-workspace-badge`, `#desk-host-status-badge` + `#desk-connection-badge`, and `#desk-theme-toggle`), `48px` far-left `#desk-activity-rail` (`role="tablist"`, `grab-ide-icons` SVG vectors via Pure Grex JS `Icon` `createElementNS`, `#desk-tab-code`, `#desk-tab-database`, `#desk-tab-browser`, `#desk-tab-grex`, `#desk-tab-fleet`, `#desk-action-settings`, `#desk-action-shortcuts`), locked main stage (`.desk-stage-locked` with `#desk-db-sidebar`, `#desk-db-object-filter`, `28px`-row `.desk-grid-table` with `tabular-nums`, `#desk-db-center`, `#desk-db-inspector`), and `24px` bottom `#desk-status-bar` (`#desk-status-db`, `#desk-status-ssh`, `#desk-status-safety`, `#desk-status-grisp`, `#desk-status-adr025c`).
+- **Verification Gates 1–4 (`100%` Pass):**
+  - Gate 1: `CGO_ENABLED=0` `go build ./...` & `go vet ./...` (Windows amd64 & Linux amd64), `go mod verify`, `govulncheck ./...` (`0` vulnerabilities), `go test -count=1 ./...`, and `grab check` + `grab format` byte parity.
+  - Gate 2: `node --test tests/*.test.js` (`14/14` pass, `divCount === 0`, `innerHTMLWriteCount === 0`, `auditDom()` `0` issues, Light & Dark WCAG AA, `ADR-025c`, and all 21 frozen `v1.2.0` DOM IDs + 17 additive `v1.3.0` shell IDs verified).
+  - Gate 3 & Gate 4: `GROXY_DESK_TEST_WEBVIEW2=1` `TestNativeWebView2Isolation`, `python tests/integration_e2e.py`, `python tests/radar_live_e2e.py`, `python tests/network_dump_recovery.py`, packaged `--smoke-test`, and clean `git status --short` across all 10 sibling `v1.x` repositories.

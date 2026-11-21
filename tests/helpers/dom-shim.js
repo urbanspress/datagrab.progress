@@ -309,6 +309,9 @@ export function createDomShim(initialTheme = "light") {
     createElement(tag) {
       return new ShimElement(tag, doc, counter);
     },
+    createElementNS(_ns, tag) {
+      return new ShimElement(tag, doc, counter);
+    },
     createTextNode(text) {
       return new ShimTextNode(text, doc);
     },

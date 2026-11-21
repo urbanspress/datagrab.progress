@@ -1,8 +1,8 @@
 /**
- * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.2.0.
+ * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.3.0.
  * Zero wrapper elements, zero raw DOM writes, zero unsafe script calls, sole Groxy AI identity.
  */
-import { ForEach, effect, renderNode, signal } from "../grex/grex.js";
+import { ForEach, Icon, effect, renderNode, signal } from "../grex/grex.js";
 import { createDeskApiClient } from "./api-client.js";
 import { createAuthorPanelNode } from "./author-panel.js";
 import { createDBStudioPanelNode } from "./db-studio-panel.js";
@@ -121,6 +121,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     browserSelection: signal(null),
     browserBrand: signal(null),
     groxyPrompt: signal(""),
+    commandSearch: signal(""),
     dnsPlan: signal(null),
     httpsPlan: signal(null),
     authorPlan: signal(null),
@@ -160,9 +161,9 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     const current = store.activeStudio.peek();
     const idx = Math.max(0, STUDIO_MODES.indexOf(current));
     let nextIdx = null;
-    if (key === "ArrowRight") {
+    if (key === "ArrowRight" || key === "ArrowDown") {
       nextIdx = (idx + 1) % STUDIO_MODES.length;
-    } else if (key === "ArrowLeft") {
+    } else if (key === "ArrowLeft" || key === "ArrowUp") {
       nextIdx = (idx - 1 + STUDIO_MODES.length) % STUDIO_MODES.length;
     } else if (key === "Home") {
       nextIdx = 0;
@@ -506,22 +507,386 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     store.themeMode.set(applied);
   };
 
-  const studioTab = (id, label) => ({
-    type: "Button",
-    id: `desk-tab-${id}`,
+  const focusSelector = (selector) => {
+    if (doc && typeof doc.querySelector === "function") {
+      const el = doc.querySelector(selector);
+      if (el && typeof el.focus === "function") {
+        el.focus();
+      }
+    }
+  };
+
+  const executeCommandSearch = () => {
+    const raw = String(store.commandSearch.peek() || "").trim();
+    const q = raw.toLowerCase();
+    if (!q) return;
+    if (q === "database" || q === "db" || q.startsWith("sql")) {
+      setActiveStudio("database");
+    } else if (q === "browser" || q === "radar") {
+      setActiveStudio("browser");
+    } else if (q === "code" || q === "grex" || q === "fleet") {
+      setActiveStudio("code");
+    } else if (q.endsWith(".grab") || q.endsWith(".html") || q.includes("/")) {
+      setActiveStudio("code");
+      openFile(raw).catch((e) => store.checkDiagnostics.set(e.message));
+    } else {
+      setActiveStudio("code");
+      store.groxyPrompt.set(raw);
+      focusSelector("#groxy-prompt-input textarea");
+    }
+  };
+
+  const RAIL_ICONS = {
+    code: [
+      {
+        tag: "polygon",
+        attrs: {
+          points: "12 2 21 7 21 17 12 22 3 17 3 7",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+          "stroke-linejoin": "round",
+        },
+      },
+      {
+        tag: "polyline",
+        attrs: {
+          points: "9 9 6 12 9 15",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+        },
+      },
+      {
+        tag: "polyline",
+        attrs: {
+          points: "15 9 18 12 15 15",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+        },
+      },
+    ],
+    database: [
+      {
+        tag: "rect",
+        attrs: {
+          x: "4",
+          y: "3",
+          width: "16",
+          height: "6",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "rect",
+        attrs: {
+          x: "4",
+          y: "9",
+          width: "16",
+          height: "6",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "rect",
+        attrs: {
+          x: "4",
+          y: "15",
+          width: "16",
+          height: "6",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+    ],
+    browser: [
+      {
+        tag: "circle",
+        attrs: {
+          cx: "12",
+          cy: "12",
+          r: "9",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "line",
+        attrs: {
+          x1: "3",
+          y1: "12",
+          x2: "21",
+          y2: "12",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "line",
+        attrs: {
+          x1: "12",
+          y1: "3",
+          x2: "12",
+          y2: "21",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+    ],
+    grex: [
+      {
+        tag: "rect",
+        attrs: {
+          x: "3",
+          y: "3",
+          width: "8",
+          height: "8",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "rect",
+        attrs: {
+          x: "13",
+          y: "3",
+          width: "8",
+          height: "8",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "rect",
+        attrs: {
+          x: "3",
+          y: "13",
+          width: "18",
+          height: "8",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+    ],
+    fleet: [
+      {
+        tag: "rect",
+        attrs: {
+          x: "3",
+          y: "4",
+          width: "18",
+          height: "6",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "rect",
+        attrs: {
+          x: "3",
+          y: "14",
+          width: "18",
+          height: "6",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "circle",
+        attrs: { cx: "7", cy: "7", r: "1", fill: "currentColor" },
+      },
+      {
+        tag: "circle",
+        attrs: { cx: "7", cy: "17", r: "1", fill: "currentColor" },
+      },
+    ],
+    settings: [
+      {
+        tag: "circle",
+        attrs: {
+          cx: "12",
+          cy: "12",
+          r: "4",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "line",
+        attrs: {
+          x1: "12",
+          y1: "2",
+          x2: "12",
+          y2: "6",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "line",
+        attrs: {
+          x1: "12",
+          y1: "18",
+          x2: "12",
+          y2: "22",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "line",
+        attrs: {
+          x1: "2",
+          y1: "12",
+          x2: "6",
+          y2: "12",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "line",
+        attrs: {
+          x1: "18",
+          y1: "12",
+          x2: "22",
+          y2: "12",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+    ],
+    shortcuts: [
+      {
+        tag: "rect",
+        attrs: {
+          x: "2",
+          y: "5",
+          width: "20",
+          height: "14",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "line",
+        attrs: {
+          x1: "6",
+          y1: "10",
+          x2: "10",
+          y2: "10",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "line",
+        attrs: {
+          x1: "14",
+          y1: "10",
+          x2: "18",
+          y2: "10",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+      {
+        tag: "line",
+        attrs: {
+          x1: "7",
+          y1: "15",
+          x2: "17",
+          y2: "15",
+          stroke: "currentColor",
+          "stroke-width": "1.8",
+        },
+      },
+    ],
+  };
+
+  const makeRailIcon = (iconKey) =>
+    Icon(
+      {
+        className: "desk-rail-icon",
+        props: {
+          size: "18",
+          viewBox: "0 0 24 24",
+          paths: RAIL_ICONS[iconKey] || RAIL_ICONS.code,
+        },
+      },
+      { document: doc }
+    ).element;
+
+  const studioTab = (id, label, iconKey = id) => ({
+    tag: "button",
     attrs: {
       id: `desk-tab-${id}`,
+      type: "button",
       role: "tab",
+      "aria-label": label,
       "aria-controls": `desk-panel-${id}`,
       "aria-selected": () => (store.activeStudio.get() === id ? "true" : "false"),
       tabindex: () => (store.activeStudio.get() === id ? "0" : "-1"),
+      class: () =>
+        store.activeStudio.get() === id
+          ? "desk-rail-btn desk-tab desk-tab-active"
+          : "desk-rail-btn desk-tab",
     },
-    className: () => (store.activeStudio.get() === id ? "desk-tab desk-tab-active" : "desk-tab"),
-    props: {
+    on: { click: () => setActiveStudio(id) },
+    children: [
+      makeRailIcon(iconKey),
+      { tag: "span", attrs: { class: "desk-rail-label" }, text: label },
+    ],
+  });
+
+  const auxiliaryRailTab = (id, label, iconKey, onClick) => ({
+    tag: "button",
+    attrs: {
+      id,
       type: "button",
-      text: label,
-      onClick: () => setActiveStudio(id),
+      role: "tab",
+      "aria-label": label,
+      "aria-controls": "desk-panel-code",
+      "aria-selected": "false",
+      tabindex: "-1",
+      class: "desk-rail-btn desk-tab",
     },
+    on: { click: onClick },
+    children: [
+      makeRailIcon(iconKey),
+      { tag: "span", attrs: { class: "desk-rail-label" }, text: label },
+    ],
+  });
+
+  const railQuickAction = (id, label, iconKey, onClick, extraClass = "") => ({
+    tag: "button",
+    attrs: {
+      id,
+      type: "button",
+      "aria-label": label,
+      class: extraClass ? `desk-rail-btn ${extraClass}` : "desk-rail-btn",
+    },
+    on: { click: onClick },
+    children: [
+      makeRailIcon(iconKey),
+      { tag: "span", attrs: { class: "desk-rail-label" }, text: label },
+    ],
+  });
+
+  const menuBarItem = (label, accessKey, onClick) => ({
+    tag: "button",
+    text: label,
+    attrs: {
+      type: "button",
+      role: "menuitem",
+      accesskey: accessKey,
+      class: "desk-menuitem",
+    },
+    on: { click: onClick },
   });
 
   const studioTabpanel = (id, title, children) => ({
@@ -633,38 +998,96 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       {
         type: "Section",
         tag: "header",
-        className: "desk-header",
+        id: "desk-header",
+        attrs: { id: "desk-header", role: "banner" },
+        className: "desk-header desk-ide-header",
         children: [
           {
             type: "Stack",
             tag: "section",
-            className: "desk-brand-group",
+            className: "desk-header-left",
             children: [
               {
-                type: "Heading",
-                props: { level: 1, text: "Groxy Desk" },
+                type: "Stack",
+                tag: "section",
+                className: "desk-brand-group",
+                children: [
+                  {
+                    type: "Heading",
+                    props: { level: 1, text: "Groxy Desk" },
+                  },
+                  {
+                    type: "Text",
+                    tag: "span",
+                    className: "desk-version-tag",
+                    props: { text: "v1.3.0" },
+                  },
+                ],
               },
               {
-                type: "Text",
-                tag: "span",
-                className: "desk-version-tag",
-                props: { text: "v1.2.0" },
+                type: "Stack",
+                tag: "nav",
+                className: "desk-menubar",
+                attrs: {
+                  role: "menubar",
+                  "aria-label": "Application Menu",
+                },
+                children: [
+                  menuBarItem("File", "f", () => {
+                    setActiveStudio("code");
+                    refreshTree(".").catch(() => []);
+                  }),
+                  menuBarItem("Edit", "e", () => {
+                    actions.undoStudioLayout();
+                  }),
+                  menuBarItem("View", "v", () => {
+                    const cur = store.activeStudio.peek();
+                    const nextIdx = (STUDIO_MODES.indexOf(cur) + 1) % STUDIO_MODES.length;
+                    setActiveStudio(STUDIO_MODES[nextIdx]);
+                  }),
+                  menuBarItem("Database", "d", () => setActiveStudio("database")),
+                  menuBarItem("Browser", "b", () => setActiveStudio("browser")),
+                  menuBarItem("Tools", "t", () => {
+                    setActiveStudio("code");
+                    focusSelector("#desk-grisp-supervisor");
+                  }),
+                  menuBarItem("Help", "h", () => {
+                    store.checkDiagnostics.set(
+                      "Shortcuts: Ctrl+K Command Search | Ctrl+Z Undo Layout | Arrow keys in Activity Rail"
+                    );
+                    focusSelector("#desk-command-search");
+                  }),
+                ],
               },
             ],
           },
           {
             type: "Stack",
-            tag: "nav",
-            className: "desk-studio-tabs",
-            attrs: {
-              role: "tablist",
-              "aria-label": "Workspace Studio Modes",
-            },
-            on: { keydown: handleTablistKeydown },
+            tag: "section",
+            className: "desk-header-center",
             children: [
-              studioTab("database", "Database Studio"),
-              studioTab("browser", "Browser & Radar"),
-              studioTab("code", "Code & Grex Studio"),
+              {
+                type: "Input",
+                id: "desk-command-search-field",
+                className: "desk-command-search",
+                on: {
+                  keydown: (ev) => {
+                    if (ev && ev.key === "Enter") {
+                      if (typeof ev.preventDefault === "function") ev.preventDefault();
+                      executeCommandSearch();
+                    }
+                  },
+                },
+                props: {
+                  inputId: "desk-command-search",
+                  name: "desk-command-search",
+                  label: "Command Search (Ctrl+K)",
+                  type: "search",
+                  placeholder: "Search files, run SQL, or ask Groxy AI (Ctrl+K)...",
+                  value: store.commandSearch,
+                  bare: true,
+                },
+              },
             ],
           },
           {
@@ -675,15 +1098,33 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
               {
                 type: "Text",
                 tag: "span",
-                id: "desk-connection-badge",
-                attrs: { id: "desk-connection-badge" },
-                className: "desk-badge",
+                id: "desk-workspace-badge",
+                attrs: { id: "desk-workspace-badge" },
+                className: "desk-badge desk-mono",
                 props: {
-                  text: () =>
-                    store.sessionReady.get()
-                      ? "127.0.0.1:9490 Authenticated"
-                      : "Waiting for Host Session",
+                  text: () => `Workspace: ${store.activePath.get()}`,
                 },
+              },
+              {
+                tag: "span",
+                attrs: {
+                  id: "desk-host-status-badge",
+                  class: "desk-badge",
+                },
+                children: [
+                  {
+                    type: "Text",
+                    tag: "span",
+                    id: "desk-connection-badge",
+                    attrs: { id: "desk-connection-badge" },
+                    props: {
+                      text: () =>
+                        store.sessionReady.get()
+                          ? "127.0.0.1:9490 Authenticated"
+                          : "Waiting for Host Session",
+                    },
+                  },
+                ],
               },
               {
                 type: "Button",
@@ -705,170 +1146,300 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       },
       {
         type: "Section",
-        tag: "main",
-        id: "desk-workspace-stage",
-        attrs: { id: "desk-workspace-stage" },
-        className: "desk-main",
-        props: { label: "Groxy Desk Studio Workspace" },
+        tag: "section",
+        className: "desk-stage-locked",
+        props: { label: "Locked IDE Workbench Stage" },
         children: [
-          studioTabpanel("database", "Database Studio", [
-            createDBStudioPanelNode(store, actions, doc),
-          ]),
-          studioTabpanel("browser", "Browser & Radar", [
-            createRadarPanelNode(store, apiClient, doc),
-          ]),
-          studioTabpanel("code", "Code & Grex Studio", [
-            {
-              type: "Section",
-              tag: "section",
-              className: "desk-workspace-grid",
-              props: { label: "Three-Pane Code and Grex Studio" },
-              children: [
+          {
+            type: "Stack",
+            tag: "nav",
+            id: "desk-activity-rail",
+            attrs: {
+              id: "desk-activity-rail",
+              role: "tablist",
+              "aria-label": "Activity Rail",
+            },
+            className: "desk-activity-rail",
+            on: { keydown: handleTablistKeydown },
+            children: [
+              studioTab("code", "Code & Grex Studio", "code"),
+              studioTab("database", "Database Studio", "database"),
+              studioTab("browser", "Browser & Radar", "browser"),
+              auxiliaryRailTab("desk-tab-grex", "Grex Visual Builder", "grex", () => {
+                setActiveStudio("code");
+                store.workbenchMode.set("split");
+                focusSelector("#desk-preview-surface");
+              }),
+              auxiliaryRailTab("desk-tab-fleet", "Server & Fleet", "fleet", () => {
+                setActiveStudio("code");
+                focusSelector("#desk-grisp-supervisor");
+              }),
+              railQuickAction(
+                "desk-action-settings",
+                "Settings",
+                "settings",
+                () => toggleTheme(),
+                "desk-rail-spacer"
+              ),
+              railQuickAction("desk-action-shortcuts", "Shortcuts", "shortcuts", () =>
+                focusSelector("#desk-command-search")
+              ),
+            ],
+          },
+          {
+            type: "Section",
+            tag: "main",
+            id: "desk-workspace-stage",
+            attrs: { id: "desk-workspace-stage" },
+            className: "desk-main",
+            props: { label: "Groxy Desk Studio Workspace" },
+            children: [
+              studioTabpanel("database", "Database Studio", [
+                createDBStudioPanelNode(store, actions, doc),
+              ]),
+              studioTabpanel("browser", "Browser & Radar", [
+                createRadarPanelNode(store, apiClient, doc),
+              ]),
+              studioTabpanel("code", "Code & Grex Studio", [
                 {
                   type: "Section",
                   tag: "section",
-                  className: "desk-code-left-rail",
-                  props: { label: "Workspace Explorer, grabman, Grisp and Step 5 Tools" },
-                  children: [
-                    createWorkspacePanelNode(store, actions, doc),
-                    {
-                      type: "Accordion",
-                      className: "desk-collapsible-group",
-                      props: {
-                        label: "Supervisor and Step 5 Tools",
-                        items: [
-                          {
-                            id: "grisp-supervisor",
-                            summary: "Local Grisp Multi-Worker Supervisor",
-                            open: true,
-                            content: createSupervisorPanelNode(store, actions, doc),
-                          },
-                          {
-                            id: "step5-fleet",
-                            summary: "Step 5 Fleet & Grabtaculous Bridge",
-                            open: false,
-                            content: createFleetPanelNode(store, actions, doc),
-                          },
-                          {
-                            id: "step5-dns",
-                            summary: "Namecheap DNS Vault & Auto-HTTPS Wizard",
-                            open: false,
-                            content: createDNSPanelNode(store, actions, doc),
-                          },
-                          {
-                            id: "step5-author",
-                            summary: "1-Click Local Author Mode & Open-Weights Runtime",
-                            open: false,
-                            content: createAuthorPanelNode(store, actions, doc),
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                {
-                  type: "Section",
-                  tag: "section",
-                  id: "desk-main-stage",
-                  attrs: { id: "desk-main-stage" },
-                  className: "desk-panel",
-                  props: { label: "Editor and Grex Preview Canvas" },
+                  className: "desk-workspace-grid",
+                  props: { label: "Three-Pane Code and Grex Studio" },
                   children: [
                     {
-                      type: "Heading",
-                      props: { level: 2, text: "Code Workbench & Grex Preview" },
-                    },
-                    {
-                      type: "Card",
+                      type: "Section",
                       tag: "section",
-                      id: "desk-editor-card",
-                      attrs: { id: "desk-editor-card" },
-                      className: "desk-card",
+                      className: "desk-code-left-rail",
+                      props: { label: "Workspace Explorer, grabman, Grisp and Step 5 Tools" },
                       children: [
+                        createWorkspacePanelNode(store, actions, doc),
                         {
-                          type: "Heading",
-                          props: { level: 3, text: "Active File Preview" },
-                        },
-                        {
-                          type: "Text",
-                          tag: "p",
-                          id: "desk-active-file-meta",
-                          attrs: { id: "desk-active-file-meta" },
-                          className: "desk-muted",
+                          type: "Accordion",
+                          className: "desk-collapsible-group",
                           props: {
-                            text: () =>
-                              `${store.activePath.get()} (${store.activeSizeBytes.get()} B)`,
-                          },
-                        },
-                        {
-                          type: "Stack",
-                          tag: "section",
-                          className: "desk-badge-row",
-                          children: [
-                            {
-                              type: "Button",
-                              id: "desk-run-grab-check-btn",
-                              attrs: { id: "desk-run-grab-check-btn" },
-                              className: "desk-btn-primary",
-                              props: {
-                                type: "button",
-                                text: "Run grab check & format",
-                                onClick: () =>
-                                  runActiveFileCheck().catch((e) =>
-                                    store.checkDiagnostics.set(e.message)
-                                  ),
+                            label: "Supervisor and Step 5 Tools",
+                            items: [
+                              {
+                                id: "grisp-supervisor",
+                                summary: "Local Grisp Multi-Worker Supervisor",
+                                open: true,
+                                content: createSupervisorPanelNode(store, actions, doc),
                               },
-                            },
-                          ],
-                        },
-                        {
-                          type: "Text",
-                          tag: "code",
-                          id: "desk-editor-code",
-                          attrs: { id: "desk-editor-code" },
-                          className: "desk-code-block",
-                          props: { text: store.activeFileContent },
-                        },
-                        {
-                          type: "Text",
-                          tag: "p",
-                          id: "desk-check-diagnostics",
-                          attrs: { id: "desk-check-diagnostics" },
-                          className: "desk-muted",
-                          props: { text: store.checkDiagnostics },
+                              {
+                                id: "step5-fleet",
+                                summary: "Step 5 Fleet & Grabtaculous Bridge",
+                                open: false,
+                                content: createFleetPanelNode(store, actions, doc),
+                              },
+                              {
+                                id: "step5-dns",
+                                summary: "Namecheap DNS Vault & Auto-HTTPS Wizard",
+                                open: false,
+                                content: createDNSPanelNode(store, actions, doc),
+                              },
+                              {
+                                id: "step5-author",
+                                summary: "1-Click Local Author Mode & Open-Weights Runtime",
+                                open: false,
+                                content: createAuthorPanelNode(store, actions, doc),
+                              },
+                            ],
+                          },
                         },
                       ],
                     },
-                    createStudioPanelNode(store, actions, doc),
+                    {
+                      type: "Section",
+                      tag: "section",
+                      id: "desk-main-stage",
+                      attrs: { id: "desk-main-stage" },
+                      className: "desk-panel",
+                      props: { label: "Editor and Grex Preview Canvas" },
+                      children: [
+                        {
+                          type: "Heading",
+                          props: { level: 2, text: "Code Workbench & Grex Preview" },
+                        },
+                        {
+                          type: "Card",
+                          tag: "section",
+                          id: "desk-editor-card",
+                          attrs: { id: "desk-editor-card" },
+                          className: "desk-card",
+                          children: [
+                            {
+                              type: "Heading",
+                              props: { level: 3, text: "Active File Preview" },
+                            },
+                            {
+                              type: "Text",
+                              tag: "p",
+                              id: "desk-active-file-meta",
+                              attrs: { id: "desk-active-file-meta" },
+                              className: "desk-muted",
+                              props: {
+                                text: () =>
+                                  `${store.activePath.get()} (${store.activeSizeBytes.get()} B)`,
+                              },
+                            },
+                            {
+                              type: "Stack",
+                              tag: "section",
+                              className: "desk-badge-row",
+                              children: [
+                                {
+                                  type: "Button",
+                                  id: "desk-run-grab-check-btn",
+                                  attrs: { id: "desk-run-grab-check-btn" },
+                                  className: "desk-btn-primary",
+                                  props: {
+                                    type: "button",
+                                    text: "Run grab check & format",
+                                    onClick: () =>
+                                      runActiveFileCheck().catch((e) =>
+                                        store.checkDiagnostics.set(e.message)
+                                      ),
+                                  },
+                                },
+                              ],
+                            },
+                            {
+                              type: "Text",
+                              tag: "code",
+                              id: "desk-editor-code",
+                              attrs: { id: "desk-editor-code" },
+                              className: "desk-code-block",
+                              props: { text: store.activeFileContent },
+                            },
+                            {
+                              type: "Text",
+                              tag: "p",
+                              id: "desk-check-diagnostics",
+                              attrs: { id: "desk-check-diagnostics" },
+                              className: "desk-muted",
+                              props: { text: store.checkDiagnostics },
+                            },
+                          ],
+                        },
+                        createStudioPanelNode(store, actions, doc),
+                      ],
+                    },
+                    {
+                      type: "Section",
+                      tag: "section",
+                      className: "desk-code-right-rail",
+                      props: { label: "Unified Groxy AI Co-Pilot, 22-Rule Scorecard and Safety Snapshots" },
+                      children: [
+                        createGroxySidebarNode(store, actions),
+                        createScorecardPanelNode(store, actions, doc),
+                        snapshotsCard,
+                      ],
+                    },
                   ],
                 },
-                {
-                  type: "Section",
-                  tag: "section",
-                  className: "desk-code-right-rail",
-                  props: { label: "Unified Groxy AI Co-Pilot, 22-Rule Scorecard and Safety Snapshots" },
-                  children: [
-                    createGroxySidebarNode(store, actions),
-                    createScorecardPanelNode(store, actions, doc),
-                    snapshotsCard,
-                  ],
-                },
-              ],
-            },
-          ]),
+              ]),
+            ],
+          },
         ],
       },
       {
         type: "Section",
         tag: "footer",
-        className: "desk-footer",
+        id: "desk-status-bar",
+        attrs: {
+          id: "desk-status-bar",
+          role: "status",
+          "aria-label": "IDE Status Bar",
+        },
+        className: "desk-footer desk-ide-statusbar",
         children: [
           {
-            type: "Text",
-            tag: "p",
-            props: {
-              text: "Groxy Desk v1.2.0 — Pure Grex JS v1.0.0 | Zero Wrapper Elements | Unified Groxy AI",
-            },
+            type: "Stack",
+            tag: "section",
+            className: "desk-statusbar-group",
+            children: [
+              {
+                type: "Button",
+                id: "desk-status-db",
+                attrs: { id: "desk-status-db" },
+                className: "desk-status-item desk-status-pill",
+                props: {
+                  type: "button",
+                  label: "Database Connection Status",
+                  text: () => {
+                    const tunnels = store.dbTunnels.get();
+                    if (tunnels.length > 0) {
+                      const t = tunnels[0];
+                      return `● Connected: ${t.engine} (${t.local_bind_addr})`;
+                    }
+                    return "● Connected: SQLite (data/app.db)";
+                  },
+                  onClick: () => setActiveStudio("database"),
+                },
+              },
+              {
+                type: "Text",
+                tag: "span",
+                id: "desk-status-ssh",
+                attrs: { id: "desk-status-ssh" },
+                className: "desk-status-item desk-mono",
+                props: {
+                  text: () => {
+                    const tunnels = store.dbTunnels.get();
+                    if (tunnels.length > 0 && tunnels[0].pinned_fingerprint) {
+                      return `SSH: ${tunnels[0].pinned_fingerprint}`;
+                    }
+                    return "SSH: Loopback 127.0.0.1 (SHA256 Pinned)";
+                  },
+                },
+              },
+              {
+                type: "Text",
+                tag: "span",
+                id: "desk-status-safety",
+                attrs: { id: "desk-status-safety" },
+                className: "desk-status-item",
+                props: {
+                  text: () =>
+                    `GROXY-SAFE-001: Armed (${store.snapshots.get().length} Snapshots)`,
+                },
+              },
+            ],
+          },
+          {
+            type: "Stack",
+            tag: "section",
+            className: "desk-statusbar-group",
+            children: [
+              {
+                type: "Text",
+                tag: "span",
+                id: "desk-status-grisp",
+                attrs: { id: "desk-status-grisp" },
+                className: "desk-status-item desk-mono",
+                props: {
+                  text: () => {
+                    const list = store.workers.get();
+                    if (list.length > 0) {
+                      const ports = list.map((w) => `:${w.port}`).join(", ");
+                      return `Grisp: ${list.length} Active (${ports})`;
+                    }
+                    return "Grisp: 0 Active (Idle)";
+                  },
+                },
+              },
+              {
+                type: "Text",
+                tag: "span",
+                id: "desk-status-adr025c",
+                attrs: { id: "desk-status-adr025c" },
+                className: "desk-status-item desk-mono",
+                props: {
+                  text: "Groxy Desk v1.3.0 | ADR-025c Exact Wire | Grex JS v1.0.0",
+                },
+              },
+            ],
           },
         ],
       },
@@ -912,10 +1483,14 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
   let onUndoKeydown = null;
   if (doc && typeof doc.addEventListener === "function") {
     onUndoKeydown = (ev) => {
-      if ((ev.ctrlKey || ev.metaKey) && String(ev.key || "").toLowerCase() === "z" && !ev.shiftKey) {
+      const k = String(ev.key || "").toLowerCase();
+      if ((ev.ctrlKey || ev.metaKey) && k === "z" && !ev.shiftKey) {
         if (actions.undoStudioLayout()) {
           if (typeof ev.preventDefault === "function") ev.preventDefault();
         }
+      } else if ((ev.ctrlKey || ev.metaKey) && k === "k") {
+        if (typeof ev.preventDefault === "function") ev.preventDefault();
+        focusSelector("#desk-command-search");
       }
     };
     doc.addEventListener("keydown", onUndoKeydown);

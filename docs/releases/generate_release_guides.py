@@ -32,15 +32,26 @@ def find_browser() -> Path:
 
 def render_guide_html(version: str) -> str:
     v = html.escape(version)
-    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0", "1.3.0", "1.3.1", "1.4.0", "1.4.1") else ""
+    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0", "1.3.0", "1.3.1", "1.4.0", "1.4.1", "1.4.2") else ""
     footer_text = f"Groxy Desk v{v} — Verified across Gate 1 (Go + govulncheck + grab check/format), Gate 2 (Pure Grex JS DOM/WCAG/ADR-025c), Gate 3 (GRAB-E401 + GROXY-SAFE-001 + DESK-E403/E409), and Gate 4 (Live E2E)."
-    if version == "1.4.1":
-        body_sections = """
+    if version in ("1.4.1", "1.4.2"):
+        subtitle = "Database Studio layout patch"
+        launch_section = ""
+        search_action = "Shortcuts"
+        if version == "1.4.2":
+            subtitle = "Console-free Windows launch and clearer workbench icons"
+            launch_section = """
+    <section>
+      <h2>Launch Groxy Desk</h2>
+      <p>Run the Windows installer, then open Groxy Desk from the Start menu or the optional desktop shortcut. Groxy Desk opens directly in its native WebView2 window.</p>
+    </section>"""
+            search_action = "the magnifying glass"
+        body_sections = f"""
   <header>
-    <h1>Groxy Desk v1.4.1</h1>
-    <p>Database Studio layout patch</p>
+    <h1>Groxy Desk v{v}</h1>
+    <p>{subtitle}</p>
   </header>
-  <main>
+  <main>{launch_section}
     <section>
       <h2>Browse a database</h2>
       <p>Open Database Studio from the activity rail. Use the plus button in Connections to add a saved connection, or select an existing profile. The connection status appears beside the Database Studio heading.</p>
@@ -57,10 +68,10 @@ def render_guide_html(version: str) -> str:
     </section>
     <section>
       <h2>Find commands and switch themes</h2>
-      <p>Press <kbd>Ctrl</kbd>+<kbd>K</kbd> or select Shortcuts on the activity rail to show command search. Press <kbd>Esc</kbd> to close it. Use Settings on the rail to switch between Light and Dark.</p>
+      <p>Press <kbd>Ctrl</kbd>+<kbd>K</kbd> or select {search_action} on the activity rail to show command search. Press <kbd>Esc</kbd> to close it. Use Settings on the rail to switch between Light and Dark.</p>
     </section>
   </main>"""
-        footer_text = "Groxy Desk v1.4.1 | Database Studio walkthrough"
+        footer_text = f"Groxy Desk v{v} | Database Studio walkthrough"
     elif version == "1.4.0":
         body_sections = """
   <header>

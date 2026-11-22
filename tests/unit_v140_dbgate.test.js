@@ -199,7 +199,13 @@ test("v1.4.0 DbGate-parity connection manager, tabbed modal, collapsible sidebar
     assert.equal(inspector.getAttribute("aria-hidden"), "true");
 
     // 3. Open modal via + New Connection, fill General + SSH Tunnel, Save -> non-secret localStorage + list
-    await root.querySelector("#db-new-conn-btn").click();
+    const newConnection = root.querySelector("#db-new-conn-btn");
+    assert.equal(newConnection.getAttribute("aria-haspopup"), "dialog");
+    assert.equal(newConnection.getAttribute("aria-controls"), dialog.id);
+    assert.ok(newConnection.querySelector("svg path"));
+    assert.ok(sidebar.querySelector(".desk-search-control svg"));
+    assert.ok(sidebar.querySelector(".desk-search-control #desk-db-object-filter"));
+    await newConnection.click();
     assert.equal(dialog.open, true);
 
     await setControlValue(dialog.querySelector("#db-conn-name"), "Prod Postgres");
@@ -229,6 +235,9 @@ test("v1.4.0 DbGate-parity connection manager, tabbed modal, collapsible sidebar
     // 4. 1-click saved connection opens pinned SSH tunnel and loads schema tree
     const connBtn = root.querySelector("#desk-db-connections-list .desk-conn-select-btn");
     assert.ok(connBtn, "Expected saved connection button in #desk-db-connections-list");
+    const databaseRailIcon = root.querySelector("#desk-tab-database svg path");
+    assert.ok(databaseRailIcon);
+    assert.equal(connBtn.querySelector("svg path").getAttribute("d"), databaseRailIcon.getAttribute("d"));
     await connBtn.click();
     assert.equal(calls.tunnelOpen.length, 1);
     assert.equal(calls.schema.length, 1);
@@ -328,6 +337,9 @@ test("v1.4.0 DbGate-parity connection manager, tabbed modal, collapsible sidebar
       .querySelectorAll("#desk-db-connections-list .desk-conn-action-btn")
       .find((b) => b.textContent === "Edit");
     assert.ok(editBtn, "Expected Edit button on saved connection");
+    assert.ok(editBtn.querySelector("svg path"));
+    assert.ok(root.querySelector("#db-toolbar-inspector-btn svg path"));
+    assert.ok(root.querySelector("#db-toolbar-undo-btn svg path"));
     await editBtn.click();
     assert.equal(dialog.open, true);
     assert.equal(dialog.querySelector("#db-conn-name input").value, "Prod Postgres");

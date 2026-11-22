@@ -1,11 +1,12 @@
 /**
- * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.4.1.
+ * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.4.2.
  * Zero wrapper elements, zero raw DOM writes, zero unsafe script calls, sole Groxy AI identity.
  */
 import { ForEach, Icon, effect, renderNode, signal } from "../grex/grex.js";
 import { createDeskApiClient } from "./api-client.js";
 import { createAuthorPanelNode } from "./author-panel.js";
 import { createDBStudioPanelNode } from "./db-studio-panel.js";
+import { deskIcon } from "./desk-icons.js";
 import { createRadarPanelNode } from "./radar-panel.js";
 import { createDNSPanelNode } from "./dns-panel.js";
 import { createFleetPanelNode } from "./fleet-panel.js";
@@ -606,41 +607,6 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
         },
       },
     ],
-    database: [
-      {
-        tag: "rect",
-        attrs: {
-          x: "4",
-          y: "3",
-          width: "16",
-          height: "6",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-      {
-        tag: "rect",
-        attrs: {
-          x: "4",
-          y: "9",
-          width: "16",
-          height: "6",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-      {
-        tag: "rect",
-        attrs: {
-          x: "4",
-          y: "15",
-          width: "16",
-          height: "6",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-    ],
     browser: [
       {
         tag: "circle",
@@ -742,112 +708,13 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
         attrs: { cx: "7", cy: "17", r: "1", fill: "currentColor" },
       },
     ],
-    settings: [
-      {
-        tag: "circle",
-        attrs: {
-          cx: "12",
-          cy: "12",
-          r: "4",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-      {
-        tag: "line",
-        attrs: {
-          x1: "12",
-          y1: "2",
-          x2: "12",
-          y2: "6",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-      {
-        tag: "line",
-        attrs: {
-          x1: "12",
-          y1: "18",
-          x2: "12",
-          y2: "22",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-      {
-        tag: "line",
-        attrs: {
-          x1: "2",
-          y1: "12",
-          x2: "6",
-          y2: "12",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-      {
-        tag: "line",
-        attrs: {
-          x1: "18",
-          y1: "12",
-          x2: "22",
-          y2: "12",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-    ],
-    shortcuts: [
-      {
-        tag: "rect",
-        attrs: {
-          x: "2",
-          y: "5",
-          width: "20",
-          height: "14",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-      {
-        tag: "line",
-        attrs: {
-          x1: "6",
-          y1: "10",
-          x2: "10",
-          y2: "10",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-      {
-        tag: "line",
-        attrs: {
-          x1: "14",
-          y1: "10",
-          x2: "18",
-          y2: "10",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-      {
-        tag: "line",
-        attrs: {
-          x1: "7",
-          y1: "15",
-          x2: "17",
-          y2: "15",
-          stroke: "currentColor",
-          "stroke-width": "1.8",
-        },
-      },
-    ],
   };
 
-  const makeRailIcon = (iconKey) =>
-    Icon(
+  const makeRailIcon = (iconKey) => {
+    if (iconKey === "database" || iconKey === "search" || iconKey === "settingsOutline") {
+      return deskIcon(doc, iconKey, "desk-rail-icon", "24");
+    }
+    return Icon(
       {
         className: "desk-rail-icon",
         props: {
@@ -858,6 +725,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       },
       { document: doc }
     ).element;
+  };
 
   const studioTab = (id, label, iconKey = id) => ({
     tag: "button",
@@ -1013,8 +881,9 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     className: "desk-card",
     children: [
       {
-        type: "Heading",
-        props: { level: 3, text: "Pre-Mutation Snapshots" },
+        tag: "h3",
+        attrs: { class: "desk-icon-heading" },
+        children: [deskIcon(doc, "history"), { tag: "span", text: "Pre-Mutation Snapshots" }],
       },
       ForEach(
         {
@@ -1103,7 +972,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
               {
                 type: "Stack",
                 tag: "section",
-                className: "desk-brand-group",
+                className: "desk-sr-only",
                 children: [
                   {
                     type: "Heading",
@@ -1113,10 +982,11 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                     type: "Text",
                     tag: "span",
                     className: "desk-version-tag",
-                    props: { text: "v1.4.1" },
+                    props: { text: "v1.4.2" },
                   },
                 ],
               },
+              deskIcon(doc, "brand", "desk-brand-mark", "18"),
               {
                 type: "Stack",
                 tag: "nav",
@@ -1157,9 +1027,10 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
           {
             type: "Stack",
             tag: "section",
-            className: "desk-header-center",
+            className: "desk-header-center desk-search-control",
             attrs: { hidden: () => !commandSearchOpen.get() },
             children: [
+              deskIcon(doc, "search", "desk-search-icon"),
               {
                 type: "Input",
                 id: "desk-command-search-field",
@@ -1275,11 +1146,11 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
               railQuickAction(
                 "desk-action-settings",
                 "Settings",
-                "settings",
+                "settingsOutline",
                 () => toggleTheme(),
                 "desk-rail-spacer"
               ),
-              railQuickAction("desk-action-shortcuts", "Shortcuts", "shortcuts", () =>
+              railQuickAction("desk-action-shortcuts", "Command Search (Ctrl+K)", "search", () =>
                 showCommandSearch()
               ),
             ],
@@ -1525,7 +1396,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                 attrs: { id: "desk-status-adr025c" },
                 className: "desk-status-item desk-mono",
                 props: {
-                  text: "Groxy Desk v1.4.1 | ADR-025c Exact Wire | Grex JS v1.0.0",
+                  text: "Groxy Desk v1.4.2 | ADR-025c Exact Wire | Grex JS v1.0.0",
                 },
               },
             ],

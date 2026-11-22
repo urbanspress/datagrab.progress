@@ -2,9 +2,16 @@
 
 ## Current Status
 
-- **Verified promotion base** `v1.4.0` at `d007edc`, confirmed on both remotes.
-- **Current milestone** `v1.4.1`, the Database Studio layout patch, is complete and ready for synchronized promotion from `main`. [SPEC-141](specifications/GROXY-DESK-SPEC-141.md)
+- **Verified promotion base** `v1.4.1` at `c03e579`, confirmed on both remotes.
+- **Current milestone** `v1.4.2`, the Windows launcher and workbench icon patch. [SPEC-142](specifications/GROXY-DESK-SPEC-142.md)
 - **Current Owner** Codex. Implementation and acceptance checks are complete.
+
+## Completed in `v1.4.2`
+
+- The Windows launcher uses the GUI subsystem. Temporary Desktop and Start menu shortcuts opened the native WebView2 window without an attached console. The standalone Windows daemon retains the console subsystem.
+- Added the emerald menu mark and database, connection, search, history, and settings icons. Edge verified the 32px header, centered native dialog, and focus restoration in Light and Dark. The published v1.4.1 layout is the starting point for this patch.
+- Passed Windows and Linux amd64 build and vet, Go tests, module verification, the vulnerability scan, GRAB check and manifest formatting parity, 15 Node tests, native WebView2 isolation, live cross-layer and Radar/CMS integrations, and disposable PostgreSQL and MariaDB dump recovery. All ten frozen sibling worktrees were clean.
+- Verified the Inno Setup installer package, executable subsystems, and all six artifact hashes. The installer bundles frozen GRAB v1.1.0 and Desk's existing grabman v1.0.0. [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.4.2-Guide.pdf)
 
 ## Completed in `v1.4.1`
 
@@ -135,4 +142,4 @@ The frozen Radar and CMS contracts support a Desk-bound receipt followed by a se
 
 ## Recommended Next Model & Effort Tier
 
-**GPT-6.2 Astra (High)** for the next independent release audit across ecosystem layers.
+**GPT-6.2 Astra (High)** for independent release sign-off on the launcher, UI contracts, and synchronized assets.

@@ -3,16 +3,16 @@
 ![Built with GRAB v1.1.0](docs/badges/built-with-grab.svg)
 ![Powered by Grex JS v1.0.0](docs/badges/powered-by-grex-js.svg)
 ![GRAB Ecosystem Step 6 — Groxy Desk](docs/badges/ecosystem-step-6.svg)
-![Release v1.4.1](docs/badges/release-v1.4.1.svg)
+![Release v1.4.2](docs/badges/release-v1.4.2.svg)
 
 **Groxy Desk** is the native desktop vibe-coding IDE, local `Grisp` (`grab.exe`) multi-worker supervisor, `grabman v1.0.0` workspace manager, Unified **`Groxy AI`** Adaptive Reasoning studio, and Step 5 Fleet / DB Explorer / DNS / Author Workbench for **Step 6 of the Post-1.0 GRAB Ecosystem**.
 
-- **Current Status:** `v1.4.1` Compact Database Studio layout and toolbar. See the [changelog](CHANGELOG.md), [roadmap](docs/ROADMAP.md), and [walkthrough](docs/releases/pdf/Groxy-Desk-v1.4.1-Guide.pdf).
+- **Current release** `v1.4.2` opens directly in its native Windows window and refreshes the menu bar and Database Studio icons. See the [changelog](CHANGELOG.md), [roadmap](docs/ROADMAP.md), and [walkthrough](docs/releases/pdf/Groxy-Desk-v1.4.2-Guide.pdf).
 - **Built Strictly Upon Frozen Baselines:** `GRAB v1.1.0`, `Grex JS v1.0.0`, `GrabLab CMS v1.0.1`, `Grex Theme Builder v1.0.0`, `Groxy AI v1.0.0`, `grabman v1.0.0`, `Grabtaculous v1.1.0`, and `Gashboard v1.0.0` (with optional `Groxy AI v1.8.0` Bestseller Radar & `GrabLab CMS v1.4.0`/`v1.5.0` draft handoff).
 
 ---
 
-## Key Features (`v1.4.1` — Compact Database Studio)
+## Key Features (`v1.4.2` — Compact Database Studio)
 - **Saved Connection Profiles & Tabbed Modal (`GET/POST/DELETE /api/db/connections`, `<dialog id="desk-db-conn-dialog">`):** Compact **`CONNECTIONS`** manager in `#desk-db-sidebar` (`+ New Connection`, 1-click pinned SSH tunnel + schema load, Edit, Disconnect, Delete) backed by non-secret `localStorage` caching and `AES-256-GCM` (`v1:...`) encrypted `stateDir/db-connections.json` storage, paired with a tabbed **`General` | `SSH Tunnel`** connection dialog.
 - **Collapsible Left Rail Sidebar & Focused Schema Tree:** Clicking the active left-rail icon (`#desk-tab-database`, `#desk-tab-code`) toggles the sidebar open/collapsed; the lower 75% of `#desk-db-sidebar` is dedicated to `Search in tables, views...` -> schema namespace (`public (N)`) -> clickable tables/views/triggers with row-count badges.
 - **Edge-to-Edge Excel-Style Spreadsheet Grid & Sub-Tab Switcher:** Clean DbGate sub-tabs (**`Data`** | **`Structure`** | **`SQL Query`** | **`ER Diagram`** | **`Export & Diff`**) + single-line toolbar, default full-height `.desk-grid-table` with sticky row-number gutter, two-row sticky headers (column names + types and per-column live filter inputs), `1px` borders, `28px` rows, alternating shading, `tabular-nums`, and click/double-click cell edit (`ADR-025c`).
@@ -77,7 +77,7 @@
 
 ```powershell
 # Install on Windows via Branded Inno Setup 6 Installer (.exe only, never .msi)
-.\dist\Groxy-Desk-Setup-1.4.1.exe
+.\dist\Groxy-Desk-Setup-1.4.2.exe
 
 # Launch headless smoke verification
 go run ./cmd/groxy-desk --smoke-test --addr 127.0.0.1:0
@@ -110,5 +110,5 @@ node --test tests/*.test.js
 python tests/integration_e2e.py
 
 # Build dist binaries, PDF walkthrough guide, Inno Setup installer, bundle zip, and SHA256SUMS.txt
-python scripts/package_release.py --version 1.4.1 --grabman-bin dist/grabman-v1.0.0.exe
+python scripts/package_release.py --version 1.4.2 --grabman-bin dist/grabman-v1.0.0.exe
 ```

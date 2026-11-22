@@ -1,4 +1,5 @@
-import { Accordion, ForEach, Icon, bindElement, signal } from "../grex/grex.js";
+import { Accordion, ForEach, bindElement, signal } from "../grex/grex.js";
+import { deskIcon } from "./desk-icons.js";
 
 const CONN_STORAGE_KEY = "groxy_desk_db_connections";
 
@@ -13,11 +14,6 @@ const engines = [
   { value: "sqlite-bridge", label: "Remote SQLite via Gashboard" },
   { value: "postgres", label: "PostgreSQL over SSH" },
   { value: "mariadb", label: "MariaDB or MySQL over SSH" },
-];
-
-const PLUS_ICON_PATHS = [
-  { tag: "line", attrs: { x1: "12", y1: "5", x2: "12", y2: "19", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round" } },
-  { tag: "line", attrs: { x1: "5", y1: "12", x2: "19", y2: "12", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round" } },
 ];
 
 function sanitizeConnectionForCache(conn) {
@@ -157,6 +153,12 @@ const button = (id, text, onClick, disabled, className, attrs = {}) => ({
   attrs: id ? { id, ...attrs } : attrs,
   className,
   props: { type: "button", text, onClick, disabled },
+});
+const iconButton = (doc, id, text, icon, click, disabled) => ({
+  tag: "button",
+  attrs: { id, type: "button", class: "grex-button desk-button-icon", disabled },
+  on: { click },
+  children: [deskIcon(doc, icon), { tag: "span", text }],
 });
 const input = (name, label, value, type = "text", placeholder = "") => ({
   type: "Input",
@@ -735,14 +737,6 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
       return String(name || "").toLowerCase().includes(q);
     };
 
-    const newConnPlusIcon = Icon(
-      {
-        className: "desk-inline-icon",
-        props: { size: "14", viewBox: "0 0 24 24", paths: PLUS_ICON_PATHS },
-      },
-      { document: doc }
-    ).element;
-
     const connectionsPane = {
       type: "Section",
       tag: "section",
@@ -761,10 +755,12 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
                 type: "button",
                 class: "grex-button desk-icon-btn",
                 "aria-label": "New Connection",
+                "aria-haspopup": "dialog",
+                "aria-controls": "desk-db-conn-dialog",
                 title: "New Connection",
               },
               on: { click: () => openNewConnectionDialog() },
-              children: [newConnPlusIcon],
+              children: [deskIcon(doc, "addConnection", "desk-add-connection-icon", "18")],
             },
           ],
         },
@@ -793,7 +789,10 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
                         class: "grex-button desk-conn-select-btn",
                         disabled: () => tab.busy.get(),
                       },
-                      text: "Workspace SQLite (data/app.db)",
+                      children: [
+                        deskIcon(doc, "database"),
+                        { tag: "span", attrs: { class: "desk-conn-name" }, text: "Workspace SQLite (data/app.db)" },
+                      ],
                       on: {
                         click: () =>
                           run(tab, () =>
@@ -829,6 +828,7 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
                         },
                         on: { click: () => run(tab, () => connectSavedProfile(entrySig.peek())) },
                         children: [
+                          deskIcon(doc, "database"),
                           { tag: "span", attrs: { class: "desk-conn-dot" }, text: () => (isConnected() ? "●" : "○") },
                           { tag: "span", attrs: { class: "desk-badge desk-conn-engine" }, text: () => engineBadgeText(entrySig.get().engine) },
                           {
@@ -848,8 +848,14 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
                         children: [
                           {
                             tag: "button",
-                            attrs: { type: "button", class: "grex-button desk-conn-action-btn", disabled: () => tab.busy.get() },
-                            text: "Edit",
+                            attrs: {
+                              type: "button",
+                              class: "grex-button desk-conn-action-btn desk-button-icon",
+                              "aria-haspopup": "dialog",
+                              "aria-controls": "desk-db-conn-dialog",
+                              disabled: () => tab.busy.get(),
+                            },
+                            children: [deskIcon(doc, "settingsSolid"), { tag: "span", text: "Edit" }],
                             on: {
                               click: () => {
                                 populateFormFromConnection(entrySig.peek());
@@ -994,18 +1000,26 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
           props: { label: "Schema Object Tree" },
           children: [
             {
-              type: "Input",
-              id: "desk-db-object-filter-field",
-              className: "desk-db-filter-field",
-              props: {
-                inputId: "desk-db-object-filter",
-                name: "db-object-filter",
-                label: "Filter schema objects",
-                type: "search",
-                placeholder: "Search in tables, views...",
-                value: objectFilter,
-                bare: true,
-              },
+              type: "Stack",
+              tag: "section",
+              className: "desk-search-control",
+              children: [
+                deskIcon(doc, "search", "desk-search-icon"),
+                {
+                  type: "Input",
+                  id: "desk-db-object-filter-field",
+                  className: "desk-db-filter-field",
+                  props: {
+                    inputId: "desk-db-object-filter",
+                    name: "db-object-filter",
+                    label: "Filter schema objects",
+                    type: "search",
+                    placeholder: "Search in tables, views...",
+                    value: objectFilter,
+                    bare: true,
+                  },
+                },
+              ],
             },
             {
               type: "Text",
@@ -1248,9 +1262,9 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
                 tab.centerView.set("export");
                 focusSectionControl("#db-compare-source input");
               }),
-              button("db-toolbar-undo-btn", "Undo Snapshot", () => run(tab, () => reviewRestore()), () => tab.busy.get() || !tab.applied.get()),
+              iconButton(doc, "db-toolbar-undo-btn", "Undo Snapshot", "history", () => run(tab, () => reviewRestore()), () => tab.busy.get() || !tab.applied.get()),
               button("db-toolbar-guard-btn", "Write SQL / Snapshot Guard", openWriteInspector),
-              button("db-toolbar-inspector-btn", () => (inspectorOpen.get() ? "Hide Inspector" : "Inspector"), () => {
+              iconButton(doc, "db-toolbar-inspector-btn", () => (inspectorOpen.get() ? "Hide Inspector" : "Inspector"), "settingsSolid", () => {
                 inspectorOpen.set(!inspectorOpen.peek());
               }),
             ], "desk-db-toolbar"),
@@ -1636,7 +1650,7 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
             () => run(tab, () => planWrite({ sql: tab.write.peek() }, fullWriteTarget())),
             () => tab.busy.get() || !canReviewWrite()
           ),
-          button(null, "Undo last database change", () => run(tab, () => reviewRestore()), () => tab.busy.get() || !tab.applied.get()),
+          iconButton(doc, null, "Undo last database change", "history", () => run(tab, () => reviewRestore()), () => tab.busy.get() || !tab.applied.get()),
           button(null, "Review forced restore", () => run(tab, () => reviewRestore(true)), () => {
             const engine = tab.applied.get()?.target.engine;
             return tab.busy.get() || !tab.restoreConflict.get() || !["postgres", "mariadb"].includes(engine);

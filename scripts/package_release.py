@@ -39,7 +39,7 @@ def find_iscc() -> Path:
     )
 
 
-def build_binary(goos: str, goarch: str, pkg: str, out_path: Path):
+def build_binary(goos: str, goarch: str, pkg: str, out_path: Path, *, windows_gui: bool = False):
     env = dict(os.environ)
     env["CGO_ENABLED"] = "0"
     env["GOOS"] = goos
@@ -48,7 +48,7 @@ def build_binary(goos: str, goarch: str, pkg: str, out_path: Path):
         "go",
         "build",
         "-trimpath",
-        "-ldflags=-s -w",
+        "-ldflags=-s -w -H=windowsgui" if windows_gui else "-ldflags=-s -w",
         "-o",
         str(out_path),
         pkg,
@@ -76,7 +76,7 @@ def verify_frozen_cli(path: Path, version: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Package Groxy Desk release artifacts into dist/")
-    parser.add_argument("--version", default="1.0.1", help="SemVer version string without leading v")
+    parser.add_argument("--version", default="1.4.2", help="SemVer version string without leading v")
     parser.add_argument("--output-dir", type=Path, default=DIST_DIR)
     parser.add_argument("--grab-bin", type=Path, default=GRAB_BIN_SRC)
     parser.add_argument("--grabman-bin", type=Path, default=GRABMAN_BIN_SRC)
@@ -95,7 +95,7 @@ def main():
     deskd_win = dist_dir / "groxy-deskd-windows-amd64.exe"
     deskd_linux = dist_dir / "groxy-deskd-linux-amd64"
 
-    build_binary("windows", "amd64", "./cmd/groxy-desk", desk_win)
+    build_binary("windows", "amd64", "./cmd/groxy-desk", desk_win, windows_gui=True)
     build_binary("windows", "amd64", "./cmd/groxy-deskd", deskd_win)
     build_binary("linux", "amd64", "./cmd/groxy-deskd", deskd_linux)
 

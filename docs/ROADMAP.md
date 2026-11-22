@@ -138,3 +138,13 @@ Target Scope:
 - Ported the owner’s WebView2 layout with an icon-only rail, inline database status, collapsed schema groups, and a single-row toolbar above the scrolling grid.
 - Kept frozen DOM controls available in drawers and retained exact database wire values, approval before writes, and snapshots.
 - Passed the Go, GRAB, Grex, native WebView2, and live cross-layer acceptance checks.
+
+---
+
+## `v1.4.2` - Console-free Windows launcher and workbench icons
+
+**Status** Complete. [SPEC-142](../specifications/GROXY-DESK-SPEC-142.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v1.4.2-Guide.pdf)
+
+- Build the native launcher with the Windows GUI subsystem and retain the console subsystem for the standalone daemon.
+- Add the emerald menu mark and inline monochrome workbench icons. Open the connection form as a centered native dialog within the compact Database Studio layout.
+- Passed the Go, GRAB, Grex, native WebView2, and live integration gates. Verified shortcut startup, executable subsystems, and package checksums.

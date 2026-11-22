@@ -352,18 +352,28 @@ test("v1.3.0 High-Density 100vh Desktop IDE Shell, 5 coordinated chrome layers, 
   const menubar = root.querySelector('nav[role="menubar"]');
   assert.ok(menubar, "Missing nav[role=menubar]");
   assert.equal(menubar.querySelectorAll('button[role="menuitem"]').length, 7);
+  const brand = root.querySelector("#desk-header .desk-brand-mark");
+  assert.equal(brand?.localName, "svg");
+  assert.equal(brand.getAttribute("width"), "18");
+  assert.equal(brand.getAttribute("height"), "18");
+  const headerChildren = menubar.parentNode.children;
+  assert.equal(headerChildren[headerChildren.indexOf(menubar) - 1], brand);
+  assert.ok(root.querySelector(".desk-header-center svg"));
+  assert.ok(root.querySelector("#desk-snapshots-card h3 svg"));
 
   // Verify 48px Activity Rail renders SVG icons via createElementNS
   const rail = root.querySelector("#desk-activity-rail");
   assert.ok(rail);
   assert.equal(rail.querySelectorAll("svg").length, 7);
+  assert.ok(rail.querySelector("#desk-action-settings svg path"));
+  assert.ok(rail.querySelector("#desk-action-shortcuts svg circle"));
 
   // Verify 24px Status Bar live indicators and 1-click DB studio navigation
   assert.equal(root.querySelector("#desk-status-db").textContent.includes("postgres (127.0.0.1:15432)"), true);
   assert.equal(root.querySelector("#desk-status-ssh").textContent.includes("SHA256:verifiedPin123"), true);
   assert.equal(root.querySelector("#desk-status-safety").textContent.includes("1 Snapshots"), true);
   assert.equal(root.querySelector("#desk-status-grisp").textContent.includes("1 Active (:8765)"), true);
-  assert.equal(root.querySelector("#desk-status-adr025c").textContent.includes("v1.4.1"), true);
+  assert.equal(root.querySelector("#desk-status-adr025c").textContent.includes("v1.4.2"), true);
 
   await root.querySelector("#desk-status-db").click();
   assert.equal(mounted.store.activeStudio.peek(), "database");

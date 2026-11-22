@@ -2,9 +2,18 @@
 
 ## Current Status
 
-- **Verified promotion base** `v1.4.1` at `c03e579`, confirmed on both remotes.
+- **Verified release** `v1.4.2` at `a698284`, confirmed on both remotes.
 - **Current milestone** `v1.4.2`, the Windows launcher and workbench icon patch. [SPEC-142](specifications/GROXY-DESK-SPEC-142.md)
-- **Current Owner** Codex. Implementation and acceptance checks are complete.
+- **Current Owner** Codex. Stage 4 is complete for `v1.4.2`.
+
+## Independent Release Sign-Off (PASS)
+
+On 2026-11-22, Codex independently verified Groxy Desk `v1.4.2` at `a698284efe923f2a129feba607e1474dac733713`.
+
+- At audit time, local HEAD and both live `main` branches matched the release commit. Both remotes advertised the same annotated tag object (`5a1249f85e2ea9413247ed7ec9f7adc599e9540d`), which resolved to that commit.
+- All six local release files matched `dist/SHA256SUMS.txt`. The Windows amd64 PE headers identified the desktop launcher as Windows GUI (2) and the standalone daemon as Windows Console (3).
+- The frozen GRAB CLI passed `check src/desk.grab views/workbench.grab.html`. All 15 Node tests passed, including byte parity with Grex, the mounted workbench's zero `div` elements and zero `innerHTML` writes, exact decimal values, and approval handling. Minimum tested text contrast was 4.74:1 in Light and 4.93:1 in Dark.
+- All ten frozen sibling worktrees returned empty `git status --short` output.
 
 ## Completed in `v1.4.2`
 
@@ -142,4 +151,4 @@ The frozen Radar and CMS contracts support a Desk-bound receipt followed by a se
 
 ## Recommended Next Model & Effort Tier
 
-**GPT-6.2 Astra (High)** for independent release sign-off on the launcher, UI contracts, and synchronized assets.
+**GPT-6.2 Sol (Medium)** for Stage 1 specification work when the owner selects the next milestone.

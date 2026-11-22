@@ -148,3 +148,4 @@ Target Scope:
 - Build the native launcher with the Windows GUI subsystem and retain the console subsystem for the standalone daemon.
 - Add the emerald menu mark and inline monochrome workbench icons. Open the connection form as a centered native dialog within the compact Database Studio layout.
 - Passed the Go, GRAB, Grex, native WebView2, and live integration gates. Verified shortcut startup, executable subsystems, and package checksums.
+- **Independent Release Sign-Off (PASS)** on 2026-11-22 for `v1.4.2` at `a698284`. Verified both remote branches and tags, all six package hashes, both Windows PE subsystems, GRAB validation, all 15 Node tests, and ten clean frozen sibling worktrees. [Stage 4 evidence](../HANDOFF.md#independent-release-sign-off-pass)

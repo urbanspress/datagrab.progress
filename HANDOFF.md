@@ -1,10 +1,17 @@
 # HANDOFF.md — Groxy Desk
 
 ## Current Status
-- **Verified promotion base:** `v1.3.0` at `2c6aca3`, confirmed on both remotes before preparing the patch.
-- **Current milestone:** `v1.3.1` remote SSH schema inspection latency patch, Approved & Frozen — Complete ([SPEC-131](specifications/GROXY-DESK-SPEC-131.md)).
-- **Branch:** `main`. `v1.3.1` is the verified patch for synchronized promotion to `origin` and `stable`.
+- **Verified promotion base:** `v1.3.1` at `7ffc8f2`, confirmed on both remotes (`git ls-remote stable refs/heads/main` and `git describe --tags --abbrev=0 stable/main`).
+- **Current milestone:** `v1.4.0` — True DbGate-Parity Connection Manager, Collapsible Rail & Full-Screen Spreadsheet Grid ([SPEC-140](specifications/GROXY-DESK-SPEC-140.md)), Approved & Frozen — Complete.
+- **Branch:** `main`. `v1.4.0` is verified across Gates 1–4 and Stage 4 Sign-Off (`PASS`) for synchronized promotion to `origin` and `stable`.
 - **Current Owner:** None — All milestone gates passed and no implementation or verification tasks remain.
+
+## Completed in `v1.4.0`
+
+- **Encrypted Saved Connection Profiles & Tabbed Modal (`internal/dbstudio/connections.go`, `internal/server/v030_handlers.go`, `<dialog id="desk-db-conn-dialog">`):** Replaced raw sidebar inputs with a compact **`CONNECTIONS`** manager (`+ New Connection`, 1-click connect opening pinned SSH tunnel + schema load, Edit, Disconnect, Delete) backed by non-secret `localStorage` caching and `AES-256-GCM` (`v1:...`) encrypted `stateDir/db-connections.json` persistence (`GET/POST/DELETE /api/db/connections`). Moved all General & SSH Tunnel fields into `<dialog id="desk-db-conn-dialog">` while preserving 100% of existing DOM input IDs.
+- **Collapsible Left Sidebar & Focused Schema Tree:** Clicking active left-rail icons (`#desk-tab-database`, `#desk-tab-code`) toggles the left sidebar open/collapsed; dedicated the lower 75% of `#desk-db-sidebar` to `Search in tables, views...` -> schema namespace (`public (N)`) -> clickable tables/views/triggers with row-count badges that immediately load rows into the grid.
+- **Edge-to-Edge Spreadsheet Grid, Sub-Tabs & Collapsed-by-Default Inspector:** Replaced stacked center cards with DbGate sub-tabs (`Data` | `Structure` | `SQL Query` | `ER Diagram` | `Export & Diff`) and single-line toolbar, rendering `Data` as a full-height `.desk-grid-table` with sticky row-number gutter, two-row sticky headers (column names + data types and per-column live filter inputs), `1px` borders, `28px` rows, alternating shading, `tabular-nums`, and click/double-click cell editing (`ADR-025c`). Collapsed `#desk-db-inspector` by default (`0px`), auto-opening on cell edit or `Write SQL / Snapshot Guard` (`GROXY-SAFE-001`).
+- **Stage 3 & Stage 4 Verification:** Passed Windows & Linux amd64 `CGO_ENABLED=0` Go build/vet, `go test -count=1 ./...` (`TestV140DBConnectionsEncryptedProfilesAndAuth`), `go mod verify`, `govulncheck ./...` (`0` vulnerabilities), `grab check/format`, `node --test tests/*.test.js` (`15/15` pass including `tests/unit_v140_dbgate.test.js`), `TestNativeWebView2Isolation`, `tests/integration_e2e.py`, `tests/radar_live_e2e.py`, `tests/network_dump_recovery.py`, clean `git status --short` across all 10 sibling `v1.x` repositories, and packaged `v1.4.0` release assets + `SHA256SUMS.txt` + [walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.4.0-Guide.pdf).
 
 ## Completed in `v1.3.1`
 

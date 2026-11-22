@@ -116,3 +116,15 @@ Target Scope:
 
 - Batch catalog metadata and exact row counts for PostgreSQL and MariaDB/MySQL over pinned SSH. Apply a 20-second inspection deadline.
 - Verify the delayed 40-table regression, existing compatibility and safety gates, and synchronized installer and release assets.
+
+---
+
+## `v1.4.0` — True DbGate-Parity Connection Manager, Collapsible Rail & Full-Screen Spreadsheet Grid
+
+**Status:** Complete (**Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off: PASS — Released as `v1.4.0`**) ([`specifications/GROXY-DESK-SPEC-140.md`](../specifications/GROXY-DESK-SPEC-140.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v1.4.0-Guide.pdf))
+
+Target Scope:
+- **Saved Connection Profiles & Tabbed Connection Modal (`<dialog id="desk-db-conn-dialog">`):** Compact `CONNECTIONS` manager in `#desk-db-sidebar` (`+ New Connection`, Edit, Disconnect, Delete) backed by non-secret `localStorage` metadata + encrypted `stateDir` profile endpoints (`GET/POST/DELETE /api/db/connections`), 1-click pinned SSH tunnel + schema load, and tabbed `General` | `SSH Tunnel` modal preserving all existing input DOM IDs.
+- **Collapsible Left Sidebar & Clean Schema Tree:** Clicking active left-rail icon (`#desk-tab-database`, `#desk-tab-code`) toggles sidebar collapsed/open; lower 75% of `#desk-db-sidebar` dedicated to `Search in tables, views...` -> schema namespace (`public (N)`) -> clickable table/view/trigger rows with row-count badges that immediately load rows into the grid.
+- **Edge-to-Edge Excel-Style Spreadsheet Grid & Sub-View Switcher:** Clean DbGate sub-tab bar (`Data` | `Structure` | `SQL Query` | `ER Diagram` | `Export & Diff`) + single-line toolbar (`Refresh`, `Inspect schema`, `Structure`, `SQL`, `Export`, `Undo Snapshot`, `Write SQL / Snapshot Guard`, `Inspector`); `Data` renders full-height `.desk-grid-table` with sticky row-number gutter, two-row sticky `<thead>` (column name + type + per-column live filter inputs), `1px` borders, `28px` rows, alternating shading, `tabular-nums`, and click/double-click cell inspection (`ADR-025c`).
+- **Collapsed-by-Default Right Inspector (`#desk-db-inspector`):** Collapses to `0px` by default so the grid fills full width, automatically sliding open on cell edit (`ADR-025c`), `Write SQL / Snapshot Guard` (`GROXY-SAFE-001`), `Undo Snapshot`, or `Inspector` toggle.

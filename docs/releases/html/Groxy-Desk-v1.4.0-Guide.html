@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Groxy Desk v1.4.0 — Walkthrough & Architecture Guide</title>
+  <style>
+    @page {
+      size: Letter;
+      margin: 0.7in 0.75in;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.55;
+      font-size: 10.5pt;
+      margin: 0;
+    }
+    header {
+      border-bottom: 3px solid #2563eb;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 20pt;
+      color: #0f172a;
+    }
+    h2 {
+      font-size: 13pt;
+      color: #1d4ed8;
+      margin: 18px 0 8px 0;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+    h3 {
+      font-size: 11pt;
+      color: #1e293b;
+      margin: 12px 0 4px 0;
+    }
+    p, li {
+      color: #334155;
+    }
+    code, pre {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      color: #0f172a;
+    }
+    code {
+      padding: 1px 5px;
+      font-size: 9.2pt;
+    }
+    pre {
+      padding: 10px 12px;
+      font-size: 8.8pt;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 9.2pt;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    section {
+      page-break-inside: avoid;
+    }
+    footer {
+      margin-top: 22px;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 8px;
+      font-size: 9pt;
+      color: #475569;
+    }
+    .candidate-guide { line-height: 1.4; }
+    .candidate-guide header { padding-bottom: 8px; margin-bottom: 12px; }
+    .candidate-guide h2 { margin: 12px 0 6px; }
+    .candidate-guide p, .candidate-guide ol { margin: 7px 0; }
+    .candidate-guide code { white-space: nowrap; }
+    .candidate-guide footer { margin-top: 14px; }
+  </style>
+</head>
+<body class="candidate-guide">
+
+  <header>
+    <h1>Groxy Desk v1.4.0</h1>
+    <p>True DbGate-Parity Connection Manager, Collapsible Rail &amp; Full-Screen Spreadsheet Grid</p>
+    <p><strong>Complete &middot; All 4 Acceptance Gates Verified</strong></p>
+  </header>
+  <main>
+    <section>
+      <h2>1. Saved Connections &amp; Tabbed Connection Window</h2>
+      <p>The Database Studio left sidebar now shows a compact <strong>CONNECTIONS</strong> list at the top with a <strong>+ New Connection</strong> button instead of raw form boxes. Click <strong>+</strong> to open the tabbed Connection dialog (<strong>General</strong> and <strong>SSH Tunnel</strong> tabs), then choose <strong>Save</strong> or <strong>Connect</strong>. Database and SSH passwords are encrypted on disk with AES-256-GCM (<code>v1:...</code>) and are never stored in browser storage.</p>
+      <p>Once saved, <strong>one click</strong> on any connection opens its pinned SSH tunnel and loads your database schema automatically. Use <strong>Edit</strong>, <strong>Disconnect</strong>, or <strong>Delete</strong> right on the connection card.</p>
+    </section>
+    <section>
+      <h2>2. Collapsible Left Sidebar &amp; Focused Schema Tree</h2>
+      <p>Click the active left-rail icon (such as <strong>Database Studio</strong> or <strong>Code &amp; Grex Studio</strong>) anytime to collapse or reopen the sidebar and give your data grid or code editor extra screen width. The lower 75% of the Database sidebar is dedicated to filtering and browsing <code>Tables</code>, <code>Views</code>, and <code>Triggers</code> with row-count badges; clicking any table loads its rows immediately.</p>
+    </section>
+    <section>
+      <h2>3. Full-Screen Spreadsheet Grid &amp; Dedicated Sub-Tabs</h2>
+      <p>The center workspace uses a clean sub-tab bar (<strong>Data</strong>, <strong>Structure</strong>, <strong>SQL Query</strong>, <strong>ER Diagram</strong>, and <strong>Export &amp; Diff</strong>) with a single-line action toolbar. <strong>Data</strong> opens by default as an edge-to-edge spreadsheet grid with sticky row numbers (<code>1, 2, 3...</code>), column names with data types, live per-column filter boxes, <code>28px</code> rows, alternating row shading, and exact <code>ADR-025c</code> numbers.</p>
+    </section>
+    <section>
+      <h2>4. Collapsed-by-Default Safety Inspector</h2>
+      <p>The right-hand <strong>Row Inspector &amp; Safety Gate</strong> stays tucked away by default so the spreadsheet grid fills the screen. Click or double-click any editable cell (or click <strong>Write SQL / Snapshot Guard</strong>) to slide the inspector open, review your change with a verified SHA-256 pre-mutation snapshot, and approve or roll back safely.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Groxy Desk v1.4.0 — Verified across Acceptance Gates 1–4 (Go + govulncheck + grab check/format, Pure Grex JS v1.0.0 DOM/WCAG/ADR-025c, Native WebView2, Radar/CMS E2E, and Database Recovery).</p>
+  </footer>
+</body>
+</html>

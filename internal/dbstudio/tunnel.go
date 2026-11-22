@@ -26,6 +26,7 @@ const (
 
 // OpenTunnelRequest configures a loopback-bound (127.0.0.1:15432-15439) SSH DB tunnel.
 type OpenTunnelRequest struct {
+	ConnectionID         string `json:"connection_id,omitempty"`
 	TunnelID             string `json:"tunnel_id,omitempty"`
 	Engine               string `json:"engine"` // postgres | mariadb | sqlite-bridge
 	SSHHost              string `json:"ssh_host"`

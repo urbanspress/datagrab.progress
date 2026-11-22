@@ -15,10 +15,10 @@ func TestV020HealthMCPStudioAndBoostSecurityLifecycle(t *testing.T) {
 	srv, wsDir, _ := setupTestServer(t)
 	sess := srv.Session()
 
-	// 1. /_health reports v1.3.1
+	// 1. /_health reports v1.4.0
 	respH, _, rawH := doAPIReq(t, http.MethodGet, sess.URL+"/_health", "", "", nil)
-	if respH.StatusCode != http.StatusOK || !strings.Contains(rawH, `"1.3.1"`) {
-		t.Fatalf("expected v1.3.1 /_health, got status=%d body=%s", respH.StatusCode, rawH)
+	if respH.StatusCode != http.StatusOK || !strings.Contains(rawH, `"1.4.0"`) {
+		t.Fatalf("expected v1.4.0 /_health, got status=%d body=%s", respH.StatusCode, rawH)
 	}
 
 	// 2. GET /api/mcp/tools enforces auth+CSRF and exposes 13 tools

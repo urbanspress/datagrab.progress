@@ -35,6 +35,7 @@ var (
 
 // TargetSpec identifies an inspectable SQLite (GRAB-E401) or active 127.0.0.1 tunneled database.
 type TargetSpec struct {
+	ConnectionID        string `json:"connection_id,omitempty"`
 	Engine              string `json:"engine"` // sqlite | postgres | mariadb
 	SQLitePath          string `json:"sqlite_path,omitempty"`
 	TunnelID            string `json:"tunnel_id,omitempty"`
@@ -109,6 +110,7 @@ type Manager struct {
 	approvals     *groxybridge.ApprovalManager
 	redactor      *security.SecretRedactor
 	tunnels       *TunnelManager
+	connections   *ConnectionStore
 }
 
 // NewManager creates a Visual DB Explorer manager bound cleanly to workspaceRoot.
@@ -122,6 +124,33 @@ func NewManager(workspaceRoot string, approvals *groxybridge.ApprovalManager, re
 		redactor:      redactor,
 		tunnels:       NewTunnelManager(redactor),
 	}
+}
+
+// SetConnections attaches an encrypted state-dir ConnectionStore for saved profile resolution.
+func (m *Manager) SetConnections(cs *ConnectionStore) {
+	m.connections = cs
+}
+
+// Connections returns the attached encrypted ConnectionStore (may be nil in unit fixtures).
+func (m *Manager) Connections() *ConnectionStore {
+	return m.connections
+}
+
+func (m *Manager) resolveTargetSecrets(target TargetSpec) (TargetSpec, error) {
+	if m.connections == nil || strings.TrimSpace(target.ConnectionID) == "" {
+		return target, nil
+	}
+	dbPass, _, bearer, err := m.connections.ResolveSecrets(target.ConnectionID)
+	if err != nil {
+		return target, err
+	}
+	if target.DBPassword == "" && dbPass != "" {
+		target.DBPassword = dbPass
+	}
+	if target.BridgeBearer == "" && bearer != "" {
+		target.BridgeBearer = bearer
+	}
+	return target, nil
 }
 
 // Tunnels returns the underlying loopback SSH DB TunnelManager.
@@ -138,6 +167,11 @@ func (m *Manager) CloseAll() {
 
 // GetSchema discovers tables, columns, indexes, foreign keys, and exact row counts.
 func (m *Manager) GetSchema(ctx context.Context, target TargetSpec) (map[string]any, error) {
+	var err error
+	target, err = m.resolveTargetSecrets(target)
+	if err != nil {
+		return nil, err
+	}
 	if normalizeEngine(target.Engine) == "sqlite-bridge" {
 		return m.remoteSQLiteSchema(ctx, target)
 	}
@@ -185,6 +219,11 @@ func (m *Manager) GetSchema(ctx context.Context, target TargetSpec) (map[string]
 
 // BrowseRows returns <= 100 bounded rows with exact ADR-025c base-10 wire strings.
 func (m *Manager) BrowseRows(ctx context.Context, req RowsRequest) (map[string]any, error) {
+	var err error
+	req.Target, err = m.resolveTargetSecrets(req.Target)
+	if err != nil {
+		return nil, err
+	}
 	if normalizeEngine(req.Target.Engine) == "sqlite-bridge" {
 		return m.remoteSQLiteRows(ctx, req)
 	}
@@ -300,6 +339,11 @@ func (m *Manager) BrowseRows(ctx context.Context, req RowsRequest) (map[string]a
 
 // RunReadOnlyQuery validates strict read-only SQL (403 DESK-E406 on writes/DDL/multi-statements) and returns <= 100 rows.
 func (m *Manager) RunReadOnlyQuery(ctx context.Context, target TargetSpec, rawSQL string) (map[string]any, error) {
+	var err error
+	target, err = m.resolveTargetSecrets(target)
+	if err != nil {
+		return nil, err
+	}
 	verb, err := ValidateReadOnlySQL(rawSQL)
 	if err != nil {
 		return nil, err

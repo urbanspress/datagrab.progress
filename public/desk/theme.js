@@ -1,5 +1,5 @@
 /**
- * Pure Grex JS v1.0.0 Light & Dark Theme Controller for Groxy Desk v1.3.1.
+ * Pure Grex JS v1.0.0 Light & Dark Theme Controller for Groxy Desk v1.4.0.
  * Zero-FOUC SSR + persistent server sync + WCAG AA (>= 4.5:1 text, >= 3.0:1 UI) verified palettes.
  */
 import { applyTokens, computeContrastRatio, createTheme } from "../grex/grex.js";

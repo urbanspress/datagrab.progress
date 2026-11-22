@@ -160,6 +160,12 @@ func New(cfg Config) (*Server, error) {
 		return nil, err
 	}
 	dbStudio := dbstudio.NewManager(wsMgr.Root(), apprMgr, redactor)
+	connStore, err := dbstudio.NewConnectionStore(absState, redactor)
+	if err != nil {
+		dbStudio.CloseAll()
+		return nil, err
+	}
+	dbStudio.SetConnections(connStore)
 	dnsMgr, err := dns.NewManager(absState, apprMgr, redactor)
 	if err != nil {
 		dbStudio.CloseAll()
@@ -366,7 +372,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, map[string]any{
 		"status":       "ok",
 		"service":      "groxy-desk",
-		"version":      "1.3.1",
+		"version":      "1.4.0",
 		"bind":         s.Addr(),
 		"worker_count": strconv.Itoa(len(workers)),
 	})

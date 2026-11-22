@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Gate 4 Cross-Layer End-to-End Integration Suite for Groxy Desk v1.3.1.
+Gate 4 Cross-Layer End-to-End Integration Suite for Groxy Desk v1.4.0.
 Verifies compiled binaries + GRAB v1.1.0 + Grex JS v1.0.0 + GrabLab CMS v1.0.1 + Grex Builder v1.0.0 + grabman v1.0.0 + Unified Groxy AI.
 """
 import hashlib
@@ -168,7 +168,7 @@ def main():
 
             # Verify /_health, /_ready, /, and static bundle
             st, hdrs, raw_health = http_req("GET", f"{base_url}/_health")
-            assert st == 200 and json.loads(raw_health)["version"] == "1.3.1", f"/_health failed: {st} {raw_health}"
+            assert st == 200 and json.loads(raw_health)["version"] == "1.4.0", f"/_health failed: {st} {raw_health}"
             assert hdrs.get("X-Frame-Options") == "DENY"
             assert hdrs.get("X-Content-Type-Options") == "nosniff"
             assert "script-src 'self'" in hdrs.get("Content-Security-Policy", "")
@@ -772,6 +772,27 @@ def main():
                     conn.close()
 
                 db_target = {"engine": "sqlite", "sqlite_path": "data/e2e_books.db"}
+                # v1.4.0 Saved Connection Profile CRUD + AES-256-GCM Encryption at Rest
+                st, _, raw_conn_save = http_req(
+                    "POST",
+                    f"{base_url}/api/db/connections",
+                    headers=auth_headers,
+                    body={
+                        "id": "e2e-sqlite",
+                        "name": "E2E Books SQLite",
+                        "engine": "sqlite",
+                        "sqlite_path": "data/e2e_books.db",
+                        "db_password": "e2e-never-returned-secret",
+                    },
+                )
+                assert st == 200 and "e2e-never-returned-secret" not in raw_conn_save, raw_conn_save
+                conn_disk = (state_dir / "db-connections.json").read_text(encoding="utf-8")
+                assert "e2e-never-returned-secret" not in conn_disk and '"v1:' in conn_disk
+                st, _, raw_conn_list = http_req("GET", f"{base_url}/api/db/connections", headers=auth_headers)
+                assert st == 200 and "e2e-sqlite" in raw_conn_list and "e2e-never-returned-secret" not in raw_conn_list
+                st, _, raw_conn_del = http_req("DELETE", f"{base_url}/api/db/connections?id=e2e-sqlite", headers=auth_headers)
+                assert st == 200 and json.loads(raw_conn_del)["deleted"] is True, raw_conn_del
+
                 st, _, raw_rows = http_req("POST", f"{base_url}/api/db/rows", headers=auth_headers, body={"target": db_target, "table": "books", "page": "1", "limit": "50"})
                 rows_obj = json.loads(raw_rows)
                 assert st == 200 and rows_obj["rows"][0]["word_count"] == "9007199254740993" and rows_obj["rows"][0]["price"] == "19.99"

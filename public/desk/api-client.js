@@ -146,6 +146,11 @@ export function createDeskApiClient(options = {}) {
       request("POST", "/api/fleet/deploy/apply", payload),
     fleetRestoreSnapshot: (payload) =>
       request("POST", "/api/fleet/snapshots/restore", payload),
+    dbConnectionsList: () => request("GET", "/api/db/connections"),
+    dbConnectionSave: (payload) =>
+      request("POST", "/api/db/connections", payload),
+    dbConnectionDelete: (id) =>
+      request("DELETE", `/api/db/connections?id=${encodeURIComponent(id)}`),
     dbTunnels: () => request("GET", "/api/db/tunnels"),
     dbTunnelOpen: (payload) =>
       request("POST", "/api/db/tunnels/open", payload),

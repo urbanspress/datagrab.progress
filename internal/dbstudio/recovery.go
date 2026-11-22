@@ -103,6 +103,11 @@ func sqliteImageDigest(image []byte) string {
 }
 
 func (m *Manager) PlanMutation(ctx context.Context, req MutatePlanRequest) (map[string]any, error) {
+	resolvedTarget, err := m.resolveTargetSecrets(req.Target)
+	if err != nil {
+		return nil, err
+	}
+	req.Target = resolvedTarget
 	if normalizeEngine(req.Target.Engine) == "postgres" && req.Edit == nil && req.Target.MaintenanceUser != "" {
 		statements, err := postgresWriteStatements(req.SQL)
 		if err != nil {
@@ -353,6 +358,11 @@ func sqliteUserSQL(conn *sql.Conn, authorize bool) error {
 }
 
 func (m *Manager) ApplyMutation(ctx context.Context, req MutateApplyRequest) (map[string]any, error) {
+	resolvedTarget, err := m.resolveTargetSecrets(req.Target)
+	if err != nil {
+		return nil, err
+	}
+	req.Target = resolvedTarget
 	if normalizeEngine(req.Target.Engine) == "postgres" && req.Edit == nil && req.Target.MaintenanceUser != "" {
 		statements, err := postgresWriteStatements(req.SQL)
 		if err != nil {
@@ -441,6 +451,11 @@ func (m *Manager) ApplyMutation(ctx context.Context, req MutateApplyRequest) (ma
 func restoreBinding(key, id, baseline string) string { return key + ":" + id + ":" + baseline }
 
 func (m *Manager) PlanRestore(ctx context.Context, req RestoreRequest) (map[string]any, error) {
+	resolvedTarget, err := m.resolveTargetSecrets(req.Target)
+	if err != nil {
+		return nil, err
+	}
+	req.Target = resolvedTarget
 	if strings.HasPrefix(req.SnapshotID, postgresFullPrefix) {
 		return m.restorePostgresSQL(ctx, req, false)
 	}
@@ -473,6 +488,11 @@ func (m *Manager) PlanRestore(ctx context.Context, req RestoreRequest) (map[stri
 }
 
 func (m *Manager) RestoreSnapshot(ctx context.Context, req RestoreRequest) (map[string]any, error) {
+	resolvedTarget, err := m.resolveTargetSecrets(req.Target)
+	if err != nil {
+		return nil, err
+	}
+	req.Target = resolvedTarget
 	if strings.HasPrefix(req.SnapshotID, postgresFullPrefix) {
 		return m.restorePostgresSQL(ctx, req, true)
 	}

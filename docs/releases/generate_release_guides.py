@@ -32,9 +32,36 @@ def find_browser() -> Path:
 
 def render_guide_html(version: str) -> str:
     v = html.escape(version)
-    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0", "1.3.0", "1.3.1") else ""
+    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0", "1.3.0", "1.3.1", "1.4.0") else ""
     footer_text = f"Groxy Desk v{v} — Verified across Gate 1 (Go + govulncheck + grab check/format), Gate 2 (Pure Grex JS DOM/WCAG/ADR-025c), Gate 3 (GRAB-E401 + GROXY-SAFE-001 + DESK-E403/E409), and Gate 4 (Live E2E)."
-    if version == "1.3.1":
+    if version == "1.4.0":
+        body_sections = """
+  <header>
+    <h1>Groxy Desk v1.4.0</h1>
+    <p>True DbGate-Parity Connection Manager, Collapsible Rail &amp; Full-Screen Spreadsheet Grid</p>
+    <p><strong>Complete &middot; All 4 Acceptance Gates Verified</strong></p>
+  </header>
+  <main>
+    <section>
+      <h2>1. Saved Connections &amp; Tabbed Connection Window</h2>
+      <p>The Database Studio left sidebar now shows a compact <strong>CONNECTIONS</strong> list at the top with a <strong>+ New Connection</strong> button instead of raw form boxes. Click <strong>+</strong> to open the tabbed Connection dialog (<strong>General</strong> and <strong>SSH Tunnel</strong> tabs), then choose <strong>Save</strong> or <strong>Connect</strong>. Database and SSH passwords are encrypted on disk with AES-256-GCM (<code>v1:...</code>) and are never stored in browser storage.</p>
+      <p>Once saved, <strong>one click</strong> on any connection opens its pinned SSH tunnel and loads your database schema automatically. Use <strong>Edit</strong>, <strong>Disconnect</strong>, or <strong>Delete</strong> right on the connection card.</p>
+    </section>
+    <section>
+      <h2>2. Collapsible Left Sidebar &amp; Focused Schema Tree</h2>
+      <p>Click the active left-rail icon (such as <strong>Database Studio</strong> or <strong>Code &amp; Grex Studio</strong>) anytime to collapse or reopen the sidebar and give your data grid or code editor extra screen width. The lower 75% of the Database sidebar is dedicated to filtering and browsing <code>Tables</code>, <code>Views</code>, and <code>Triggers</code> with row-count badges; clicking any table loads its rows immediately.</p>
+    </section>
+    <section>
+      <h2>3. Full-Screen Spreadsheet Grid &amp; Dedicated Sub-Tabs</h2>
+      <p>The center workspace uses a clean sub-tab bar (<strong>Data</strong>, <strong>Structure</strong>, <strong>SQL Query</strong>, <strong>ER Diagram</strong>, and <strong>Export &amp; Diff</strong>) with a single-line action toolbar. <strong>Data</strong> opens by default as an edge-to-edge spreadsheet grid with sticky row numbers (<code>1, 2, 3...</code>), column names with data types, live per-column filter boxes, <code>28px</code> rows, alternating row shading, and exact <code>ADR-025c</code> numbers.</p>
+    </section>
+    <section>
+      <h2>4. Collapsed-by-Default Safety Inspector</h2>
+      <p>The right-hand <strong>Row Inspector &amp; Safety Gate</strong> stays tucked away by default so the spreadsheet grid fills the screen. Click or double-click any editable cell (or click <strong>Write SQL / Snapshot Guard</strong>) to slide the inspector open, review your change with a verified SHA-256 pre-mutation snapshot, and approve or roll back safely.</p>
+    </section>
+  </main>"""
+        footer_text = "Groxy Desk v1.4.0 — Verified across Acceptance Gates 1–4 (Go + govulncheck + grab check/format, Pure Grex JS v1.0.0 DOM/WCAG/ADR-025c, Native WebView2, Radar/CMS E2E, and Database Recovery)."
+    elif version == "1.3.1":
         body_sections = """
   <header>
     <h1>Groxy Desk v1.3.1</h1>

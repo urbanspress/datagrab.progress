@@ -209,6 +209,16 @@ class ShimElement {
     }
   }
 
+  showModal() {
+    this.open = true;
+    this.setAttribute("open", "");
+  }
+
+  close() {
+    this.open = false;
+    this.removeAttribute("open");
+  }
+
   querySelectorAll(selector) {
     const results = [];
     const parts = String(selector)
@@ -238,14 +248,6 @@ class ShimElement {
 
 function matchesSimpleSelector(el, sel) {
   if (sel === "*") return true;
-  if (sel.startsWith("#")) {
-    return el.id === sel.slice(1);
-  }
-  if (sel.startsWith(".")) {
-    const cls = (el.getAttribute("class") || "").split(/\s+/);
-    return cls.includes(sel.slice(1));
-  }
-  // Support tag[attr="val"] and [attr], img[alt], label[for="..."]
   const parts = sel.split(/\s+/);
   if (parts.length > 1) {
     const targetSel = parts[parts.length - 1];
@@ -259,6 +261,13 @@ function matchesSimpleSelector(el, sel) {
       p = p.parentNode;
     }
     return true;
+  }
+  if (sel.startsWith("#")) {
+    return el.id === sel.slice(1);
+  }
+  if (sel.startsWith(".")) {
+    const cls = (el.getAttribute("class") || "").split(/\s+/);
+    return cls.includes(sel.slice(1));
   }
   return matchesAtom(el, sel);
 }

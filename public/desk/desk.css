@@ -344,6 +344,39 @@ body.desk-shell,
   height: 100%;
   align-items: stretch;
   overflow: hidden;
+  transition: grid-template-columns 160ms ease;
+}
+
+.desk-workspace-grid.is-sidebar-collapsed,
+.desk-workspace-grid[data-sidebar-collapsed="true"] {
+  grid-template-columns: 0px minmax(0, 1fr) var(--desk-inspector-w);
+}
+
+.desk-code-left-rail.is-collapsed,
+.desk-code-left-rail[data-collapsed="true"],
+.desk-db-sidebar.is-collapsed,
+.desk-db-sidebar[data-collapsed="true"],
+.desk-db-inspector.is-collapsed,
+.desk-db-inspector[data-collapsed="true"] {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.desk-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .desk-code-left-rail {
@@ -459,31 +492,267 @@ body.desk-shell,
   height: 100%;
   align-items: stretch;
   overflow: hidden;
+  transition: grid-template-columns 160ms ease;
+}
+
+.desk-db-three-pane.is-inspector-collapsed,
+.desk-db-three-pane[data-inspector-open="false"] {
+  grid-template-columns: var(--desk-sidebar-w) minmax(0, 1fr) 0px;
+}
+
+.desk-db-three-pane.is-sidebar-collapsed,
+.desk-db-three-pane[data-sidebar-collapsed="true"] {
+  grid-template-columns: 0px minmax(0, 1fr) var(--desk-inspector-w);
+}
+
+.desk-db-three-pane.is-sidebar-collapsed.is-inspector-collapsed,
+.desk-db-three-pane[data-sidebar-collapsed="true"][data-inspector-open="false"] {
+  grid-template-columns: 0px minmax(0, 1fr) 0px;
 }
 
 .desk-db-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   min-width: 0;
   height: 100%;
-  overflow-y: auto;
+  overflow: hidden;
   background-color: var(--grex-surface);
   border-right: 1px solid var(--grex-border);
   border-radius: 0;
-  padding: 8px;
+  padding: 0;
+}
+
+.desk-db-connections-pane {
+  flex: 0 1 26%;
+  min-height: 92px;
+  max-height: 30%;
+  overflow-y: auto;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--grex-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.desk-db-schema-pane {
+  flex: 1 1 74%;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.desk-db-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.desk-db-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--grex-text-muted);
+}
+
+.desk-icon-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  min-width: 22px;
+}
+
+.desk-inline-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.desk-db-conn-ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.desk-db-conn-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid var(--grex-border);
+  background-color: var(--grex-base);
+}
+
+.desk-db-conn-item.is-connected {
+  border-color: var(--grex-accent);
+  background-color: var(--grex-surface-active);
+}
+
+.desk-conn-select-btn {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 6px;
+  height: 24px;
+  padding: 0 6px;
+  font-size: 11px;
+  overflow: hidden;
+}
+
+.desk-conn-dot {
+  color: var(--grex-accent);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.desk-conn-engine {
+  height: 16px;
+  padding: 0 4px;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+.desk-conn-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-conn-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.desk-conn-action-btn {
+  height: 20px;
+  padding: 0 6px;
+  font-size: 10px;
+}
+
+.desk-db-namespace-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--grex-text-muted);
+}
+
+.desk-tree-item {
+  width: 100%;
+  justify-content: flex-start;
+  height: 24px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-tree-item[data-selected="true"] {
+  background-color: var(--grex-surface-active);
+  border-color: var(--grex-accent);
 }
 
 .desk-db-center {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   min-width: 0;
   height: 100%;
-  overflow-y: auto;
+  overflow: hidden;
   background-color: var(--grex-base);
   border-radius: 0;
+  padding: 0;
+}
+
+.desk-db-subtabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 6px;
+  background-color: var(--grex-surface);
+  border-bottom: 1px solid var(--grex-border);
+  overflow-x: auto;
+}
+
+.desk-db-subtab {
+  appearance: none;
+  border: 1px solid transparent;
+  border-bottom: 2px solid transparent;
+  background-color: transparent;
+  color: var(--grex-text-muted);
+  height: 27px;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.desk-db-subtab:hover {
+  color: var(--grex-text);
+  background-color: var(--grex-surface-hover);
+}
+
+.desk-db-subtab.is-active,
+.desk-db-subtab[aria-selected="true"] {
+  color: var(--grex-text);
+  border-bottom-color: var(--grex-accent);
+  background-color: var(--grex-base);
+}
+
+.desk-db-subpanel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
   padding: 8px;
+}
+
+.desk-db-subpanel.desk-db-subpanel-data {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.desk-db-subpanel[hidden] {
+  display: none;
+}
+
+.desk-db-empty-grid {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.desk-db-empty-grid[hidden] {
+  display: none;
+}
+
+.desk-db-center-status {
+  padding: 3px 8px;
+  border-top: 1px solid var(--grex-border);
+  background-color: var(--grex-surface);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .desk-db-inspector {
@@ -497,17 +766,36 @@ body.desk-shell,
   border-left: 1px solid var(--grex-border);
   border-radius: 0;
   padding: 8px;
+  transition: width 160ms ease, opacity 140ms ease;
+}
+
+.desk-db-inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
 }
 
 .desk-db-toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
-  padding: 4px 6px;
-  border-radius: 4px;
+  gap: 4px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 6px;
+  border-radius: 0;
   background-color: var(--grex-surface);
-  border: 1px solid var(--grex-border);
+  border-bottom: 1px solid var(--grex-border);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.desk-db-toolbar .grex-button {
+  height: 22px;
+  padding: 0 7px;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .desk-db-filter-field,
@@ -968,10 +1256,12 @@ a:focus-visible {
 }
 
 .desk-db-grid {
+  flex: 1 1 auto;
+  min-height: 0;
   max-width: 100%;
-  overflow-x: auto;
-  border: 1px solid var(--grex-border);
-  border-radius: 4px;
+  overflow: auto;
+  border: none;
+  border-radius: 0;
   background-color: var(--grex-base);
 }
 
@@ -988,21 +1278,82 @@ a:focus-visible {
 .desk-grid-table th,
 .desk-grid-table td {
   height: var(--desk-row-h);
-  border-bottom: 1px solid var(--grex-border);
-  border-right: 1px solid var(--grex-border);
+  border: 1px solid var(--grex-border);
   padding: 2px 8px;
   text-align: left;
   white-space: nowrap;
 }
 
-.desk-db-grid th,
-.desk-grid-table th {
+.desk-db-grid thead tr.desk-grid-header-row th,
+.desk-grid-table thead tr.desk-grid-header-row th {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 3;
   background-color: var(--grex-surface);
   font-weight: 700;
   color: var(--grex-text);
+}
+
+.desk-db-grid thead tr.desk-grid-filter-row th,
+.desk-grid-table thead tr.desk-grid-filter-row th {
+  position: sticky;
+  top: var(--desk-row-h);
+  z-index: 2;
+  background-color: var(--grex-surface);
+  padding: 2px 4px;
+}
+
+.desk-grid-gutter {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  width: 40px;
+  min-width: 40px;
+  text-align: right;
+  background-color: var(--grex-surface);
+  color: var(--grex-text-muted);
+  font-weight: 600;
+}
+
+.desk-col-name {
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.desk-col-type {
+  font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--grex-text-muted);
+}
+
+.desk-col-filter {
+  width: 100%;
+  min-width: 72px;
+  height: 22px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--grex-border);
+  background-color: var(--grex-base);
+  color: var(--grex-text);
+  font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  font-size: 11px;
+}
+
+.desk-grid-cell-btn {
+  width: 100%;
+  height: 22px;
+  justify-content: flex-start;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.desk-grid-cell-btn:hover {
+  border-color: var(--grex-accent);
+  background-color: var(--grex-surface-active);
 }
 
 .desk-db-grid td,
@@ -1026,6 +1377,66 @@ a:focus-visible {
   text-align: left;
   background-color: var(--grex-surface);
   border-bottom: 1px solid var(--grex-border);
+}
+
+dialog.desk-db-conn-dialog {
+  width: min(680px, 92vw);
+  max-height: 86vh;
+  padding: 12px;
+  border: 1px solid var(--grex-border);
+  border-radius: 6px;
+  background-color: var(--grex-surface);
+  color: var(--grex-text);
+  overflow-y: auto;
+}
+
+dialog.desk-db-conn-dialog:not([open]) {
+  display: none;
+}
+
+dialog.desk-db-conn-dialog::backdrop {
+  background-color: rgba(15, 17, 21, 0.72);
+}
+
+.desk-db-conn-tabs > nav[role="tablist"] {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0;
+  border-bottom: 1px solid var(--grex-border);
+  padding-bottom: 4px;
+}
+
+.desk-db-conn-tabs > nav[role="tablist"] > button[role="tab"] {
+  appearance: none;
+  border: 1px solid var(--grex-border);
+  background-color: var(--grex-base);
+  color: var(--grex-text-muted);
+  border-radius: 4px;
+  height: 26px;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.desk-db-conn-tabs > nav[role="tablist"] > button[role="tab"][aria-selected="true"] {
+  background-color: var(--grex-surface-active);
+  border-color: var(--grex-accent);
+  color: var(--grex-text);
+}
+
+.desk-db-conn-tabs > section[role="tabpanel"][hidden] {
+  display: none;
+}
+
+.desk-db-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--grex-border);
 }
 
 .desk-db-diagram {

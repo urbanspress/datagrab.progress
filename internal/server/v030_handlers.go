@@ -21,7 +21,11 @@ func (s *Server) registerV030Routes(mux *http.ServeMux) {
 	mux.Handle("POST /api/fleet/snapshots/restore", s.authCSRF(http.HandlerFunc(s.handleFleetSnapshotRestore)))
 
 	// Loopback SSH DB Tunnels & Visual DB Explorer endpoints
+	mux.Handle("GET /api/db/connections", s.authCSRF(http.HandlerFunc(s.handleDBConnectionsList)))
+	mux.Handle("POST /api/db/connections", s.authCSRF(http.HandlerFunc(s.handleDBConnectionsSave)))
+	mux.Handle("DELETE /api/db/connections", s.authCSRF(http.HandlerFunc(s.handleDBConnectionsDelete)))
 	mux.Handle("GET /api/db/tunnels", s.authCSRF(http.HandlerFunc(s.handleDBTunnels)))
+	mux.Handle("POST /api/db/tunnel", s.authCSRF(http.HandlerFunc(s.handleDBTunnelOpen)))
 	mux.Handle("POST /api/db/tunnels/open", s.authCSRF(http.HandlerFunc(s.handleDBTunnelOpen)))
 	mux.Handle("POST /api/db/tunnels/close", s.authCSRF(http.HandlerFunc(s.handleDBTunnelClose)))
 	mux.Handle("GET /api/db/schema", s.authCSRF(http.HandlerFunc(s.handleDBSchema)))
@@ -110,6 +114,69 @@ func (s *Server) handleFleetSnapshotRestore(w http.ResponseWriter, r *http.Reque
 	})
 }
 
+func (s *Server) handleDBConnectionsList(w http.ResponseWriter, r *http.Request) {
+	if s.dbStudio.Connections() == nil {
+		s.writeJSON(w, http.StatusOK, map[string]any{"ok": true, "connections": []any{}})
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{
+		"ok":          true,
+		"connections": s.dbStudio.Connections().List(),
+	})
+}
+
+func (s *Server) handleDBConnectionsSave(w http.ResponseWriter, r *http.Request) {
+	if s.dbStudio.Connections() == nil {
+		s.writeError(w, security.NewError(security.CodeDeskE101, 500, "connection store unavailable", nil))
+		return
+	}
+	handleJSONAction(s, w, r, func(req dbstudio.ConnectionUpsertRequest) (map[string]any, error) {
+		view, err := s.dbStudio.Connections().Save(req)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{
+			"ok":          true,
+			"connection":  view,
+			"connections": s.dbStudio.Connections().List(),
+		}, nil
+	})
+}
+
+func (s *Server) handleDBConnectionsDelete(w http.ResponseWriter, r *http.Request) {
+	if s.dbStudio.Connections() == nil {
+		s.writeError(w, security.NewError(security.CodeDeskE101, 500, "connection store unavailable", nil))
+		return
+	}
+	id := strings.TrimSpace(r.URL.Query().Get("id"))
+	if id == "" && r.Body != nil && r.ContentLength != 0 {
+		type deleteReq struct {
+			ID string `json:"id"`
+		}
+		var req deleteReq
+		if err := decodeJSONBody(r, &req); err != nil {
+			s.writeError(w, err)
+			return
+		}
+		id = strings.TrimSpace(req.ID)
+	}
+	if id == "" {
+		s.writeError(w, security.NewError(security.CodeDeskE101, 400, "connection id is required", nil))
+		return
+	}
+	deleted, err := s.dbStudio.Connections().Delete(id)
+	if err != nil {
+		s.writeError(w, err)
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{
+		"ok":          true,
+		"deleted":     deleted,
+		"id":          id,
+		"connections": s.dbStudio.Connections().List(),
+	})
+}
+
 func (s *Server) handleDBTunnels(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, map[string]any{
 		"ok":      true,
@@ -121,6 +188,15 @@ func (s *Server) handleDBTunnelOpen(w http.ResponseWriter, r *http.Request) {
 	handleJSONAction(s, w, r, func(req dbstudio.OpenTunnelRequest) (map[string]any, error) {
 		if strings.EqualFold(strings.TrimSpace(req.Transport), "loopback_test") {
 			return nil, security.NewError(security.CodeDeskE405, 403, "database forwarding requires an authenticated pinned SSH connection", nil)
+		}
+		if req.ConnectionID != "" && req.SSHPassword == "" && s.dbStudio.Connections() != nil {
+			_, sshPass, _, err := s.dbStudio.Connections().ResolveSecrets(req.ConnectionID)
+			if err != nil {
+				return nil, err
+			}
+			if sshPass != "" {
+				req.SSHPassword = sshPass
+			}
 		}
 		view, err := s.dbStudio.Tunnels().OpenTunnel(req)
 		if err != nil {

@@ -1,5 +1,5 @@
 /**
- * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.3.1.
+ * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.4.0.
  * Zero wrapper elements, zero raw DOM writes, zero unsafe script calls, sole Groxy AI identity.
  */
 import { ForEach, Icon, effect, renderNode, signal } from "../grex/grex.js";
@@ -116,7 +116,10 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     mcpLastOutput: signal("Unified grab mcp, GrabLab CMS, and Grex Builder outputs appear here."),
     fleetNodes: signal([]),
     fleetDeployPlan: signal(null),
+    dbConnections: signal([]),
     dbTunnels: signal([]),
+    dbSidebarCollapsed: signal(false),
+    codeSidebarCollapsed: signal(false),
     browserStatus: signal({ origin: "", message: "" }),
     browserSelection: signal(null),
     browserBrand: signal(null),
@@ -250,6 +253,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       actions.loadMcpTools().catch(() => []),
       actions.loadStudioCatalog().catch(() => null),
       actions.loadFleetNodes().catch(() => []),
+      actions.loadDBConnections().catch(() => []),
       actions.loadDBTunnels().catch(() => []),
       actions.authorOllamaStatus().catch(() => null),
     ]);
@@ -419,6 +423,33 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       const res = await apiClient.fleetRestoreSnapshot(payload);
       await refreshSnapshots().catch(() => []);
       return res;
+    },
+    loadDBConnections: async () => {
+      if (typeof apiClient.dbConnectionsList !== "function" || !apiClient.hasSession()) return [];
+      const data = await apiClient.dbConnectionsList();
+      const list = Array.isArray(data.connections) ? data.connections : [];
+      store.dbConnections.set(list);
+      return list;
+    },
+    saveDBConnection: async (payload) => {
+      if (typeof apiClient.dbConnectionSave !== "function" || !apiClient.hasSession()) return null;
+      const data = await apiClient.dbConnectionSave(payload);
+      if (Array.isArray(data.connections)) {
+        store.dbConnections.set(data.connections);
+      } else {
+        await actions.loadDBConnections().catch(() => []);
+      }
+      return data.connection || null;
+    },
+    deleteDBConnection: async (id) => {
+      if (typeof apiClient.dbConnectionDelete !== "function" || !apiClient.hasSession()) return null;
+      const data = await apiClient.dbConnectionDelete(id);
+      if (Array.isArray(data.connections)) {
+        store.dbConnections.set(data.connections);
+      } else {
+        await actions.loadDBConnections().catch(() => []);
+      }
+      return data;
     },
     loadDBTunnels: async () => {
       if (typeof apiClient.dbTunnels !== "function" || !apiClient.hasSession()) return [];
@@ -830,13 +861,31 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       "aria-label": label,
       "aria-controls": `desk-panel-${id}`,
       "aria-selected": () => (store.activeStudio.get() === id ? "true" : "false"),
+      "aria-expanded": () => {
+        if (store.activeStudio.get() !== id) return "false";
+        if (id === "database") return store.dbSidebarCollapsed.get() ? "false" : "true";
+        if (id === "code") return store.codeSidebarCollapsed.get() ? "false" : "true";
+        return "true";
+      },
       tabindex: () => (store.activeStudio.get() === id ? "0" : "-1"),
       class: () =>
         store.activeStudio.get() === id
           ? "desk-rail-btn desk-tab desk-tab-active"
           : "desk-rail-btn desk-tab",
     },
-    on: { click: () => setActiveStudio(id) },
+    on: {
+      click: () => {
+        if (store.activeStudio.peek() === id) {
+          if (id === "database") {
+            store.dbSidebarCollapsed.set(!store.dbSidebarCollapsed.peek());
+          } else if (id === "code") {
+            store.codeSidebarCollapsed.set(!store.codeSidebarCollapsed.peek());
+          }
+          return;
+        }
+        setActiveStudio(id);
+      },
+    },
     children: [
       makeRailIcon(iconKey),
       { tag: "span", attrs: { class: "desk-rail-label" }, text: label },
@@ -1020,7 +1069,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                     type: "Text",
                     tag: "span",
                     className: "desk-version-tag",
-                    props: { text: "v1.3.1" },
+                    props: { text: "v1.4.0" },
                   },
                 ],
               },
@@ -1205,12 +1254,20 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                   type: "Section",
                   tag: "section",
                   className: "desk-workspace-grid",
+                  attrs: {
+                    "data-sidebar-collapsed": () =>
+                      store.codeSidebarCollapsed.get() ? "true" : "false",
+                  },
                   props: { label: "Three-Pane Code and Grex Studio" },
                   children: [
                     {
                       type: "Section",
                       tag: "section",
                       className: "desk-code-left-rail",
+                      attrs: {
+                        "data-collapsed": () =>
+                          store.codeSidebarCollapsed.get() ? "true" : "false",
+                      },
                       props: { label: "Workspace Explorer, grabman, Grisp and Step 5 Tools" },
                       children: [
                         createWorkspacePanelNode(store, actions, doc),
@@ -1436,7 +1493,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                 attrs: { id: "desk-status-adr025c" },
                 className: "desk-status-item desk-mono",
                 props: {
-                  text: "Groxy Desk v1.3.1 | ADR-025c Exact Wire | Grex JS v1.0.0",
+                  text: "Groxy Desk v1.4.0 | ADR-025c Exact Wire | Grex JS v1.0.0",
                 },
               },
             ],

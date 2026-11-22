@@ -4,6 +4,38 @@ All notable releases of **Groxy Desk** (Step 6 of the GRAB Post-1.0 Ecosystem) a
 
 ---
 
+## `v1.4.0` — 2026-11-21
+
+### Release Type & Affected Layers
+
+- **Release Version & SemVer Tier:** `v1.4.0` (`MINOR 1.x.0` — Backwards-Compatible Feature Release)
+- **Affected Layer(s):** `Groxy Desk` (`urbanspress/groxy-desk`)
+- **Neighboring Layer Upgrade Required?** `No — 100% drop-in compatible` (existing workflows use frozen `v1.x` baselines; optional Bestseller Radar and GrabLab CMS book draft handoffs use `Groxy AI v1.8.0` and `GrabLab CMS v1.4.0`/`v1.5.0`)
+
+| Ecosystem Layer | Repository | Required Version Range | Touched in This Release? | Neighbor Upgrade Required? |
+|---|---|---|---|---|
+| **Core Language, Bytecode VM & Grisp Server** | `urbanspress/grab` | `>= v1.1.0 (< v2.0.0)` | `No` | `No` |
+| **Reactive Frontend Runtime & 20-Element Library** | `urbanspress/grex-js` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Flagship Zero-Plugin CMS** | `urbanspress/grablab-cms` | `>= v1.0.1 (< v2.0.0)` (`v1.4.0`/`v1.5.0` for optional book drafts) | `No` | `No` |
+| **Exclusive `mode: "visual"` Theme & Studio** | `urbanspress/grex-builder` | `>= v1.0.0 (< v2.0.0)` | `No` | `No` |
+| **Autonomous Design, Content & SEO Agent** | `urbanspress/groxy-ai` | `>= v1.0.0 (< v2.0.0)` (`v1.8.0` for optional Bestseller Radar) | `No` | `No` |
+| **Scaffolder, Orchestrator & Discreet VPS Panel** | `urbanspress/grabman`, `urbanspress/grabtaculous`, `urbanspress/gashboard` | `>= v1.0.0 (< v2.0.0)` (bundle pins `grabman v1.0.0`) | `No` | `No` |
+| **Native Desktop Vibe-Coding IDE & Studio** | `urbanspress/groxy-desk` | `>= v1.4.0 (< v2.0.0)` | `Yes` | `No` |
+
+### Added & Verified (`Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off: PASS`)
+- **Saved Connection Profiles & Tabbed Connection Modal (`internal/dbstudio/connections.go`, `GET/POST/DELETE /api/db/connections`, `<dialog id="desk-db-conn-dialog">`):**
+  - Replaced raw sidebar connection/SSH inputs with a compact **`CONNECTIONS`** manager (`+ New Connection` button `#db-new-conn-btn`, 1-click connect opening pinned SSH tunnel + schema load, Edit, Disconnect, Delete) backed by non-secret `localStorage` caching and `AES-256-GCM` (`v1:...`) encrypted `stateDir/db-connections.json` persistence.
+  - Added `<dialog id="desk-db-conn-dialog">` with **`General`** and **`SSH Tunnel`** tabs preserving every existing DOM input ID alongside **`Save`**, **`Connect`**, and **`Close`** actions.
+- **Collapsible Left Sidebar & Focused Schema Tree (`public/desk/workbench.js`, `public/desk/db-studio-panel.js`):**
+  - Clicking active left-rail icons (`#desk-tab-database`, `#desk-tab-code`) toggles the studio's left sidebar open or collapsed (`data-collapsed="true|false"`).
+  - Dedicated the lower 75% of `#desk-db-sidebar` to `Search in tables, views...` -> schema namespace (`public (N)`) -> clickable `Tables`/`Views`/`Triggers` rows with row-count badges that immediately load rows into the grid.
+- **Edge-to-Edge Spreadsheet Grid, Sub-Tab Switcher & Collapsed-by-Default Inspector (`public/desk/db-studio-panel.js`, `public/desk/desk.css`):**
+  - Replaced stacked center form cards with DbGate sub-tabs (**`Data`** | **`Structure`** | **`SQL Query`** | **`ER Diagram`** | **`Export & Diff`**) and single-line toolbar, making **`Data`** a full-height `.desk-grid-table` with sticky row-number gutter, two-row sticky headers (column names + data types and per-column live filter inputs), `1px` borders, `28px` rows, alternating shading, `tabular-nums`, and click/double-click cell inspection (`ADR-025c`).
+  - Collapsed `#desk-db-inspector` by default (`0px`, `data-collapsed="true"`), auto-opening on cell edit or **`Write SQL / Snapshot Guard`** (`GROXY-SAFE-001`).
+- Verified `100%` across `CGO_ENABLED=0` Windows/Linux Go build/vet/test, `go mod verify`, `govulncheck ./...` (`0` vulnerabilities), `grab check` + `grab format`, `node --test tests/*.test.js` (`15/15` pass), `TestNativeWebView2Isolation`, `tests/integration_e2e.py`, `tests/radar_live_e2e.py`, `tests/network_dump_recovery.py`, and clean `git status --short` across all 10 sibling `v1.x` repositories. [Release Notes](docs/releases/pdf/Groxy-Desk-v1.4.0-RELEASE-NOTES.md)
+
+---
+
 ## `v1.3.1` — 2026-11-21
 
 ### Release Type & Affected Layers

@@ -32,9 +32,31 @@ def find_browser() -> Path:
 
 def render_guide_html(version: str) -> str:
     v = html.escape(version)
-    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0", "1.3.0") else ""
+    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0", "1.3.0", "1.3.1") else ""
     footer_text = f"Groxy Desk v{v} — Verified across Gate 1 (Go + govulncheck + grab check/format), Gate 2 (Pure Grex JS DOM/WCAG/ADR-025c), Gate 3 (GRAB-E401 + GROXY-SAFE-001 + DESK-E403/E409), and Gate 4 (Live E2E)."
-    if version == "1.3.0":
+    if version == "1.3.1":
+        body_sections = """
+  <header>
+    <h1>Groxy Desk v1.3.1</h1>
+    <p>Faster remote database schema inspection</p>
+  </header>
+  <main>
+    <section>
+      <h2>Install the patch</h2>
+      <p>Download <code>Groxy-Desk-Setup-1.3.1.exe</code> and <code>SHA256SUMS.txt</code> from the same release. Compare the installer hash with the entry in the checksum file, then run the installer.</p>
+    </section>
+    <section>
+      <h2>Open a remote schema</h2>
+      <p>In Database Studio, open your saved PostgreSQL or MariaDB connection through its pinned SSH tunnel and refresh the schema. Expand Tables, Views, or Triggers in the schema tree.</p>
+    </section>
+    <section>
+      <h2>What changed</h2>
+      <p>Desk sends one catalog query and one query for exact table row counts, even when a database has dozens of tables. The inspection has a 20-second deadline. Views and triggers are listed according to the account's catalog visibility.</p>
+      <p>Row counts and database numeric values retain their exact decimal text. Database writes still require explicit approval and a pre-mutation snapshot.</p>
+    </section>
+  </main>"""
+        footer_text = "Groxy Desk v1.3.1 | Database Studio patch"
+    elif version == "1.3.0":
         body_sections = """
   <header>
     <h1>Groxy Desk v1.3.0</h1>

@@ -3,11 +3,11 @@
 ![Built with GRAB v1.1.0](docs/badges/built-with-grab.svg)
 ![Powered by Grex JS v1.0.0](docs/badges/powered-by-grex-js.svg)
 ![GRAB Ecosystem Step 6 — Groxy Desk](docs/badges/ecosystem-step-6.svg)
-![Release v1.3.0](docs/badges/release-v1.3.0.svg)
+![Release v1.3.1](docs/badges/release-v1.3.1.svg)
 
 **Groxy Desk** is the native desktop vibe-coding IDE, local `Grisp` (`grab.exe`) multi-worker supervisor, `grabman v1.0.0` workspace manager, Unified **`Groxy AI`** Adaptive Reasoning studio, and Step 5 Fleet / DB Explorer / DNS / Author Workbench for **Step 6 of the Post-1.0 GRAB Ecosystem**.
 
-- **Current Status:** `v1.3.0` (`MINOR 1.x.0`) — **Approved & Frozen — Complete (Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off: PASS — Released as `v1.3.0`)** (See [`CHANGELOG.md`](CHANGELOG.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), [`specifications/GROXY-DESK-SPEC-130.md`](specifications/GROXY-DESK-SPEC-130.md), and the [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.3.0-Guide.pdf))
+- **Current Status:** `v1.3.1` patch for remote SSH schema inspection. See the [changelog](CHANGELOG.md), [roadmap](docs/ROADMAP.md), and [walkthrough](docs/releases/pdf/Groxy-Desk-v1.3.1-Guide.pdf).
 - **Built Strictly Upon Frozen Baselines:** `GRAB v1.1.0`, `Grex JS v1.0.0`, `GrabLab CMS v1.0.1`, `Grex Theme Builder v1.0.0`, `Groxy AI v1.0.0`, `grabman v1.0.0`, `Grabtaculous v1.1.0`, and `Gashboard v1.0.0` (with optional `Groxy AI v1.8.0` Bestseller Radar & `GrabLab CMS v1.4.0`/`v1.5.0` draft handoff).
 
 ---
@@ -71,7 +71,7 @@
 
 ```powershell
 # Install on Windows via Branded Inno Setup 6 Installer (.exe only, never .msi)
-.\dist\Groxy-Desk-Setup-1.3.0.exe
+.\dist\Groxy-Desk-Setup-1.3.1.exe
 
 # Launch headless smoke verification
 go run ./cmd/groxy-desk --smoke-test --addr 127.0.0.1:0

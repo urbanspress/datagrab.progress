@@ -22,8 +22,9 @@ import (
 )
 
 const (
-	MaxRowsPerPage = 100
-	queryTimeout   = 10 * time.Second
+	MaxRowsPerPage      = 100
+	queryTimeout        = 10 * time.Second
+	remoteSchemaTimeout = 20 * time.Second
 )
 
 var (
@@ -146,31 +147,40 @@ func (m *Manager) GetSchema(ctx context.Context, target TargetSpec) (map[string]
 	}
 	defer db.Close()
 
-	qCtx, cancel := context.WithTimeout(ctx, queryTimeout)
+	timeout := queryTimeout
+	if engine == "postgres" || engine == "mariadb" {
+		timeout = remoteSchemaTimeout
+	}
+	qCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	var tables []TableSchema
-	switch engine {
-	case "sqlite":
-		tables, err = inspectSQLiteSchema(qCtx, db)
-	case "postgres":
-		schemaName := firstNonEmpty(target.SchemaName, "public")
-		tables, err = inspectPostgresSchema(qCtx, db, schemaName)
-	case "mariadb":
-		tables, err = inspectMariaDBSchema(qCtx, db, target.DBName)
+	var catalog networkCatalog
+	if engine == "sqlite" {
+		catalog.tables, err = inspectSQLiteSchema(qCtx, db)
+	} else {
+		schema := target.DBName
+		if engine == "postgres" {
+			schema = firstNonEmpty(target.SchemaName, "public")
+		}
+		catalog, err = inspectNetworkCatalog(qCtx, db, engine, schema)
 	}
 	if err != nil {
 		return nil, security.NewError(security.CodeDeskE101, 500, "database schema inspection failed", err)
 	}
 
-	return map[string]any{
+	out := map[string]any{
 		"ok":                        true,
 		"engine":                    engine,
 		"target_label":              label,
-		"tables":                    tables,
+		"tables":                    catalog.tables,
 		"postgres_replay_candidate": engine == "postgres" && postgresReplayCandidate,
 		"mariadb_replay_candidate":  engine == "mariadb",
-	}, nil
+	}
+	if engine == "postgres" || engine == "mariadb" {
+		out["views"] = catalog.views
+		out["triggers"] = catalog.triggers
+	}
+	return out, nil
 }
 
 // BrowseRows returns <= 100 bounded rows with exact ADR-025c base-10 wire strings.

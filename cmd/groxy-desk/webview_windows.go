@@ -101,7 +101,7 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 	if err != nil {
 		return err
 	}
-	title, err := windows.UTF16PtrFromString("Groxy Desk v1.3.0 — Native Vibe-Coding IDE")
+	title, err := windows.UTF16PtrFromString("Groxy Desk v1.3.1 — Native Vibe-Coding IDE")
 	if err != nil {
 		return err
 	}

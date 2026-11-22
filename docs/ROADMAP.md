@@ -108,5 +108,11 @@ Target Scope:
 - **Main Locked Stage (`.desk-stage-locked`, `height: calc(100vh - var(--desk-header-h) - var(--desk-statusbar-h))`):** `240px` collapsible left sidebars (`#desk-db-sidebar` with `#desk-db-object-filter`), `28px`-row-height sticky-header zebra-striped spreadsheet grid (`.desk-grid-table`, `font-variant-numeric: tabular-nums`), `280px` right inspector (`#desk-db-inspector`), and Coolify-density Server & Fleet health pills.
 - **`24px` Pinned Bottom IDE Status Bar (`<footer id="desk-status-bar" class="desk-ide-statusbar" role="status">`):** Live `#desk-status-db` connection pill (1-click connect/disconnect), `#desk-status-ssh` pinned `SHA256:...` fingerprint, `#desk-status-safety` (`GROXY-SAFE-001` guard state), `#desk-status-grisp` active worker pool, and `#desk-status-adr025c` exact-wire indicator, preserving 100% of frozen `v1.2.0` DOM element IDs and invariants.
 
+---
 
+## `v1.3.1` — Remote SSH schema inspection latency
 
+**Status:** Approved & Frozen — Complete ([SPEC-131](../specifications/GROXY-DESK-SPEC-131.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v1.3.1-Guide.pdf)).
+
+- Batch catalog metadata and exact row counts for PostgreSQL and MariaDB/MySQL over pinned SSH. Apply a 20-second inspection deadline.
+- Verify the delayed 40-table regression, existing compatibility and safety gates, and synchronized installer and release assets.

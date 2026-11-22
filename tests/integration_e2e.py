@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Gate 4 Cross-Layer End-to-End Integration Suite for Groxy Desk v1.3.0.
+Gate 4 Cross-Layer End-to-End Integration Suite for Groxy Desk v1.3.1.
 Verifies compiled binaries + GRAB v1.1.0 + Grex JS v1.0.0 + GrabLab CMS v1.0.1 + Grex Builder v1.0.0 + grabman v1.0.0 + Unified Groxy AI.
 """
 import hashlib
@@ -168,7 +168,7 @@ def main():
 
             # Verify /_health, /_ready, /, and static bundle
             st, hdrs, raw_health = http_req("GET", f"{base_url}/_health")
-            assert st == 200 and json.loads(raw_health)["version"] == "1.3.0", f"/_health failed: {st} {raw_health}"
+            assert st == 200 and json.loads(raw_health)["version"] == "1.3.1", f"/_health failed: {st} {raw_health}"
             assert hdrs.get("X-Frame-Options") == "DENY"
             assert hdrs.get("X-Content-Type-Options") == "nosniff"
             assert "script-src 'self'" in hdrs.get("Content-Security-Policy", "")

@@ -1,10 +1,16 @@
 # HANDOFF.md — Groxy Desk
 
 ## Current Status
-- **Verified stable release:** `v1.3.0`, VS Code / DbGate / Coolify High-Density `100vh` Desktop IDE Shell (`MINOR 1.x.0`). Promoted to `origin` (`urbanspress/groxy-desk.progress`) and `stable` (`urbanspress/groxy-desk.stable`) on 2026-11-21 after 100% Stage 4 Pre-Release Cross-Layer Security & Contract Sign-Off (`PASS`). (Prior stable tag `v1.2.0` at `dbd957a` verified live via `git ls-remote stable refs/heads/main` and `git describe --tags --abbrev=0 stable/main` before promotion.)
-- **Current milestone:** **`v1.3.0` — VS Code / DbGate / Coolify High-Density Desktop IDE Shell** (`Approved & Frozen — Complete`; [`specifications/GROXY-DESK-SPEC-130.md`](specifications/GROXY-DESK-SPEC-130.md)).
-- **Branch:** `main` synchronized across `origin` (`urbanspress/groxy-desk.progress`) and `stable` (`urbanspress/groxy-desk.stable`) at `v1.3.0`.
-- **Current Owner:** None — Milestone `v1.3.0` is 100% `Complete` with no pending tasks. Awaiting next milestone direction from the project owner (**Claude Sonnet (Medium)** / **Hydrogen (Medium)** or **GPT-6.2 Sol (Medium)** for next Stage 1 specification).
+- **Verified promotion base:** `v1.3.0` at `2c6aca3`, confirmed on both remotes before preparing the patch.
+- **Current milestone:** `v1.3.1` remote SSH schema inspection latency patch, Approved & Frozen — Complete ([SPEC-131](specifications/GROXY-DESK-SPEC-131.md)).
+- **Branch:** `main`. `v1.3.1` is the verified patch for synchronized promotion to `origin` and `stable`.
+- **Current Owner:** None — All milestone gates passed and no implementation or verification tasks remain.
+
+## Completed in `v1.3.1`
+
+- Batched PostgreSQL and MariaDB/MySQL metadata and exact row counts into two queries over pinned SSH. Applied the 20-second inspection deadline and populated the existing Views and Triggers tree.
+- The delayed 40-table regression passed on PostgreSQL 18.6, MariaDB 11.8.9, and MySQL 8.4.13. Windows and Linux amd64 Go build/vet, Windows Go tests, dependency checks, `govulncheck`, GRAB check/format, 14 Node tests, native WebView2 isolation, cross-layer integration, live Radar/CMS, and database dump/recovery passed.
+- Verified all ten sibling worktrees clean, all six package digests, the launcher smoke test, and the [walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.3.1-Guide.pdf). Packaging used the existing `grabman v1.0.0` binary in Desk's `dist` directory.
 
 ## Completed in `v1.0.1` (`PATCH 1.0.x` — NGINX `1.30.6` Edge Generator Alignment)
 - Updated `renderEdgeHTTPSConfig` in `internal/dns/dns.go` (`edgeProxy == "nginx"`) to emit NGINX `1.30.6` (`listen 443 ssl;`, `listen [::]:443 ssl;`, `http2 on;`) instead of deprecated `listen 443 ssl http2;`, plus the full `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto $scheme;`, and `X-Forwarded-Host $host;` header tuple required by `GRAB v1.1.0` `--trusted-proxy`.

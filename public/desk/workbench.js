@@ -1,5 +1,5 @@
 /**
- * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.3.0.
+ * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.3.1.
  * Zero wrapper elements, zero raw DOM writes, zero unsafe script calls, sole Groxy AI identity.
  */
 import { ForEach, Icon, effect, renderNode, signal } from "../grex/grex.js";
@@ -1020,7 +1020,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                     type: "Text",
                     tag: "span",
                     className: "desk-version-tag",
-                    props: { text: "v1.3.0" },
+                    props: { text: "v1.3.1" },
                   },
                 ],
               },
@@ -1436,7 +1436,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                 attrs: { id: "desk-status-adr025c" },
                 className: "desk-status-item desk-mono",
                 props: {
-                  text: "Groxy Desk v1.3.0 | ADR-025c Exact Wire | Grex JS v1.0.0",
+                  text: "Groxy Desk v1.3.1 | ADR-025c Exact Wire | Grex JS v1.0.0",
                 },
               },
             ],

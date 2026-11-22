@@ -11,12 +11,15 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"groxy-desk/internal/groxybridge"
 	"groxy-desk/internal/security"
 	"groxy-desk/internal/testfixture"
+
+	"golang.org/x/crypto/ssh"
 )
 
 // TestPinnedDatabaseCatalogs uses disposable DB fixtures published on loopback.
@@ -35,7 +38,11 @@ func TestPinnedDatabaseCatalogs(t *testing.T) {
 			if err != nil || port == 0 {
 				t.Fatalf("invalid fixture port %q", configuredPort)
 			}
-			sshEndpoint := testfixture.PinnedSSHWithSFTP(t, uint32(port), testfixture.ForwardLoopback(uint32(port)))
+			var delayed atomic.Bool
+			forward := testfixture.ForwardLoopback(uint32(port))
+			sshEndpoint := testfixture.PinnedSSHWithSFTP(t, uint32(port), func(ch ssh.Channel) {
+				forward(catalogFixtureChannel{Channel: ch, delayed: &delayed})
+			})
 			req := OpenTunnelRequest{Engine: fixture.engine, SSHHost: "127.0.0.1", SSHPort: sshEndpoint.Port,
 				KnownHostsPath: sshEndpoint.KnownHosts, PinnedFingerprint: sshEndpoint.Fingerprint,
 				RemoteDBHost: "127.0.0.1", RemoteDBPort: configuredPort}
@@ -103,7 +110,70 @@ func TestPinnedDatabaseCatalogs(t *testing.T) {
 			}
 			verifyPinnedCellRecovery(t, ctx, db, m, target, approvalState)
 			verifyNetworkSQLPage(t, ctx, db, m, target)
+			verifyLargeNetworkCatalog(t, ctx, db, m, target, &delayed)
 		})
+	}
+}
+
+type catalogFixtureChannel struct {
+	ssh.Channel
+	delayed *atomic.Bool
+}
+
+func (ch catalogFixtureChannel) Write(p []byte) (int, error) {
+	if ch.delayed.Load() {
+		time.Sleep(300 * time.Millisecond)
+	}
+	return ch.Channel.Write(p)
+}
+
+func verifyLargeNetworkCatalog(t *testing.T, ctx context.Context, db *sql.DB, m *Manager, target TargetSpec, delayed *atomic.Bool) {
+	t.Helper()
+	const tableCount = 40
+	for i := range tableCount {
+		statement := fmt.Sprintf("CREATE TABLE wan_%02d (id BIGINT PRIMARY KEY, amount DECIMAL(12,2) DEFAULT 0.00)", i)
+		if _, err := db.ExecContext(ctx, statement); err != nil {
+			t.Fatal(err)
+		}
+	}
+	statements := []string{
+		"INSERT INTO wan_39 (id) VALUES (1),(2)",
+		"CREATE VIEW wan_view AS SELECT id FROM wan_39",
+	}
+	if target.Engine == "postgres" {
+		statements = append(statements,
+			"CREATE FUNCTION wan_trigger_fn() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END; $$",
+			"CREATE TRIGGER wan_trigger BEFORE INSERT ON wan_39 FOR EACH ROW EXECUTE FUNCTION wan_trigger_fn()")
+	} else {
+		statements = append(statements, "CREATE TRIGGER wan_trigger BEFORE INSERT ON wan_39 FOR EACH ROW SET NEW.id=NEW.id")
+	}
+	for _, statement := range statements {
+		if _, err := db.ExecContext(ctx, statement); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// One response per table would exceed this deadline at the simulated latency.
+	delayed.Store(true)
+	defer delayed.Store(false)
+	inspectCtx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	catalog, err := m.GetSchema(inspectCtx, target)
+	if err != nil {
+		t.Fatalf("large catalog over delayed pinned SSH: %v", err)
+	}
+	tables := catalog["tables"].([]TableSchema)
+	if len(tables) != tableCount+3 || tables[3].Name != "wan_00" || tables[3].RowCount != "0" {
+		t.Fatalf("wrong table list or empty-table count: %+v", tables)
+	}
+	last := tables[len(tables)-1]
+	if last.Name != "wan_39" || last.RowCount != "2" || len(last.Columns) != 2 ||
+		!last.Columns[0].PrimaryKey || last.Columns[1].DefaultVal == "" {
+		t.Fatalf("lost exact row count or column metadata: %+v", last)
+	}
+	if !reflect.DeepEqual(catalog["views"], []schemaObject{{Name: "wan_view"}}) ||
+		!reflect.DeepEqual(catalog["triggers"], []schemaObject{{Name: "wan_trigger", Table: "wan_39"}}) {
+		t.Fatalf("unexpected views or triggers: %v %v", catalog["views"], catalog["triggers"])
 	}
 }
 

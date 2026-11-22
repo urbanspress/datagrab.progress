@@ -32,9 +32,36 @@ def find_browser() -> Path:
 
 def render_guide_html(version: str) -> str:
     v = html.escape(version)
-    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0", "1.3.0", "1.3.1", "1.4.0") else ""
+    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0", "1.3.0", "1.3.1", "1.4.0", "1.4.1") else ""
     footer_text = f"Groxy Desk v{v} — Verified across Gate 1 (Go + govulncheck + grab check/format), Gate 2 (Pure Grex JS DOM/WCAG/ADR-025c), Gate 3 (GRAB-E401 + GROXY-SAFE-001 + DESK-E403/E409), and Gate 4 (Live E2E)."
-    if version == "1.4.0":
+    if version == "1.4.1":
+        body_sections = """
+  <header>
+    <h1>Groxy Desk v1.4.1</h1>
+    <p>Database Studio layout patch</p>
+  </header>
+  <main>
+    <section>
+      <h2>Browse a database</h2>
+      <p>Open Database Studio from the activity rail. Use the plus button in Connections to add a saved connection, or select an existing profile. The connection status appears beside the Database Studio heading.</p>
+      <p>Expand Tables, Views, or Triggers in the sidebar. Use the search box to narrow the lists, then select a table to load its rows. The grid supports per-column filters and keeps row numbers and headers in view while you scroll.</p>
+    </section>
+    <section>
+      <h2>Use the compact toolbar</h2>
+      <p>Switch between Data, SQL, ER Diagram, and Export. The first Refresh button reloads table rows. The second Refresh button reloads the schema. Hover over either button to see which action it performs.</p>
+      <p>Open Database actions in the SQL view to find Structure, schema comparison, and snapshot controls. Open SQL tabs to add or switch query tabs.</p>
+    </section>
+    <section>
+      <h2>Review edits before applying them</h2>
+      <p>Click an editable cell or choose Save to open the Row Inspector &amp; Safety Gate. Review the proposed change in the inspector. Applying a write still requires explicit approval and a pre-mutation snapshot. Decimal and integer values retain their exact precision.</p>
+    </section>
+    <section>
+      <h2>Find commands and switch themes</h2>
+      <p>Press <kbd>Ctrl</kbd>+<kbd>K</kbd> or select Shortcuts on the activity rail to show command search. Press <kbd>Esc</kbd> to close it. Use Settings on the rail to switch between Light and Dark.</p>
+    </section>
+  </main>"""
+        footer_text = "Groxy Desk v1.4.1 | Database Studio walkthrough"
+    elif version == "1.4.0":
         body_sections = """
   <header>
     <h1>Groxy Desk v1.4.0</h1>

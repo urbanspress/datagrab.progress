@@ -1,5 +1,5 @@
 /**
- * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.4.0.
+ * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.4.1.
  * Zero wrapper elements, zero raw DOM writes, zero unsafe script calls, sole Groxy AI identity.
  */
 import { ForEach, Icon, effect, renderNode, signal } from "../grex/grex.js";
@@ -547,10 +547,17 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     }
   };
 
+  const commandSearchOpen = signal(false);
+  const showCommandSearch = () => {
+    commandSearchOpen.set(true);
+    focusSelector("#desk-command-search");
+  };
+
   const executeCommandSearch = () => {
     const raw = String(store.commandSearch.peek() || "").trim();
     const q = raw.toLowerCase();
     if (!q) return;
+    commandSearchOpen.set(false);
     if (q === "database" || q === "db" || q.startsWith("sql")) {
       setActiveStudio("database");
     } else if (q === "browser" || q === "radar") {
@@ -938,6 +945,47 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     on: { click: onClick },
   });
 
+  const studioHeading = (title) => ({
+    type: "Heading",
+    className: "desk-tabpanel-heading",
+    props: { level: 2, text: title },
+  });
+
+  const databasePanelHeader = {
+    type: "Section",
+    tag: "header",
+    className: "desk-db-panel-header",
+    children: [
+      studioHeading("Database Studio"),
+      {
+        type: "Stack",
+        tag: "section",
+        className: "desk-statusbar-group",
+        children: [
+          {
+            type: "Button",
+            id: "desk-status-db",
+            attrs: { id: "desk-status-db" },
+            className: "desk-status-item desk-status-pill",
+            props: {
+              type: "button",
+              label: "Database Connection Status",
+              text: () => {
+                const tunnels = store.dbTunnels.get();
+                if (tunnels.length > 0) {
+                  const t = tunnels[0];
+                  return `● Connected: ${t.engine} (${t.local_bind_addr})`;
+                }
+                return "● Connected: SQLite (data/app.db)";
+              },
+              onClick: () => setActiveStudio("database"),
+            },
+          },
+        ],
+      },
+    ],
+  };
+
   const studioTabpanel = (id, title, children) => ({
     type: "Section",
     tag: "section",
@@ -952,11 +1000,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     },
     className: "desk-tabpanel",
     children: [
-      {
-        type: "Heading",
-        className: "desk-tabpanel-heading",
-        props: { level: 2, text: title },
-      },
+      id === "database" ? databasePanelHeader : studioHeading(title),
       ...children,
     ],
   });
@@ -1069,7 +1113,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                     type: "Text",
                     tag: "span",
                     className: "desk-version-tag",
-                    props: { text: "v1.4.0" },
+                    props: { text: "v1.4.1" },
                   },
                 ],
               },
@@ -1104,7 +1148,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                     store.checkDiagnostics.set(
                       "Shortcuts: Ctrl+K Command Search | Ctrl+Z Undo Layout | Arrow keys in Activity Rail"
                     );
-                    focusSelector("#desk-command-search");
+                    showCommandSearch();
                   }),
                 ],
               },
@@ -1114,6 +1158,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
             type: "Stack",
             tag: "section",
             className: "desk-header-center",
+            attrs: { hidden: () => !commandSearchOpen.get() },
             children: [
               {
                 type: "Input",
@@ -1121,7 +1166,10 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                 className: "desk-command-search",
                 on: {
                   keydown: (ev) => {
-                    if (ev && ev.key === "Enter") {
+                    if (ev?.key === "Escape") {
+                      commandSearchOpen.set(false);
+                      focusSelector("#desk-action-shortcuts");
+                    } else if (ev?.key === "Enter") {
                       if (typeof ev.preventDefault === "function") ev.preventDefault();
                       executeCommandSearch();
                     }
@@ -1143,6 +1191,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
             type: "Stack",
             tag: "section",
             className: "desk-header-actions",
+            attrs: { hidden: true, "aria-hidden": "true" },
             children: [
               {
                 type: "Text",
@@ -1231,7 +1280,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                 "desk-rail-spacer"
               ),
               railQuickAction("desk-action-shortcuts", "Shortcuts", "shortcuts", () =>
-                focusSelector("#desk-command-search")
+                showCommandSearch()
               ),
             ],
           },
@@ -1408,6 +1457,8 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
           id: "desk-status-bar",
           role: "status",
           "aria-label": "IDE Status Bar",
+          hidden: true,
+          "aria-hidden": "true",
         },
         className: "desk-footer desk-ide-statusbar",
         children: [
@@ -1416,25 +1467,6 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
             tag: "section",
             className: "desk-statusbar-group",
             children: [
-              {
-                type: "Button",
-                id: "desk-status-db",
-                attrs: { id: "desk-status-db" },
-                className: "desk-status-item desk-status-pill",
-                props: {
-                  type: "button",
-                  label: "Database Connection Status",
-                  text: () => {
-                    const tunnels = store.dbTunnels.get();
-                    if (tunnels.length > 0) {
-                      const t = tunnels[0];
-                      return `● Connected: ${t.engine} (${t.local_bind_addr})`;
-                    }
-                    return "● Connected: SQLite (data/app.db)";
-                  },
-                  onClick: () => setActiveStudio("database"),
-                },
-              },
               {
                 type: "Text",
                 tag: "span",
@@ -1493,7 +1525,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                 attrs: { id: "desk-status-adr025c" },
                 className: "desk-status-item desk-mono",
                 props: {
-                  text: "Groxy Desk v1.4.0 | ADR-025c Exact Wire | Grex JS v1.0.0",
+                  text: "Groxy Desk v1.4.1 | ADR-025c Exact Wire | Grex JS v1.0.0",
                 },
               },
             ],
@@ -1547,7 +1579,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
         }
       } else if ((ev.ctrlKey || ev.metaKey) && k === "k") {
         if (typeof ev.preventDefault === "function") ev.preventDefault();
-        focusSelector("#desk-command-search");
+        showCommandSearch();
       }
     };
     doc.addEventListener("keydown", onUndoKeydown);

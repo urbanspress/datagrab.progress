@@ -1,10 +1,17 @@
 # HANDOFF.md — Groxy Desk
 
 ## Current Status
-- **Verified promotion base:** `v1.3.1` at `7ffc8f2`, confirmed on both remotes (`git ls-remote stable refs/heads/main` and `git describe --tags --abbrev=0 stable/main`).
-- **Current milestone:** `v1.4.0` — True DbGate-Parity Connection Manager, Collapsible Rail & Full-Screen Spreadsheet Grid ([SPEC-140](specifications/GROXY-DESK-SPEC-140.md)), Approved & Frozen — Complete.
-- **Branch:** `main`. `v1.4.0` is verified across Gates 1–4 and Stage 4 Sign-Off (`PASS`) for synchronized promotion to `origin` and `stable`.
-- **Current Owner:** None — All milestone gates passed and no implementation or verification tasks remain.
+
+- **Verified promotion base** `v1.4.0` at `d007edc`, confirmed on both remotes.
+- **Current milestone** `v1.4.1`, the Database Studio layout patch, is complete and ready for synchronized promotion from `main`. [SPEC-141](specifications/GROXY-DESK-SPEC-141.md)
+- **Current Owner** Codex. Implementation and acceptance checks are complete.
+
+## Completed in `v1.4.1`
+
+- Ported the owner’s DevTools layout to the semantic workbench. The connection indicator sits beside Database Studio, the icon-only rail and compact toolbar match the reference, and secondary SQL actions remain available in collapsed drawers. Save opens the existing approval workflow.
+- Passed Windows and Linux amd64 Go build and vet, Windows Go tests, module verification, and the vulnerability scan. The frozen GRAB CLI validated the manifest and template and confirmed canonical manifest formatting.
+- Passed all 15 Node tests, including zero wrapper elements, zero unsafe DOM writes, Light and Dark WCAG AA palette checks, exact database values, and approval and snapshot tests. Edge verified the layout and grid scrolling. Native WebView2 isolation, the live GRAB and Radar/CMS integrations, and disposable PostgreSQL and MariaDB dump recovery passed.
+- Confirmed all ten frozen sibling repositories clean. Packaged with Desk’s existing `grabman v1.0.0` executable. [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.4.1-Guide.pdf)
 
 ## Completed in `v1.4.0`
 
@@ -128,4 +135,4 @@ The frozen Radar and CMS contracts support a Desk-bound receipt followed by a se
 
 ## Recommended Next Model & Effort Tier
 
-**Claude Sonnet (Medium) / Hydrogen (Medium)** or **GPT-6.2 Sol (Medium)** for next Stage 1 milestone specification & roadmap planning (or **Gemini 3.8 Flash** / **GPT-6 Luna (Medium)** for quick UI edits and packaging).
+**GPT-6.2 Astra (High)** for the next independent release audit across ecosystem layers.

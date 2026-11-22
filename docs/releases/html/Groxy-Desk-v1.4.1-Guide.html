@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Groxy Desk v1.4.1 — Walkthrough & Architecture Guide</title>
+  <style>
+    @page {
+      size: Letter;
+      margin: 0.7in 0.75in;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.55;
+      font-size: 10.5pt;
+      margin: 0;
+    }
+    header {
+      border-bottom: 3px solid #2563eb;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 20pt;
+      color: #0f172a;
+    }
+    h2 {
+      font-size: 13pt;
+      color: #1d4ed8;
+      margin: 18px 0 8px 0;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+    h3 {
+      font-size: 11pt;
+      color: #1e293b;
+      margin: 12px 0 4px 0;
+    }
+    p, li {
+      color: #334155;
+    }
+    code, pre {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      color: #0f172a;
+    }
+    code {
+      padding: 1px 5px;
+      font-size: 9.2pt;
+    }
+    pre {
+      padding: 10px 12px;
+      font-size: 8.8pt;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 9.2pt;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    section {
+      page-break-inside: avoid;
+    }
+    footer {
+      margin-top: 22px;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 8px;
+      font-size: 9pt;
+      color: #475569;
+    }
+    .candidate-guide { line-height: 1.4; }
+    .candidate-guide header { padding-bottom: 8px; margin-bottom: 12px; }
+    .candidate-guide h2 { margin: 12px 0 6px; }
+    .candidate-guide p, .candidate-guide ol { margin: 7px 0; }
+    .candidate-guide code { white-space: nowrap; }
+    .candidate-guide footer { margin-top: 14px; }
+  </style>
+</head>
+<body class="candidate-guide">
+
+  <header>
+    <h1>Groxy Desk v1.4.1</h1>
+    <p>Database Studio layout patch</p>
+  </header>
+  <main>
+    <section>
+      <h2>Browse a database</h2>
+      <p>Open Database Studio from the activity rail. Use the plus button in Connections to add a saved connection, or select an existing profile. The connection status appears beside the Database Studio heading.</p>
+      <p>Expand Tables, Views, or Triggers in the sidebar. Use the search box to narrow the lists, then select a table to load its rows. The grid supports per-column filters and keeps row numbers and headers in view while you scroll.</p>
+    </section>
+    <section>
+      <h2>Use the compact toolbar</h2>
+      <p>Switch between Data, SQL, ER Diagram, and Export. The first Refresh button reloads table rows. The second Refresh button reloads the schema. Hover over either button to see which action it performs.</p>
+      <p>Open Database actions in the SQL view to find Structure, schema comparison, and snapshot controls. Open SQL tabs to add or switch query tabs.</p>
+    </section>
+    <section>
+      <h2>Review edits before applying them</h2>
+      <p>Click an editable cell or choose Save to open the Row Inspector &amp; Safety Gate. Review the proposed change in the inspector. Applying a write still requires explicit approval and a pre-mutation snapshot. Decimal and integer values retain their exact precision.</p>
+    </section>
+    <section>
+      <h2>Find commands and switch themes</h2>
+      <p>Press <kbd>Ctrl</kbd>+<kbd>K</kbd> or select Shortcuts on the activity rail to show command search. Press <kbd>Esc</kbd> to close it. Use Settings on the rail to switch between Light and Dark.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Groxy Desk v1.4.1 | Database Studio walkthrough</p>
+  </footer>
+</body>
+</html>

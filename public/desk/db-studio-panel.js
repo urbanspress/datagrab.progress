@@ -1,4 +1,4 @@
-import { ForEach, Icon, signal } from "../grex/grex.js";
+import { Accordion, ForEach, Icon, bindElement, signal } from "../grex/grex.js";
 
 const CONN_STORAGE_KEY = "groxy_desk_db_connections";
 
@@ -658,7 +658,7 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
             tag: "table",
             attrs: { class: "desk-grid-table" },
             children: [
-              { tag: "caption", text: `${result.table || "Query"} results on ${labelTarget(result.target)}` },
+              { tag: "caption", attrs: { class: "desk-sr-only" }, text: `${result.table || "Query"} results on ${labelTarget(result.target)}` },
               {
                 tag: "thead",
                 children: [
@@ -743,6 +743,237 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
       { document: doc }
     ).element;
 
+    const connectionsPane = {
+      type: "Section",
+      tag: "section",
+      className: "desk-db-connections-pane",
+      props: { label: "Saved Connections" },
+      children: [
+        {
+          tag: "section",
+          attrs: { class: "desk-db-section-header" },
+          children: [
+            { tag: "span", attrs: { class: "desk-db-section-title" }, text: "CONNECTIONS" },
+            {
+              tag: "button",
+              attrs: {
+                id: "db-new-conn-btn",
+                type: "button",
+                class: "grex-button desk-icon-btn",
+                "aria-label": "New Connection",
+                title: "New Connection",
+              },
+              on: { click: () => openNewConnectionDialog() },
+              children: [newConnPlusIcon],
+            },
+          ],
+        },
+        {
+          type: "Section",
+          tag: "section",
+          id: "desk-db-connections-list",
+          attrs: { id: "desk-db-connections-list" },
+          className: "desk-db-connections-list",
+          props: { label: "Saved Database Connections" },
+          children: [
+            ForEach(
+              {
+                items: () => mergedConnections(),
+                key: (item) => item.id,
+                parent: { type: "Stack", tag: "ul", className: "desk-db-conn-ul", props: { label: "Saved connection profiles" } },
+                empty: () => ({
+                  tag: "li",
+                  attrs: { class: "desk-db-conn-empty" },
+                  children: [
+                    {
+                      tag: "button",
+                      attrs: {
+                        id: "db-quick-sqlite-btn",
+                        type: "button",
+                        class: "grex-button desk-conn-select-btn",
+                        disabled: () => tab.busy.get(),
+                      },
+                      text: "Workspace SQLite (data/app.db)",
+                      on: {
+                        click: () =>
+                          run(tab, () =>
+                            connectSavedProfile({
+                              id: "workspace-sqlite",
+                              name: "Workspace SQLite",
+                              engine: "sqlite",
+                              sqlite_path: "data/app.db",
+                            })
+                          ),
+                      },
+                    },
+                  ],
+                }),
+                render: (entrySig) => {
+                  const conn = entrySig.peek();
+                  const isConnected = () => activeConnId.get() === conn.id;
+                  return {
+                    tag: "li",
+                    attrs: {
+                      class: () => (isConnected() ? "desk-db-conn-item is-connected" : "desk-db-conn-item"),
+                    },
+                    children: [
+                      {
+                        tag: "button",
+                        attrs: {
+                          type: "button",
+                          class: "grex-button desk-conn-select-btn",
+                          "aria-label": () => {
+                            const c = entrySig.get();
+                            return `Connect to ${c.name} (${c.engine})`;
+                          },
+                        },
+                        on: { click: () => run(tab, () => connectSavedProfile(entrySig.peek())) },
+                        children: [
+                          { tag: "span", attrs: { class: "desk-conn-dot" }, text: () => (isConnected() ? "●" : "○") },
+                          { tag: "span", attrs: { class: "desk-badge desk-conn-engine" }, text: () => engineBadgeText(entrySig.get().engine) },
+                          {
+                            tag: "span",
+                            attrs: { class: "desk-conn-name" },
+                            text: () => {
+                              const c = entrySig.get();
+                              const d = c.engine === "sqlite" ? c.sqlite_path || "data/app.db" : c.db_name || c.ssh_host || c.engine;
+                              return `${c.name} · ${d}`;
+                            },
+                          },
+                        ],
+                      },
+                      {
+                        tag: "section",
+                        attrs: { class: "desk-conn-actions" },
+                        children: [
+                          {
+                            tag: "button",
+                            attrs: { type: "button", class: "grex-button desk-conn-action-btn", disabled: () => tab.busy.get() },
+                            text: "Edit",
+                            on: {
+                              click: () => {
+                                populateFormFromConnection(entrySig.peek());
+                                connDialogOpen.set(true);
+                              },
+                            },
+                          },
+                          {
+                            tag: "button",
+                            attrs: {
+                              type: "button",
+                              class: "grex-button desk-conn-action-btn",
+                              disabled: () => tab.busy.get() || (!isConnected() && !tab.tunnel.get()),
+                            },
+                            text: "Disconnect",
+                            on: { click: () => run(tab, () => disconnectProfile(entrySig.peek())) },
+                          },
+                          {
+                            tag: "button",
+                            attrs: { type: "button", class: "grex-button desk-conn-action-btn", disabled: () => tab.busy.get() },
+                            text: "Delete",
+                            on: { click: () => run(tab, () => deleteProfile(entrySig.peek())) },
+                          },
+                        ],
+                      },
+                    ],
+                  };
+                },
+              },
+              { document: doc }
+            ),
+          ],
+        },
+        repeat(
+          () => store.dbTunnels.get().map((tunnel) => ({ ...tunnel, id: tunnel.tunnel_id })),
+          (entry) =>
+            paragraph(() => {
+              const tunnel = entry.get();
+              return `Tunnel ${tunnel.tunnel_id} · ${tunnel.engine} · ${tunnel.local_bind_addr}`;
+            }, { class: "desk-muted desk-mono" }),
+          "Active SSH database tunnels"
+        ),
+      ],
+    };
+
+    const schemaTree = Accordion({
+      className: "desk-db-accordion",
+      props: {
+        items: [
+          {
+            id: `db-tree-tables-${tab.id}`,
+            summary: "Tables",
+            open: false,
+            content: [
+              repeat(
+                () =>
+                  catalogForTarget()
+                    .filter((table) => matchesFilter(table.name))
+                    .map((table) => ({ ...table, id: `tbl-${table.schema || "main"}-${table.name}` })),
+                (entry) => {
+                  const table = entry.peek();
+                  const colCount = (table.columns || []).length;
+                  const hasRowCount = table.row_count !== undefined && table.row_count !== null && String(table.row_count) !== "";
+                  const label = hasRowCount ? `${table.name} (${table.row_count})` : `${table.name} (${colCount} cols)`;
+                  return button(
+                    null,
+                    label,
+                    () => {
+                      tab.table.set(table.name);
+                      tab.centerView.set("data");
+                      tab.message.set(`Loading ${table.name}...`);
+                      browse();
+                    },
+                    disabled,
+                    "desk-tree-item",
+                    {
+                      "data-selected": () => (tab.table.get() === table.name ? "true" : "false"),
+                      title: `${table.name} (${colCount} cols${hasRowCount ? `, ${table.row_count} rows` : ""})`,
+                    }
+                  );
+                },
+                "Tables list"
+              ),
+            ],
+          },
+          {
+            id: `db-tree-views-${tab.id}`,
+            summary: "Views",
+            open: false,
+            content: [
+              paragraph(() => `Views (${viewsForTarget().length})`),
+              repeat(
+                () =>
+                  viewsForTarget()
+                    .filter((v) => matchesFilter(v.name || v))
+                    .map((v, idx) => ({ id: `view-${idx}-${v.name || v}`, label: v.name || String(v) })),
+                (entry) => paragraph(() => entry.get().label),
+                "Views list"
+              ),
+            ],
+          },
+          {
+            id: `db-tree-triggers-${tab.id}`,
+            summary: "Triggers",
+            open: false,
+            content: [
+              paragraph(() => `Triggers (${triggersForTarget().length})`),
+              repeat(
+                () =>
+                  triggersForTarget()
+                    .filter((tr) => matchesFilter(tr.name || tr))
+                    .map((tr, idx) => ({ id: `trig-${idx}-${tr.name || tr}`, label: tr.name || String(tr) })),
+                (entry) => paragraph(() => entry.get().label),
+                "Triggers list"
+              ),
+            ],
+          },
+        ],
+      },
+    }, { document: doc });
+    const tableSummary = bindElement(schemaTree.element.querySelector("summary"), {
+      text: () => `Tables (${catalogForTarget().length})`,
+    });
+
     const leftSidebar = {
       type: "Section",
       tag: "aside",
@@ -751,161 +982,11 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
       attrs: {
         id: "desk-db-sidebar",
         "data-collapsed": () => (store.dbSidebarCollapsed && store.dbSidebarCollapsed.get() ? "true" : "false"),
+        inert: () => Boolean(store.dbSidebarCollapsed?.get()),
       },
       props: { label: "Connections and Schema Object Tree" },
       children: [
         { type: "Heading", className: "desk-sr-only", props: { level: 4, text: "Connections & Schema" } },
-        {
-          type: "Section",
-          tag: "section",
-          className: "desk-db-connections-pane",
-          props: { label: "Saved Connections" },
-          children: [
-            {
-              tag: "section",
-              attrs: { class: "desk-db-section-header" },
-              children: [
-                { tag: "span", attrs: { class: "desk-db-section-title" }, text: "CONNECTIONS" },
-                {
-                  tag: "button",
-                  attrs: {
-                    id: "db-new-conn-btn",
-                    type: "button",
-                    class: "grex-button desk-icon-btn",
-                    "aria-label": "New Connection",
-                    title: "New Connection",
-                  },
-                  on: { click: () => openNewConnectionDialog() },
-                  children: [newConnPlusIcon],
-                },
-              ],
-            },
-            {
-              type: "Section",
-              tag: "section",
-              id: "desk-db-connections-list",
-              attrs: { id: "desk-db-connections-list" },
-              className: "desk-db-connections-list",
-              props: { label: "Saved Database Connections" },
-              children: [
-                ForEach(
-                  {
-                    items: () => mergedConnections(),
-                    key: (item) => item.id,
-                    parent: { type: "Stack", tag: "ul", className: "desk-db-conn-ul", props: { label: "Saved connection profiles" } },
-                    empty: () => ({
-                      tag: "li",
-                      attrs: { class: "desk-db-conn-empty" },
-                      children: [
-                        {
-                          tag: "button",
-                          attrs: {
-                            id: "db-quick-sqlite-btn",
-                            type: "button",
-                            class: "grex-button desk-conn-select-btn",
-                            disabled: () => tab.busy.get(),
-                          },
-                          text: "Workspace SQLite (data/app.db)",
-                          on: {
-                            click: () =>
-                              run(tab, () =>
-                                connectSavedProfile({
-                                  id: "workspace-sqlite",
-                                  name: "Workspace SQLite",
-                                  engine: "sqlite",
-                                  sqlite_path: "data/app.db",
-                                })
-                              ),
-                          },
-                        },
-                      ],
-                    }),
-                    render: (entrySig) => {
-                      const conn = entrySig.peek();
-                      const isConnected = () => activeConnId.get() === conn.id;
-                      return {
-                        tag: "li",
-                        attrs: {
-                          class: () => (isConnected() ? "desk-db-conn-item is-connected" : "desk-db-conn-item"),
-                        },
-                        children: [
-                          {
-                            tag: "button",
-                            attrs: {
-                              type: "button",
-                              class: "grex-button desk-conn-select-btn",
-                              "aria-label": () => {
-                                const c = entrySig.get();
-                                return `Connect to ${c.name} (${c.engine})`;
-                              },
-                            },
-                            on: { click: () => run(tab, () => connectSavedProfile(entrySig.peek())) },
-                            children: [
-                              { tag: "span", attrs: { class: "desk-conn-dot" }, text: () => (isConnected() ? "●" : "○") },
-                              { tag: "span", attrs: { class: "desk-badge desk-conn-engine" }, text: () => engineBadgeText(entrySig.get().engine) },
-                              {
-                                tag: "span",
-                                attrs: { class: "desk-conn-name" },
-                                text: () => {
-                                  const c = entrySig.get();
-                                  const d = c.engine === "sqlite" ? c.sqlite_path || "data/app.db" : c.db_name || c.ssh_host || c.engine;
-                                  return `${c.name} · ${d}`;
-                                },
-                              },
-                            ],
-                          },
-                          {
-                            tag: "section",
-                            attrs: { class: "desk-conn-actions" },
-                            children: [
-                              {
-                                tag: "button",
-                                attrs: { type: "button", class: "grex-button desk-conn-action-btn", disabled: () => tab.busy.get() },
-                                text: "Edit",
-                                on: {
-                                  click: () => {
-                                    populateFormFromConnection(entrySig.peek());
-                                    connDialogOpen.set(true);
-                                  },
-                                },
-                              },
-                              {
-                                tag: "button",
-                                attrs: {
-                                  type: "button",
-                                  class: "grex-button desk-conn-action-btn",
-                                  disabled: () => tab.busy.get() || (!isConnected() && !tab.tunnel.get()),
-                                },
-                                text: "Disconnect",
-                                on: { click: () => run(tab, () => disconnectProfile(entrySig.peek())) },
-                              },
-                              {
-                                tag: "button",
-                                attrs: { type: "button", class: "grex-button desk-conn-action-btn", disabled: () => tab.busy.get() },
-                                text: "Delete",
-                                on: { click: () => run(tab, () => deleteProfile(entrySig.peek())) },
-                              },
-                            ],
-                          },
-                        ],
-                      };
-                    },
-                  },
-                  { document: doc }
-                ),
-              ],
-            },
-            repeat(
-              () => store.dbTunnels.get().map((tunnel) => ({ ...tunnel, id: tunnel.tunnel_id })),
-              (entry) =>
-                paragraph(() => {
-                  const tunnel = entry.get();
-                  return `Tunnel ${tunnel.tunnel_id} · ${tunnel.engine} · ${tunnel.local_bind_addr}`;
-                }, { class: "desk-muted desk-mono" }),
-              "Active SSH database tunnels"
-            ),
-          ],
-        },
         {
           type: "Section",
           tag: "section",
@@ -930,6 +1011,7 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
               type: "Text",
               tag: "p",
               className: "desk-db-namespace-label desk-mono",
+              attrs: { hidden: true },
               props: {
                 text: () => {
                   const total = catalogForTarget().length + viewsForTarget().length + triggersForTarget().length;
@@ -938,82 +1020,13 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
               },
             },
             {
-              type: "Accordion",
-              className: "desk-db-accordion",
-              props: {
-                items: [
-                  {
-                    id: `db-tree-tables-${tab.id}`,
-                    summary: "Tables",
-                    open: true,
-                    content: [
-                      paragraph(() => `Tables (${catalogForTarget().length})`),
-                      repeat(
-                        () =>
-                          catalogForTarget()
-                            .filter((table) => matchesFilter(table.name))
-                            .map((table) => ({ ...table, id: `tbl-${table.schema || "main"}-${table.name}` })),
-                        (entry) => {
-                          const table = entry.peek();
-                          const colCount = (table.columns || []).length;
-                          const hasRowCount = table.row_count !== undefined && table.row_count !== null && String(table.row_count) !== "";
-                          const label = hasRowCount ? `${table.name} (${table.row_count})` : `${table.name} (${colCount} cols)`;
-                          return button(
-                            null,
-                            label,
-                            () => {
-                              tab.table.set(table.name);
-                              tab.centerView.set("data");
-                              tab.message.set(`Loading ${table.name}...`);
-                              browse();
-                            },
-                            disabled,
-                            "desk-tree-item",
-                            {
-                              "data-selected": () => (tab.table.get() === table.name ? "true" : "false"),
-                              title: `${table.name} (${colCount} cols${hasRowCount ? `, ${table.row_count} rows` : ""})`,
-                            }
-                          );
-                        },
-                        "Tables list"
-                      ),
-                    ],
-                  },
-                  {
-                    id: `db-tree-views-${tab.id}`,
-                    summary: "Views",
-                    open: false,
-                    content: [
-                      paragraph(() => `Views (${viewsForTarget().length})`),
-                      repeat(
-                        () =>
-                          viewsForTarget()
-                            .filter((v) => matchesFilter(v.name || v))
-                            .map((v, idx) => ({ id: `view-${idx}-${v.name || v}`, label: v.name || String(v) })),
-                        (entry) => paragraph(() => entry.get().label),
-                        "Views list"
-                      ),
-                    ],
-                  },
-                  {
-                    id: `db-tree-triggers-${tab.id}`,
-                    summary: "Triggers",
-                    open: false,
-                    content: [
-                      paragraph(() => `Triggers (${triggersForTarget().length})`),
-                      repeat(
-                        () =>
-                          triggersForTarget()
-                            .filter((tr) => matchesFilter(tr.name || tr))
-                            .map((tr, idx) => ({ id: `trig-${idx}-${tr.name || tr}`, label: tr.name || String(tr) })),
-                        (entry) => paragraph(() => entry.get().label),
-                        "Triggers list"
-                      ),
-                    ],
-                  },
-                ],
+              element: schemaTree.element,
+              dispose() {
+                tableSummary.dispose();
+                schemaTree.dispose();
               },
             },
+            connectionsPane,
           ],
         },
       ],
@@ -1041,6 +1054,8 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
       attrs: {
         id: domId,
         type: "button",
+        hidden: () => viewId === "structure" && tab.centerView.get() !== viewId,
+        "aria-controls": `db-subpanel-${viewId}`,
         role: "tab",
         "aria-selected": () => (tab.centerView.get() === viewId ? "true" : "false"),
         class: () => (tab.centerView.get() === viewId ? "desk-db-subtab is-active" : "desk-db-subtab"),
@@ -1048,6 +1063,11 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
       on: { click: () => tab.centerView.set(viewId) },
       text: label,
     });
+
+    const openWriteInspector = () => {
+      inspectorOpen.set(true);
+      focusSectionControl(tab.cell.peek() ? "#db-cell-value input" : "#db-mutate-sql textarea");
+    };
 
     const centerWorkspace = {
       type: "Section",
@@ -1061,53 +1081,30 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
         {
           type: "Section",
           tag: "section",
-          id: "desk-db-subtabs",
-          attrs: { id: "desk-db-subtabs", role: "tablist", "aria-label": "Database Center Sub-Views" },
           className: "desk-db-subtabs",
           children: [
-            subTabButton("data", "db-subtab-data", "Data"),
-            subTabButton("structure", "db-subtab-structure", "Structure"),
-            subTabButton("sql", "db-subtab-sql", "SQL Query"),
-            subTabButton("er", "db-subtab-er", "ER Diagram"),
-            subTabButton("export", "db-subtab-export", "Export & Diff"),
-          ],
-        },
-        {
-          type: "Section",
-          tag: "section",
-          id: "desk-db-toolbar",
-          attrs: { id: "desk-db-toolbar" },
-          className: "desk-db-toolbar",
-          props: { label: "Database actions" },
-          children: [
-            button("db-rows-btn", "Refresh", browse, disabled, "desk-btn-primary"),
-            button("db-schema-btn", "Inspect schema", inspectSchema, disabled),
-            button("db-toolbar-structure-btn", "Structure", () => tab.centerView.set("structure"), disabled),
-            button("db-toolbar-sql-btn", "SQL", () => {
-              tab.centerView.set("sql");
-              focusSectionControl("#db-ro-sql textarea");
+            {
+              type: "Stack",
+              tag: "nav",
+              id: "desk-db-subtabs",
+              attrs: { id: "desk-db-subtabs", role: "tablist", "aria-label": "Database Center Sub-Views" },
+              className: "desk-db-view-tabs",
+              children: [
+                subTabButton("data", "db-subtab-data", "Data"),
+                subTabButton("structure", "db-subtab-structure", "Structure"),
+                subTabButton("sql", "db-subtab-sql", "SQL"),
+                subTabButton("er", "db-subtab-er", "ER Diagram"),
+                subTabButton("export", "db-subtab-export", "Export"),
+              ],
+            },
+            button("db-save-btn", "Save", openWriteInspector, disabled, "desk-btn-primary"),
+            button("db-rows-btn", "Refresh", browse, disabled, "desk-btn-primary", {
+              title: "Refresh rows",
+              "aria-label": "Refresh rows",
             }),
-            button("db-toolbar-export-btn", "Export", () => {
-              tab.centerView.set("export");
-              focusSectionControl("#db-export-path input");
-            }),
-            button("db-toolbar-er-btn", "ER Diagram", () => {
-              tab.centerView.set("er");
-              if (!currentCatalog()) {
-                inspectSchema();
-              }
-            }),
-            button("db-toolbar-diff-btn", "Schema Diff", () => {
-              tab.centerView.set("export");
-              focusSectionControl("#db-compare-source input");
-            }),
-            button("db-toolbar-undo-btn", "Undo Snapshot", () => run(tab, () => reviewRestore()), () => tab.busy.get() || !tab.applied.get()),
-            button("db-toolbar-guard-btn", "Write SQL / Snapshot Guard", () => {
-              inspectorOpen.set(true);
-              focusSectionControl("#db-mutate-sql textarea");
-            }),
-            button("db-toolbar-inspector-btn", () => (inspectorOpen.get() ? "Hide Inspector" : "Inspector"), () => {
-              inspectorOpen.set(!inspectorOpen.peek());
+            button("db-schema-btn", "Refresh", inspectSchema, disabled, "desk-btn-primary", {
+              title: "Refresh schema",
+              "aria-label": "Refresh schema",
             }),
           ],
         },
@@ -1231,6 +1228,33 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
           },
           className: "desk-db-subpanel",
           children: [
+            actionsDrawer("Database actions", [
+              button("db-toolbar-structure-btn", "Structure", () => tab.centerView.set("structure"), disabled),
+              button("db-toolbar-sql-btn", "SQL", () => {
+                tab.centerView.set("sql");
+                focusSectionControl("#db-ro-sql textarea");
+              }),
+              button("db-toolbar-export-btn", "Export", () => {
+                tab.centerView.set("export");
+                focusSectionControl("#db-export-path input");
+              }),
+              button("db-toolbar-er-btn", "ER Diagram", () => {
+                tab.centerView.set("er");
+                if (!currentCatalog()) {
+                  inspectSchema();
+                }
+              }),
+              button("db-toolbar-diff-btn", "Schema Diff", () => {
+                tab.centerView.set("export");
+                focusSectionControl("#db-compare-source input");
+              }),
+              button("db-toolbar-undo-btn", "Undo Snapshot", () => run(tab, () => reviewRestore()), () => tab.busy.get() || !tab.applied.get()),
+              button("db-toolbar-guard-btn", "Write SQL / Snapshot Guard", openWriteInspector),
+              button("db-toolbar-inspector-btn", () => (inspectorOpen.get() ? "Hide Inspector" : "Inspector"), () => {
+                inspectorOpen.set(!inspectorOpen.peek());
+              }),
+            ], "desk-db-toolbar"),
+            buildSQLTabControls(),
             controls("SQL editor and table browsing", [
               input("db-ro-sql", "Read-only SQL", tab.sql, "textarea"),
               input("db-table-name", "Table name", tab.table),
@@ -1525,6 +1549,7 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
         id: "desk-db-inspector",
         "data-collapsed": () => (inspectorOpen.get() ? "false" : "true"),
         "aria-hidden": () => (inspectorOpen.get() ? "false" : "true"),
+        hidden: () => !inspectorOpen.get(),
       },
       props: { label: "Row Inspector, Pre-Mutation Snapshot Guard and GROXY-SAFE-001 Drawer" },
       children: [
@@ -1794,6 +1819,55 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
     };
   }
 
+  const actionsDrawer = (label, content, id) => ({
+    type: "Accordion",
+    id,
+    attrs: id ? { id } : undefined,
+    className: "desk-db-actions-drawer",
+    props: { items: [{ id: label, summary: label, content }] },
+  });
+
+  const buildSQLTabControls = () => actionsDrawer("SQL tabs", [
+    button(null, "New SQL tab", () => {
+      const tab = makeTab(++nextTab);
+      tab.centerView.set("sql");
+      tabs.set([...tabs.peek(), tab]);
+      active.set(tab.id);
+    }),
+    button(
+      null,
+      "Close current SQL tab",
+      async () => {
+        const current = tabs.peek().find((tab) => tab.id === active.peek());
+        const remaining = tabs.peek().filter((tab) => tab !== current);
+        if (!remaining.length) return;
+        current.query?.abort();
+        tabs.set(remaining);
+        const next = remaining.at(-1);
+        active.set(next.id);
+        const tunnel = current.tunnel.peek().trim();
+        if (tunnel && !remaining.some((tab) => tab.tunnel.peek().trim() === tunnel)) {
+          try {
+            await actions.dbTunnelClose({ tunnel_id: tunnel });
+          } catch (error) {
+            next.message.set(error.message);
+          }
+        }
+      },
+      () => tabs.get().length < 2
+    ),
+    repeat(
+      tabs,
+      (entry) =>
+        button(
+          null,
+          () => `Tab ${entry.get().id}${active.get() === entry.get().id ? " (active)" : ""}`,
+          () => active.set(entry.peek().id)
+        ),
+      "Open SQL tabs"
+    ),
+  ]);
+
   return {
     type: "Card",
     tag: "section",
@@ -1801,45 +1875,6 @@ export function createDBStudioPanelNode(store, actions, doc = globalThis.documen
     className: "desk-card desk-db-studio-root",
     children: [
       { type: "Heading", props: { level: 3, text: "Visual Database Workbench" } },
-      controls("SQL tabs", [
-        button(null, "New SQL tab", () => {
-          const tab = makeTab(++nextTab);
-          tabs.set([...tabs.peek(), tab]);
-          active.set(tab.id);
-        }),
-        button(
-          null,
-          "Close current SQL tab",
-          async () => {
-            const current = tabs.peek().find((tab) => tab.id === active.peek());
-            const remaining = tabs.peek().filter((tab) => tab !== current);
-            if (!remaining.length) return;
-            current.query?.abort();
-            tabs.set(remaining);
-            const next = remaining.at(-1);
-            active.set(next.id);
-            const tunnel = current.tunnel.peek().trim();
-            if (tunnel && !remaining.some((tab) => tab.tunnel.peek().trim() === tunnel)) {
-              try {
-                await actions.dbTunnelClose({ tunnel_id: tunnel });
-              } catch (error) {
-                next.message.set(error.message);
-              }
-            }
-          },
-          () => tabs.get().length < 2
-        ),
-        repeat(
-          tabs,
-          (entry) =>
-            button(
-              null,
-              () => `Tab ${entry.get().id}${active.get() === entry.get().id ? " (active)" : ""}`,
-              () => active.set(entry.peek().id)
-            ),
-          "Open SQL tabs"
-        ),
-      ]),
       repeat(onlyActive, (entry) => renderTab(entry.peek()), "Active SQL workspace"),
     ],
   };

@@ -128,3 +128,13 @@ Target Scope:
 - **Collapsible Left Sidebar & Clean Schema Tree:** Clicking active left-rail icon (`#desk-tab-database`, `#desk-tab-code`) toggles sidebar collapsed/open; lower 75% of `#desk-db-sidebar` dedicated to `Search in tables, views...` -> schema namespace (`public (N)`) -> clickable table/view/trigger rows with row-count badges that immediately load rows into the grid.
 - **Edge-to-Edge Excel-Style Spreadsheet Grid & Sub-View Switcher:** Clean DbGate sub-tab bar (`Data` | `Structure` | `SQL Query` | `ER Diagram` | `Export & Diff`) + single-line toolbar (`Refresh`, `Inspect schema`, `Structure`, `SQL`, `Export`, `Undo Snapshot`, `Write SQL / Snapshot Guard`, `Inspector`); `Data` renders full-height `.desk-grid-table` with sticky row-number gutter, two-row sticky `<thead>` (column name + type + per-column live filter inputs), `1px` borders, `28px` rows, alternating shading, `tabular-nums`, and click/double-click cell inspection (`ADR-025c`).
 - **Collapsed-by-Default Right Inspector (`#desk-db-inspector`):** Collapses to `0px` by default so the grid fills full width, automatically sliding open on cell edit (`ADR-025c`), `Write SQL / Snapshot Guard` (`GROXY-SAFE-001`), `Undo Snapshot`, or `Inspector` toggle.
+
+---
+
+## `v1.4.1` - Database Studio layout patch
+
+**Status** Complete. [SPEC-141](../specifications/GROXY-DESK-SPEC-141.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v1.4.1-Guide.pdf)
+
+- Ported the owner’s WebView2 layout with an icon-only rail, inline database status, collapsed schema groups, and a single-row toolbar above the scrolling grid.
+- Kept frozen DOM controls available in drawers and retained exact database wire values, approval before writes, and snapshots.
+- Passed the Go, GRAB, Grex, native WebView2, and live cross-layer acceptance checks.

@@ -363,7 +363,7 @@ test("v1.3.0 High-Density 100vh Desktop IDE Shell, 5 coordinated chrome layers, 
   assert.equal(root.querySelector("#desk-status-ssh").textContent.includes("SHA256:verifiedPin123"), true);
   assert.equal(root.querySelector("#desk-status-safety").textContent.includes("1 Snapshots"), true);
   assert.equal(root.querySelector("#desk-status-grisp").textContent.includes("1 Active (:8765)"), true);
-  assert.equal(root.querySelector("#desk-status-adr025c").textContent.includes("v1.4.0"), true);
+  assert.equal(root.querySelector("#desk-status-adr025c").textContent.includes("v1.4.1"), true);
 
   await root.querySelector("#desk-status-db").click();
   assert.equal(mounted.store.activeStudio.peek(), "database");

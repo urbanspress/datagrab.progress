@@ -235,6 +235,15 @@ test("v1.4.0 DbGate-parity connection manager, tabbed modal, collapsible sidebar
     assert.equal(sidebar.textContent.includes("public (3)"), true);
     assert.equal(sidebar.textContent.includes("books (2)"), true);
 
+    const schemaPane = sidebar.querySelector(".desk-db-schema-pane");
+    assert.ok(schemaPane.querySelector(".desk-db-connections-pane"));
+    assert.equal(schemaPane.querySelector("details").hasAttribute("open"), false);
+    assert.equal(root.querySelector("#desk-status-db").parentNode.parentNode.localName, "header");
+    assert.equal(root.querySelector("#desk-status-bar").hasAttribute("hidden"), true);
+    assert.equal(root.querySelector("#db-subtab-structure").hasAttribute("hidden"), true);
+    assert.equal(root.querySelector("#db-rows-btn").getAttribute("aria-label"), "Refresh rows");
+    assert.equal(root.querySelector("#db-schema-btn").getAttribute("aria-label"), "Refresh schema");
+
     // 5. Clicking a table in schema tree immediately loads rows into default Data spreadsheet grid
     const tableBtn = sidebar.querySelectorAll(".desk-tree-item").find((b) => b.textContent.includes("books"));
     assert.ok(tableBtn, "Expected clickable books table button");
@@ -281,6 +290,10 @@ test("v1.4.0 DbGate-parity connection manager, tabbed modal, collapsible sidebar
     assert.equal(inspector.getAttribute("data-collapsed"), "true");
 
     // 7. Clicking Write SQL / Snapshot Guard opens inspector
+    await root.querySelector("#db-save-btn").click();
+    assert.equal(root.querySelector("#desk-db-inspector").hasAttribute("hidden"), false);
+    await root.querySelector("#db-inspector-close-btn").click();
+    assert.equal(root.querySelector("#desk-db-inspector").hasAttribute("hidden"), true);
     await root.querySelector("#db-toolbar-guard-btn").click();
     assert.equal(inspector.getAttribute("data-collapsed"), "false");
 

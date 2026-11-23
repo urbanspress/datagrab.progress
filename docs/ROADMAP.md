@@ -149,3 +149,13 @@ Target Scope:
 - Add the emerald menu mark and inline monochrome workbench icons. Open the connection form as a centered native dialog within the compact Database Studio layout.
 - Passed the Go, GRAB, Grex, native WebView2, and live integration gates. Verified shortcut startup, executable subsystems, and package checksums.
 - **Independent Release Sign-Off (PASS)** on 2026-11-22 for `v1.4.2` at `a698284`. Verified both remote branches and tags, all six package hashes, both Windows PE subsystems, GRAB validation, all 15 Node tests, and ten clean frozen sibling worktrees. [Stage 4 evidence](../HANDOFF.md#independent-release-sign-off-pass)
+
+---
+
+## `v1.5.0` — Unified Windows title bar and silent background processes
+
+**Status** Complete. Stage 2 and Stage 4 passed. [SPEC-150](../specifications/GROXY-DESK-SPEC-150.md) | [Walkthrough PDF](releases/pdf/Groxy-Desk-v1.5.0-Guide.pdf)
+
+- Combine the brand mark, seven menus, Command Search, theme toggle, and window controls in the 32px Windows title bar. Preserve native window dragging, resizing, snapping, and the Windows system menu.
+- Use a shared subprocess launcher to start Windows background tools with `CREATE_NO_WINDOW`, keeping their output and errors in the workbench.
+- Preserve WebView2 research isolation, frozen Grex and workspace contracts, exact database values, and the approval and snapshot workflow.

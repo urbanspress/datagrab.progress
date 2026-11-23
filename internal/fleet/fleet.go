@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
+
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"groxy-desk/internal/auditor"
+	"groxy-desk/internal/deskexec"
 	"groxy-desk/internal/groxybridge"
 	"groxy-desk/internal/security"
 	"groxy-desk/internal/workspace"
@@ -496,7 +497,7 @@ func (m *Manager) ValidateSiteDNA(ctx context.Context, req DNAValidateRequest) (
 				defer cancel()
 				args := []string{"dna", "validate", absPath}
 				if security.ValidateSafeCommandBinary(gmBin, args) == nil {
-					out, execErr := exec.CommandContext(cmdCtx, gmBin, args...).CombinedOutput()
+					out, execErr := deskexec.CommandContext(cmdCtx, gmBin, args...).CombinedOutput()
 					if execErr != nil {
 						return DNAValidationResult{}, security.NewError(security.CodeDeskE302, 422, fmt.Sprintf("grabman dna validate failed: %s (DESK-E302)", strings.TrimSpace(string(out))), execErr)
 					}

@@ -14,13 +14,14 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
+
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"groxy-desk/internal/auditor"
+	"groxy-desk/internal/deskexec"
 	"groxy-desk/internal/groxybridge"
 	"groxy-desk/internal/security"
 )
@@ -610,10 +611,10 @@ func (b *Bridge) callCoreGrabMCP(ctx context.Context, toolName string, args map[
 	defer cancel()
 
 	// Structured argv execution only; zero shell string interpolation.
-	cmd := exec.CommandContext(cCtx, b.grabBin, argv...)
+	cmd := deskexec.CommandContext(cCtx, b.grabBin, argv...)
 	cmd.Dir = b.workspaceRoot
 
-	req1 := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"groxy-desk","version":"1.4.2"}}}`
+	req1 := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"groxy-desk","version":"1.5.0"}}}`
 	req2 := `{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}`
 	callObj := map[string]any{
 		"jsonrpc": "2.0",

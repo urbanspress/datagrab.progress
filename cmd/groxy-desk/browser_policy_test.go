@@ -70,6 +70,9 @@ func TestBrowserPaneExactOriginAndWorkbenchMessages(t *testing.T) {
 		`{"type":"groxy-browser-resize","width":"30"}`,
 		`{"type":"groxy-browser-close"} {"type":"groxy-desk-ready"}`,
 		`{"type":"execute-script"}`,
+		`{"type":"win_close","url":""}`,
+		`{"type":"win_minimize","width":0}`,
+		`{"type":"win_toggle_maximize","handle":1}`,
 	} {
 		if _, ok := decodePaneCommand(message); ok {
 			t.Errorf("unsupported message accepted: %s", message)
@@ -80,5 +83,10 @@ func TestBrowserPaneExactOriginAndWorkbenchMessages(t *testing.T) {
 	}
 	if _, ok := decodePaneCommand(`{"type":"groxy-browser-capture"}`); !ok {
 		t.Fatal("fixed selection capture rejected")
+	}
+	for _, action := range []string{"win_minimize", "win_toggle_maximize", "win_close"} {
+		if command, ok := decodePaneCommand(`{"type":"` + action + `"}`); !ok || command.Type != action {
+			t.Errorf("valid window action rejected: %s", action)
+		}
 	}
 }

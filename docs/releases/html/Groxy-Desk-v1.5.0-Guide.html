@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Groxy Desk v1.5.0 — Walkthrough & Architecture Guide</title>
+  <style>
+    @page {
+      size: Letter;
+      margin: 0.7in 0.75in;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.55;
+      font-size: 10.5pt;
+      margin: 0;
+    }
+    header {
+      border-bottom: 3px solid #2563eb;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 20pt;
+      color: #0f172a;
+    }
+    h2 {
+      font-size: 13pt;
+      color: #1d4ed8;
+      margin: 18px 0 8px 0;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+    h3 {
+      font-size: 11pt;
+      color: #1e293b;
+      margin: 12px 0 4px 0;
+    }
+    p, li {
+      color: #334155;
+    }
+    code, pre {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      color: #0f172a;
+    }
+    code {
+      padding: 1px 5px;
+      font-size: 9.2pt;
+    }
+    pre {
+      padding: 10px 12px;
+      font-size: 8.8pt;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 9.2pt;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    section {
+      page-break-inside: avoid;
+    }
+    footer {
+      margin-top: 22px;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 8px;
+      font-size: 9pt;
+      color: #475569;
+    }
+    .candidate-guide { line-height: 1.4; }
+    .candidate-guide header { padding-bottom: 8px; margin-bottom: 12px; }
+    .candidate-guide h2 { margin: 12px 0 6px; }
+    .candidate-guide p, .candidate-guide ol { margin: 7px 0; }
+    .candidate-guide code { white-space: nowrap; }
+    .candidate-guide footer { margin-top: 14px; }
+  </style>
+</head>
+<body class="candidate-guide">
+
+  <header>
+    <h1>Groxy Desk v1.5.0</h1>
+    <p>Unified Windows title bar and silent background tools</p>
+  </header>
+  <main>
+    <section>
+      <h2>Install and open Groxy Desk</h2>
+      <p>Run <code>Groxy-Desk-Setup-1.5.0.exe</code>. Open Groxy Desk from the Start menu or optional desktop shortcut. The native WebView2 window contains the menu bar, Command Search, theme switch, and Windows controls in one row.</p>
+    </section>
+    <section>
+      <h2>Move, resize, and snap the window</h2>
+      <p>Drag a blank space on the title bar to move the window. Drag to the edge of a display to snap, or double-click a blank space to maximize or restore. Resize from any outer edge or corner. Right-click a blank space or press <code>Alt+Space</code> to open the Windows system menu.</p>
+    </section>
+    <section>
+      <h2>Find commands and switch themes</h2>
+      <p>Click Command Search or press <code>Ctrl+K</code>. Enter <code>database</code>, <code>browser</code>, or <code>code</code> to switch studios. You can also open a workspace file by entering its path. Use the theme button beside the window controls to switch between Light and Dark.</p>
+    </section>
+    <section>
+      <h2>Run workspace and database tools</h2>
+      <p>GRAB checks, local workers, and helper programs run in the background. Read their output in the workbench. In Database Studio you can connect through the existing pinned SSH tunnel, inspect a schema, and review edits in the approval drawer. Writes still require approval and a pre-mutation snapshot.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Groxy Desk v1.5.0 | Windows desktop walkthrough</p>
+  </footer>
+</body>
+</html>

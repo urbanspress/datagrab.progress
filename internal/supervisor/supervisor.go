@@ -19,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	"groxy-desk/internal/deskexec"
 	"groxy-desk/internal/security"
 )
 
@@ -433,7 +434,7 @@ func (m *Manager) launchProcess(ctx context.Context, w *managedWorker) error {
 	}
 
 	procCtx, cancel := context.WithCancel(context.Background())
-	cmd := exec.CommandContext(procCtx, m.grabBin, args...)
+	cmd := deskexec.CommandContext(procCtx, m.grabBin, args...)
 	cmd.Dir = w.workDirAbs
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {
@@ -620,7 +621,7 @@ func (m *Manager) runGrabCheckPreflight(ctx context.Context, workDirAbs, grabFil
 
 	checkCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(checkCtx, m.grabBin, args...)
+	cmd := deskexec.CommandContext(checkCtx, m.grabBin, args...)
 	cmd.Dir = workDirAbs
 	out, err := cmd.CombinedOutput()
 	if err != nil {

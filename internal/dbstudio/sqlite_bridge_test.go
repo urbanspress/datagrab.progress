@@ -9,12 +9,13 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
+
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"groxy-desk/internal/deskexec"
 	"groxy-desk/internal/security"
 
 	"golang.org/x/crypto/ssh"
@@ -95,7 +96,7 @@ func TestRemoteSQLiteWithFrozenGashboard(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	version, err := exec.CommandContext(ctx, bin, "--version").Output()
+	version, err := deskexec.CommandContext(ctx, bin, "--version").Output()
 	if err != nil || strings.TrimSpace(string(version)) != "gashboard-bridge v1.0.0" {
 		t.Fatalf("expected frozen Gashboard v1.0.0, got %q: %v", version, err)
 	}
@@ -116,7 +117,7 @@ func TestRemoteSQLiteWithFrozenGashboard(t *testing.T) {
 	addr := listener.Addr().(*net.TCPAddr)
 	_ = listener.Close()
 	const bearer = "gashboard-read-only-fixture"
-	command := exec.CommandContext(ctx, bin, "--listen", addr.String(), "--sqlite-root", root)
+	command := deskexec.CommandContext(ctx, bin, "--listen", addr.String(), "--sqlite-root", root)
 	command.Env = append(os.Environ(), "GASHBOARD_BRIDGE_TOKEN="+bearer)
 	if err := command.Start(); err != nil {
 		t.Fatal(err)

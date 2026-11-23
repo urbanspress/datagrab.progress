@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"groxy-desk/internal/deskexec"
 	"groxy-desk/internal/server"
 
 	"github.com/wailsapp/go-webview2/pkg/edge"
@@ -206,7 +206,7 @@ const poll = setInterval(async () => {
 		}
 		t.Errorf("remove native test profiles: %v", err)
 	})
-	cmd := exec.CommandContext(ctx, exe, "-test.run=^TestNativeWebView2Isolation$", "-test.v")
+	cmd := deskexec.CommandContext(ctx, exe, "-test.run=^TestNativeWebView2Isolation$", "-test.v")
 	pin := sha256.Sum256(tls.Certificate().RawSubjectPublicKeyInfo)
 	cmd.Env = append(os.Environ(),
 		"GROXY_DESK_TEST_WORKBENCH="+workbench.URL,

@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"groxy-desk/internal/deskexec"
 	"groxy-desk/internal/security"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -53,7 +54,7 @@ func dumpReservedPostgres(ctx context.Context, conn *sql.Conn, database string, 
 	if clean {
 		args = append(args, "--clean", "--if-exists")
 	}
-	cmd := exec.CommandContext(ctx, path, args...)
+	cmd := deskexec.CommandContext(ctx, path, args...)
 	cmd.Dir = filepath.Dir(path)
 	// Ignore libpq environment settings that can redirect a connection or
 	// change dump semantics. The child never receives Desk's DB credentials.

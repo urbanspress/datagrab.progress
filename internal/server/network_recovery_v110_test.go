@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	"groxy-desk/internal/deskexec"
 	"groxy-desk/internal/groxybridge"
 	"groxy-desk/internal/security"
 	"groxy-desk/internal/testfixture"
@@ -700,7 +701,7 @@ func startDisposableMariaDB(t *testing.T) (portText string, adminPassword string
 	containerName := "groxy-desk-mariadb-lp-" + nameBytes
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	out, err := exec.CommandContext(ctx, "docker", "run", "--detach", "--rm",
+	out, err := deskexec.CommandContext(ctx, "docker", "run", "--detach", "--rm",
 		"--publish", "127.0.0.1::3306", "--name", containerName,
 		"--env", "MARIADB_ROOT_PASSWORD="+seedPassword,
 		"mariadb:11.8").CombinedOutput()
@@ -710,9 +711,9 @@ func startDisposableMariaDB(t *testing.T) (portText string, adminPassword string
 	t.Cleanup(func() {
 		stopCtx, stopCancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer stopCancel()
-		_ = exec.CommandContext(stopCtx, "docker", "stop", "--time", "5", containerName).Run()
+		_ = deskexec.CommandContext(stopCtx, "docker", "stop", "--time", "5", containerName).Run()
 	})
-	portOut, err := exec.CommandContext(ctx, "docker", "port", containerName, "3306/tcp").CombinedOutput()
+	portOut, err := deskexec.CommandContext(ctx, "docker", "port", containerName, "3306/tcp").CombinedOutput()
 	if err != nil {
 		t.Fatalf("failed reading published MariaDB port: %v (%s)", err, strings.TrimSpace(string(portOut)))
 	}

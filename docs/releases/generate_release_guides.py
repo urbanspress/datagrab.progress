@@ -32,9 +32,34 @@ def find_browser() -> Path:
 
 def render_guide_html(version: str) -> str:
     v = html.escape(version)
-    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0", "1.3.0", "1.3.1", "1.4.0", "1.4.1", "1.4.2") else ""
+    body_class = "candidate-guide" if version in ("1.1.0", "1.2.0", "1.3.0", "1.3.1", "1.4.0", "1.4.1", "1.4.2", "1.5.0") else ""
     footer_text = f"Groxy Desk v{v} — Verified across Gate 1 (Go + govulncheck + grab check/format), Gate 2 (Pure Grex JS DOM/WCAG/ADR-025c), Gate 3 (GRAB-E401 + GROXY-SAFE-001 + DESK-E403/E409), and Gate 4 (Live E2E)."
-    if version in ("1.4.1", "1.4.2"):
+    if version == "1.5.0":
+        body_sections = f"""
+  <header>
+    <h1>Groxy Desk v{v}</h1>
+    <p>Unified Windows title bar and silent background tools</p>
+  </header>
+  <main>
+    <section>
+      <h2>Install and open Groxy Desk</h2>
+      <p>Run <code>Groxy-Desk-Setup-1.5.0.exe</code>. Open Groxy Desk from the Start menu or optional desktop shortcut. The native WebView2 window contains the menu bar, Command Search, theme switch, and Windows controls in one row.</p>
+    </section>
+    <section>
+      <h2>Move, resize, and snap the window</h2>
+      <p>Drag a blank space on the title bar to move the window. Drag to the edge of a display to snap, or double-click a blank space to maximize or restore. Resize from any outer edge or corner. Right-click a blank space or press <code>Alt+Space</code> to open the Windows system menu.</p>
+    </section>
+    <section>
+      <h2>Find commands and switch themes</h2>
+      <p>Click Command Search or press <code>Ctrl+K</code>. Enter <code>database</code>, <code>browser</code>, or <code>code</code> to switch studios. You can also open a workspace file by entering its path. Use the theme button beside the window controls to switch between Light and Dark.</p>
+    </section>
+    <section>
+      <h2>Run workspace and database tools</h2>
+      <p>GRAB checks, local workers, and helper programs run in the background. Read their output in the workbench. In Database Studio you can connect through the existing pinned SSH tunnel, inspect a schema, and review edits in the approval drawer. Writes still require approval and a pre-mutation snapshot.</p>
+    </section>
+  </main>"""
+        footer_text = f"Groxy Desk v{v} | Windows desktop walkthrough"
+    elif version in ("1.4.1", "1.4.2"):
         subtitle = "Database Studio layout patch"
         launch_section = ""
         search_action = "Shortcuts"

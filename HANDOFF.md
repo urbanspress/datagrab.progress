@@ -2,9 +2,15 @@
 
 ## Current Status
 
-- **Verified release** `v1.4.2` at `a698284`, confirmed on both remotes.
-- **Current milestone** `v1.4.2`, the Windows launcher and workbench icon patch. [SPEC-142](specifications/GROXY-DESK-SPEC-142.md)
-- **Current Owner** Codex. Stage 4 is complete for `v1.4.2`.
+- **Current milestone** `v1.5.0` is complete. [SPEC-150](specifications/GROXY-DESK-SPEC-150.md)
+- **Current Owner** Codex. Stage 4 passed for the unified title bar and silent background tools. The next milestone awaits direction from the project owner.
+
+## Completed in `v1.5.0`
+
+- One native Windows title bar combines the emblem, seven menus, Command Search, theme switch, and three caption buttons. The independent reviewer confirmed all eight native resize hit zones, double-click maximize and restore, and trusted minimize and close messages. Live Windows acceptance confirmed drag-to-top Aero snap and the native system menu. The client fills the work area above the taskbar when maximized.
+- All audited background process calls use the common Go launcher. The Windows regression verified no attached console plus preserved output. Independent testing confirmed cancellation, process flags, working directory, and environment. All ten frozen sibling worktrees were clean.
+- Windows and Linux amd64 build and vet, the Go suite, module verification, `govulncheck`, frozen GRAB validation and format parity, 16 Node tests, native WebView2 isolation, the cross-layer suite, live Radar/CMS handoffs, and PostgreSQL and MariaDB recovery passed. [Stage 4 evidence](specifications/GROXY-DESK-SPEC-150.md#stage-4--pass)
+- Release assets include the Inno Setup installer, bundled binaries and source documentation, and `SHA256SUMS.txt`. [Walkthrough PDF](docs/releases/pdf/Groxy-Desk-v1.5.0-Guide.pdf)
 
 ## Independent Release Sign-Off (PASS)
 

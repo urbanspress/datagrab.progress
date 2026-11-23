@@ -5,6 +5,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -41,7 +42,6 @@ var (
 const (
 	csHRedraw     = 0x0002
 	csVRedraw     = 0x0001
-	wsOverlapped  = 0x00CF0000
 	wsVisible     = 0x10000000
 	cwUseDefault  = ^uintptr(0x7fffffff)
 	swShowDefault = 10
@@ -91,6 +91,10 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 	}
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
+	const perMonitorAwareV2 = ^uintptr(3) // DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+	if previous, _, _ := procSetThreadDpiAwarenessContext.Call(perMonitorAwareV2); previous != 0 {
+		defer procSetThreadDpiAwarenessContext.Call(previous)
+	}
 
 	_, _, _ = procCoInitializeEx.Call(0, coinitApt)
 	defer func() {
@@ -101,7 +105,7 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 	if err != nil {
 		return err
 	}
-	title, err := windows.UTF16PtrFromString("Groxy Desk v1.4.2 — Native Vibe-Coding IDE")
+	title, err := windows.UTF16PtrFromString("Groxy Desk v1.5.0 — Native Vibe-Coding IDE")
 	if err != nil {
 		return err
 	}
@@ -110,8 +114,10 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 	hCursor, _, _ := procLoadCursorW.Call(0, uintptr(idcArrow))
 
 	var chromium, research *edge.Chromium
-	var workbenchPane, researchPane uintptr
+	var researchPane uintptr
+	var windowStateChanged func()
 	width := 45
+	zoom := 1.0
 	activeOrigin := ""
 	var browserSession uint64
 	var brandPreview struct {
@@ -124,19 +130,40 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 		if activeOrigin != "" {
 			percent = width
 		}
-		resizePanes(hwnd, workbenchPane, researchPane, percent)
 		if chromium != nil {
 			chromium.Resize()
 		}
 		if research != nil {
+			resizeResearchPane(hwnd, researchPane, percent, zoom)
 			research.Resize()
 		}
 	}
 	wndProc := syscall.NewCallback(func(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		switch msg {
+		case wmGetMinMaxInfo:
+			info := *(**windowMinMaxInfo)(unsafe.Pointer(&lParam))
+			setWorkbenchMaxBounds(hwnd, info)
+			return 0
 		case wmSize:
-			if workbenchPane != 0 {
+			if wParam != 1 { // SIZE_MINIMIZED
 				resize(hwnd)
+			}
+			if windowStateChanged != nil {
+				windowStateChanged()
+			}
+		case wmDPIChanged:
+			applyWindowDPIChange(hwnd, lParam)
+			resize(hwnd)
+			return 0
+		case wmNCHitTest:
+			// The thick frame supplies DPI-aware edge and corner hit tests.
+			// WebView2 supplies HTCAPTION for its CSS drag regions.
+			result, _, _ := procDefWindowProcW.Call(hwnd, uintptr(msg), wParam, lParam)
+			return result
+		case wmNCRButtonUp:
+			if wParam == htCaption {
+				showWindowSystemMenu(hwnd, lParam)
+				return 0
 			}
 		case wmDestroy:
 			_, _, _ = procPostQuitMessage.Call(0)
@@ -165,7 +192,7 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 		0,
 		uintptr(unsafe.Pointer(className)),
 		uintptr(unsafe.Pointer(title)),
-		wsOverlapped|wsVisible,
+		workbenchStyle,
 		cwUseDefault,
 		cwUseDefault,
 		1360,
@@ -178,16 +205,6 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 	if hwnd == 0 {
 		return callErr
 	}
-
-	workbenchPane, err = childPane(hwnd, hInst)
-	if err != nil {
-		return err
-	}
-	researchPane, err = childPane(hwnd, hInst)
-	if err != nil {
-		return err
-	}
-	resize(hwnd)
 
 	openPane := func(parent uintptr, profile string, debug bool, args ...string) (*edge.Chromium, error) {
 		pane := newController()
@@ -204,7 +221,7 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 		}
 		return pane, nil
 	}
-	chromium, err = openPane(workbenchPane, "webview2-profile", debug)
+	chromium, err = openPane(hwnd, "webview2-profile", debug)
 	if err != nil {
 		return err
 	}
@@ -218,6 +235,10 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 	origins := parseBrowserOrigins(os.Getenv("GROXY_DESK_BROWSER_ORIGINS"), os.Getenv("GROXY_DESK_CMS_ORIGIN"))
 	var proxy *researchProxy
 	if len(origins) > 0 {
+		researchPane, err = childPane(hwnd, hInst)
+		if err != nil {
+			return err
+		}
 		proxy, err = startResearchProxy()
 		if err != nil {
 			return err
@@ -244,12 +265,48 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 		}
 		defer releaseResearch()
 		_ = research.Hide()
+		controller := chromium.GetController()
+		const addZoomFactorChanged = 9 // ICoreWebView2Controller vtable
+		updateZoom := func(_ unsafe.Pointer) uintptr {
+			if factor, err := controller.GetZoomFactor(); err == nil && factor > 0 {
+				zoom = factor
+				resize(hwnd)
+			}
+			return 0
+		}
+		removeZoomHandler, err := subscribeWebViewEvent(unsafe.Pointer(controller), addZoomFactorChanged, updateZoom)
+		if err != nil {
+			return fmt.Errorf("track WebView2 workbench zoom: %w", err)
+		}
+		defer removeZoomHandler()
+		updateZoom(nil)
 	}
 	notify := func(sender *edge.ICoreWebView2, payload any) {
 		raw, err := json.Marshal(payload)
 		if err == nil {
 			_ = sender.PostWebMessageAsString(string(raw))
 		}
+	}
+	sendWindowState := func(sender *edge.ICoreWebView2) {
+		notify(sender, map[string]any{"type": "groxy-window-state", "maximized": windowMaximized(hwnd)})
+	}
+	lastMaximized := windowMaximized(hwnd)
+	windowStateChanged = func() {
+		maximized := windowMaximized(hwnd)
+		if maximized == lastMaximized {
+			return
+		}
+		lastMaximized = maximized
+		view, err := chromium.GetController().GetCoreWebView2()
+		if err == nil {
+			defer view.Release()
+			if source, err := view.GetSource(); err == nil && trustedWorkbenchSource(source, sess.URL) {
+				sendWindowState(view)
+			}
+		}
+	}
+	sendBrowserStatus := func(sender *edge.ICoreWebView2, message string) {
+		notify(sender, map[string]any{"type": "groxy-browser-status", "origin": activeOrigin, "message": message, "width": width})
 	}
 	setBrowserState := func(sender *edge.ICoreWebView2, origin, message string) {
 		browserSession++
@@ -265,7 +322,7 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 		_, _, _ = procSetWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(windowTitle)))
 		runtime.KeepAlive(windowTitle)
 		resize(hwnd)
-		notify(sender, map[string]string{"type": "groxy-browser-status", "origin": origin, "message": message})
+		sendBrowserStatus(sender, message)
 	}
 
 	chromium.MessageCallback = func(raw string, sender *edge.ICoreWebView2, args *edge.ICoreWebView2WebMessageReceivedEventArgs) {
@@ -286,10 +343,22 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 		switch cmd.Type {
 		case "groxy-desk-ready":
 			notify(sender, map[string]string{"type": "groxy-desk-session", "url": sess.URL, "bearer_token": sess.BearerToken, "csrf_token": sess.CSRFToken})
+			sendWindowState(sender)
+			sendBrowserStatus(sender, "")
+		case "win_minimize":
+			postWindowCommand(hwnd, scMinimize)
+		case "win_toggle_maximize":
+			command := uintptr(scMaximize)
+			if windowMaximized(hwnd) {
+				command = scRestore
+			}
+			postWindowCommand(hwnd, command)
+		case "win_close":
+			postWindowCommand(hwnd, scClose)
 		case "groxy-browser-open":
 			origin := origins.match(cmd.URL)
 			if origin == "" || research == nil {
-				notify(sender, map[string]string{"type": "groxy-browser-status", "origin": activeOrigin, "message": "GRAB-E402: This browser origin is outside the configured HTTPS allowlist."})
+				sendBrowserStatus(sender, "GRAB-E402: This browser origin is outside the configured HTTPS allowlist.")
 				return
 			}
 			setBrowserState(sender, origin, "")
@@ -303,6 +372,7 @@ func launchWebViewWindowWithController(sess server.SessionCredentials, stateDir,
 		case "groxy-browser-resize":
 			width = cmd.Width
 			resize(hwnd)
+			sendBrowserStatus(sender, "")
 		case "groxy-browser-capture", "groxy-browser-brand-preview", "groxy-browser-brand-prefill":
 			if research == nil || activeOrigin == "" || selectionHandler.complete != nil {
 				return

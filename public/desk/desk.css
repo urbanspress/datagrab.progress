@@ -115,18 +115,26 @@ body.desk-shell,
 
 .desk-header,
 .desk-ide-header {
+  box-sizing: border-box;
   height: var(--desk-header-h);
   min-height: var(--desk-header-h);
   max-height: var(--desk-header-h);
   z-index: 20;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr) minmax(42px, min(34%, 440px)) minmax(max-content, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  padding: 0 8px;
+  padding-inline-start: 8px;
   background-color: var(--desk-menu-bg, #d1d1d1);
   border-bottom: 1px solid var(--grex-border);
   overflow: hidden;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.desk-header :is(button, a, input, .desk-search-control) {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .desk-header-left {
@@ -161,7 +169,7 @@ body.desk-shell,
 .desk-menubar {
   display: inline-flex;
   align-items: center;
-  gap: 15px;
+  gap: 3px;
 }
 
 .desk-menuitem {
@@ -173,7 +181,7 @@ body.desk-shell,
   height: 22px;
   padding: 0 6px;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 400;
   cursor: pointer;
   white-space: nowrap;
@@ -184,12 +192,10 @@ body.desk-shell,
 }
 
 .desk-header-center {
-  flex: 1 1 280px;
-  max-width: 440px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 140px;
+  min-width: 0;
 }
 
 .desk-command-search,
@@ -198,6 +204,7 @@ body.desk-shell,
   height: 24px;
   padding: 2px 8px;
   padding-inline-start: 28px;
+  padding-inline-end: 56px;
   border-radius: 4px;
   border: 1px solid var(--grex-border);
   background-color: var(--grex-base);
@@ -208,6 +215,14 @@ body.desk-shell,
 
 .desk-search-control {
   position: relative;
+}
+
+.desk-search-shortcut {
+  position: absolute;
+  inset-inline-end: 8px;
+  color: var(--grex-text-muted);
+  font: 11px "Segoe UI", sans-serif;
+  pointer-events: none;
 }
 
 .desk-search-icon {
@@ -227,9 +242,140 @@ body.desk-shell,
 
 .desk-header-actions {
   display: inline-flex;
+  justify-self: end;
   align-items: center;
-  gap: 6px;
   white-space: nowrap;
+}
+
+.desk-window-controls {
+  display: flex;
+}
+
+.desk-header-actions [hidden] {
+  display: none;
+}
+
+.desk-header .desk-window-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: calc(var(--desk-header-h) - 1px);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--grex-text);
+}
+
+.desk-header .desk-window-button:hover {
+  background: var(--grex-surface-hover);
+}
+
+.desk-header #desk-win-close:hover {
+  background: #bd1827;
+  color: #fff;
+}
+
+.desk-header .desk-window-button:focus-visible {
+  outline: 2px solid var(--grex-focus-ring);
+  outline-offset: -3px;
+}
+
+.desk-window-button::before,
+.desk-window-button::after {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+#desk-theme-toggle::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: linear-gradient(90deg, currentColor 50%, transparent 50%);
+}
+
+#desk-win-min::before {
+  content: "";
+  width: 10px;
+  border-top: 1px solid currentColor;
+}
+
+#desk-win-max::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border: 1px solid currentColor;
+}
+
+#desk-win-max[data-restored="true"]::before,
+#desk-win-max[data-restored="true"]::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border: 1px solid currentColor;
+}
+
+#desk-win-max[data-restored="true"]::before {
+  transform: translate(1px, -1px);
+  border-left: 0;
+  border-bottom: 0;
+}
+
+#desk-win-max[data-restored="true"]::after {
+  transform: translate(-1px, 1px);
+}
+
+#desk-win-close::before,
+#desk-win-close::after {
+  content: "";
+  width: 13px;
+  border-top: 1px solid currentColor;
+  transform: rotate(45deg);
+}
+
+#desk-win-close::after {
+  transform: rotate(-45deg);
+}
+
+@media (max-width: 860px) {
+  .desk-ide-header {
+    grid-template-columns: max-content minmax(36px, 1fr) max-content;
+    gap: 4px;
+  }
+  .desk-menubar {
+    gap: 0;
+  }
+  .desk-menuitem {
+    padding-inline: 3px;
+    font-size: 12px;
+  }
+  .desk-header .desk-window-button {
+    width: 32px;
+  }
+  #desk-command-search {
+    padding-inline-end: 6px;
+  }
+  .desk-search-shortcut {
+    display: none;
+  }
+}
+
+@media (max-width: 500px) {
+  .desk-ide-header {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 28%) max-content;
+  }
+  .desk-menubar {
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+}
+
+.desk-root > :is(.desk-stage-locked, .desk-ide-statusbar) {
+  width: calc(100% - var(--desk-research-width, 0%));
 }
 
 .desk-stage-locked {
@@ -1434,7 +1580,9 @@ a:focus-visible {
 
 dialog.desk-db-conn-dialog {
   margin: auto;
-  width: min(680px, 92vw);
+  inset-inline-end: var(--desk-research-width, 0%);
+  box-sizing: border-box;
+  width: min(680px, calc((100% - var(--desk-research-width, 0%)) * 0.92));
   max-height: 86vh;
   padding: 12px;
   border: 1px solid var(--grex-border);
@@ -1486,6 +1634,7 @@ dialog.desk-db-conn-dialog::backdrop {
 
 .desk-db-dialog-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
   margin-top: 12px;

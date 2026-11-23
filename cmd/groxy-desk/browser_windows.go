@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"runtime"
 	"strings"
 	"syscall"
@@ -17,7 +18,6 @@ import (
 
 var (
 	procGetClientRect = user32.NewProc("GetClientRect")
-	procMoveWindow    = user32.NewProc("MoveWindow")
 	procCoTaskMemFree = ole32.NewProc("CoTaskMemFree")
 )
 
@@ -62,15 +62,18 @@ func childPane(parent, instance uintptr) (uintptr, error) {
 	return hwnd, nil
 }
 
-func resizePanes(parent, workbench, research uintptr, percent int) {
+func resizeResearchPane(parent, research uintptr, percent int, zoom float64) {
 	var rect clientRect
 	if ok, _, _ := procGetClientRect.Call(parent, uintptr(unsafe.Pointer(&rect))); ok == 0 {
 		return
 	}
-	width := uintptr(rect.right)
-	left := width * uintptr(100-percent) / 100
-	_, _, _ = procMoveWindow.Call(workbench, 0, 0, left, uintptr(rect.bottom), 1)
-	_, _, _ = procMoveWindow.Call(research, left, 0, width-left, uintptr(rect.bottom), 1)
+	dpi, _, _ := procGetDpiForWindow.Call(parent)
+	top := min(rect.bottom, int32(math.Ceil(titleBarHeight*zoom*float64(dpi)/96)))
+	width := rect.right * int32(percent) / 100
+	// Raise the sibling above the workbench while leaving the full-width
+	// header available to the trusted controller.
+	_, _, _ = procSetWindowPos.Call(research, 0, uintptr(rect.right-width), uintptr(top),
+		uintptr(width), uintptr(rect.bottom-top), swpNoActivate)
 }
 
 // These handlers use the base ICoreWebView2 vtable slots from WebView2.h.
@@ -187,16 +190,24 @@ var browserEventVtable = [4]uintptr{
 }
 
 func subscribeBrowserEvent(view *edge.ICoreWebView2, slot int, callback func(unsafe.Pointer) uintptr) (func(), error) {
+	release, err := subscribeWebViewEvent(unsafe.Pointer(view), slot, callback)
+	if err != nil {
+		return nil, fmt.Errorf("register WebView2 navigation policy: %w", err)
+	}
+	return release, nil
+}
+
+func subscribeWebViewEvent(source unsafe.Pointer, slot int, callback func(unsafe.Pointer) uintptr) (func(), error) {
 	handler := &browserEvent{&browserEventVtable, callback}
-	vtable := *(**[61]uintptr)(unsafe.Pointer(view))
+	vtable := *(**[61]uintptr)(source)
 	var token int64
-	hr, _, _ := syscall.SyscallN(vtable[slot], uintptr(unsafe.Pointer(view)), uintptr(unsafe.Pointer(handler)), uintptr(unsafe.Pointer(&token)))
+	hr, _, _ := syscall.SyscallN(vtable[slot], uintptr(source), uintptr(unsafe.Pointer(handler)), uintptr(unsafe.Pointer(&token)))
 	runtime.KeepAlive(handler)
 	if int32(hr) < 0 {
-		return nil, fmt.Errorf("register WebView2 navigation policy: %w", windows.Errno(hr))
+		return nil, windows.Errno(hr)
 	}
 	return func() {
-		_, _, _ = syscall.SyscallN(vtable[slot+1], uintptr(unsafe.Pointer(view)), uintptr(token))
+		_, _, _ = syscall.SyscallN(vtable[slot+1], uintptr(source), uintptr(token))
 		runtime.KeepAlive(handler)
 	}, nil
 }
@@ -276,6 +287,11 @@ func isolateBrowser(chromium *edge.Chromium, allowsNavigation, allowsResource fu
 	}
 	if err := settings.PutIsWebMessageEnabled(!research); err != nil {
 		return nil, err
+	}
+	if !research {
+		if err := enableWorkbenchTitleBar(settings); err != nil {
+			return nil, err
+		}
 	}
 	view, err := chromium.GetController().GetCoreWebView2()
 	if err != nil {

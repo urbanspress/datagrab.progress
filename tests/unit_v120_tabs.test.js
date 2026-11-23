@@ -37,6 +37,55 @@ function createWindowMock(initialHash = "", initialStored = "") {
   };
 }
 
+test("Windows title bar exposes only the native controls confirmed by the host", async () => {
+  const { document } = createDomShim("light");
+  const root = document.createElement("section");
+  document.body.appendChild(root);
+  const win = createWindowMock();
+  const sent = [];
+  let receive;
+  win.chrome = { webview: {
+    addEventListener: (type, listener) => {
+      assert.equal(type, "message");
+      receive = listener;
+    },
+    removeEventListener() {},
+    postMessage: (message) => sent.push(JSON.parse(message)),
+  } };
+  const mounted = mountGroxyDeskWorkbench(root, {
+    document,
+    window: win,
+    apiClient: { hasSession: () => false },
+    autoHydrate: false,
+  });
+  const header = root.querySelector("#desk-header");
+  const group = header.querySelector(".desk-window-controls");
+  const minimize = group.querySelector("#desk-win-min");
+  const maximize = group.querySelector("#desk-win-max");
+  const close = group.querySelector("#desk-win-close");
+  for (const button of [minimize, maximize, close]) assert.equal(button.localName, "button");
+  assert.ok(group.hasAttribute("hidden"));
+  await close.click();
+  assert.deepEqual(sent, [{ type: "groxy-desk-ready" }]);
+
+  receive({ data: { type: "groxy-window-state", maximized: false } });
+  await Promise.resolve();
+  assert.equal(group.hasAttribute("hidden"), false);
+  assert.equal(maximize.getAttribute("aria-label"), "Maximize");
+  await minimize.click();
+  await maximize.click();
+  receive({ data: { type: "groxy-window-state", maximized: true } });
+  await Promise.resolve();
+  assert.equal(maximize.getAttribute("aria-label"), "Restore");
+  await close.click();
+  assert.deepEqual(sent.slice(1), [
+    { type: "win_minimize" },
+    { type: "win_toggle_maximize" },
+    { type: "win_close" },
+  ]);
+  mounted.dispose();
+});
+
 test("Offline-safe Urbanist fonts are bundled locally and desk.css has zero CDN URLs or undefined --desk-border", () => {
   for (const weight of ["400", "500", "600", "700"]) {
     const fontPath = path.join(repoRoot, "public", "desk", "fonts", `urbanist-latin-${weight}-normal.woff2`);
@@ -373,7 +422,7 @@ test("v1.3.0 High-Density 100vh Desktop IDE Shell, 5 coordinated chrome layers, 
   assert.equal(root.querySelector("#desk-status-ssh").textContent.includes("SHA256:verifiedPin123"), true);
   assert.equal(root.querySelector("#desk-status-safety").textContent.includes("1 Snapshots"), true);
   assert.equal(root.querySelector("#desk-status-grisp").textContent.includes("1 Active (:8765)"), true);
-  assert.equal(root.querySelector("#desk-status-adr025c").textContent.includes("v1.4.2"), true);
+  assert.equal(root.querySelector("#desk-status-adr025c").textContent.includes("v1.5.0"), true);
 
   await root.querySelector("#desk-status-db").click();
   assert.equal(mounted.store.activeStudio.peek(), "database");

@@ -53,6 +53,10 @@ func decodePaneCommand(raw string) (paneCommand, bool) {
 		return paneCommand{}, false
 	}
 	switch cmd.Type {
+	case "win_minimize", "win_toggle_maximize", "win_close":
+		// Window actions have no arguments, including explicit zero values.
+		var fields map[string]json.RawMessage
+		return cmd, json.Unmarshal([]byte(raw), &fields) == nil && len(fields) == 1 && fields["type"] != nil
 	case "groxy-desk-ready", "groxy-browser-close", "groxy-browser-capture", "groxy-browser-brand-preview", "groxy-browser-brand-prefill":
 		return cmd, cmd.URL == "" && cmd.Width == 0
 	case "groxy-browser-open":

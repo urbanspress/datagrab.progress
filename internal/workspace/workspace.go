@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"groxy-desk/internal/deskexec"
 	"groxy-desk/internal/security"
 )
 
@@ -328,7 +329,7 @@ func (m *Manager) CheckFiles(ctx context.Context, grabRel, tmplRel string) (Chec
 
 	runCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(runCtx, m.grabBin, checkArgs...)
+	cmd := deskexec.CommandContext(runCtx, m.grabBin, checkArgs...)
 	cmd.Dir = projectDir
 	var checkOut bytes.Buffer
 	cmd.Stdout = &checkOut
@@ -347,7 +348,7 @@ func (m *Manager) CheckFiles(ctx context.Context, grabRel, tmplRel string) (Chec
 	if err := security.ValidateSafeCommandBinary(m.grabBin, fmtArgs); err != nil {
 		return CheckResult{}, err
 	}
-	fmtCmd := exec.CommandContext(runCtx, m.grabBin, fmtArgs...)
+	fmtCmd := deskexec.CommandContext(runCtx, m.grabBin, fmtArgs...)
 	fmtCmd.Dir = projectDir
 	var fmtOut, fmtErrBuf bytes.Buffer
 	fmtCmd.Stdout = &fmtOut
@@ -464,7 +465,7 @@ func (m *Manager) runGrabman(ctx context.Context, command, relSlash string, args
 	runCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(runCtx, m.grabmanBin, args...)
+	cmd := deskexec.CommandContext(runCtx, m.grabmanBin, args...)
 	cmd.Dir = m.workspaceRoot
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

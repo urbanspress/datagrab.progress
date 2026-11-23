@@ -76,10 +76,11 @@ def verify_frozen_cli(path: Path, version: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Package Groxy Desk release artifacts into dist/")
-    parser.add_argument("--version", default="1.4.2", help="SemVer version string without leading v")
+    parser.add_argument("--version", default="1.5.0", help="SemVer version string without leading v")
     parser.add_argument("--output-dir", type=Path, default=DIST_DIR)
     parser.add_argument("--grab-bin", type=Path, default=GRAB_BIN_SRC)
     parser.add_argument("--grabman-bin", type=Path, default=GRABMAN_BIN_SRC)
+    parser.add_argument("--reuse-guide", action="store_true", help="package the existing verified release PDF")
     args = parser.parse_args()
     version = args.version.lstrip("v")
     if not re.fullmatch(r"\d+\.\d+\.\d+", version):
@@ -99,12 +100,13 @@ def main():
     build_binary("windows", "amd64", "./cmd/groxy-deskd", deskd_win)
     build_binary("linux", "amd64", "./cmd/groxy-deskd", deskd_linux)
 
-    subprocess.run(
-        [sys.executable, str(ROOT / "docs" / "releases" / "generate_release_guides.py"), version],
-        cwd=ROOT,
-        check=True,
-    )
     pdf_src = ROOT / "docs" / "releases" / "pdf" / f"Groxy-Desk-v{version}-Guide.pdf"
+    if not args.reuse_guide:
+        subprocess.run(
+            [sys.executable, str(ROOT / "docs" / "releases" / "generate_release_guides.py"), version],
+            cwd=ROOT,
+            check=True,
+        )
     pdf_dist = dist_dir / f"Groxy-Desk-v{version}-Guide.pdf"
     shutil.copy2(pdf_src, pdf_dist)
 

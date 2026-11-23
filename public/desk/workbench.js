@@ -1,5 +1,5 @@
 /**
- * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.4.2.
+ * Pure Grex JS v1.0.0 Main IDE Workbench Entrypoint for Groxy Desk v1.5.0.
  * Zero wrapper elements, zero raw DOM writes, zero unsafe script calls, sole Groxy AI identity.
  */
 import { ForEach, Icon, effect, renderNode, signal } from "../grex/grex.js";
@@ -74,6 +74,9 @@ const DEFAULT_BLUEPRINTS = [
 export function mountGroxyDeskWorkbench(rootEl, options = {}) {
   const doc = options.document || globalThis.document;
   const win = options.window || globalThis.window;
+  const webview = win?.chrome?.webview;
+  const nativeWindow = signal(false);
+  const maximized = signal(false);
   if (!rootEl) {
     throw new Error("mountGroxyDeskWorkbench requires a root DOM element.");
   }
@@ -548,9 +551,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     }
   };
 
-  const commandSearchOpen = signal(false);
   const showCommandSearch = () => {
-    commandSearchOpen.set(true);
     focusSelector("#desk-command-search");
   };
 
@@ -558,7 +559,6 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
     const raw = String(store.commandSearch.peek() || "").trim();
     const q = raw.toLowerCase();
     if (!q) return;
-    commandSearchOpen.set(false);
     if (q === "database" || q === "db" || q.startsWith("sql")) {
       setActiveStudio("database");
     } else if (q === "browser" || q === "radar") {
@@ -574,6 +574,19 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
       focusSelector("#groxy-prompt-input textarea");
     }
   };
+
+  const windowButton = (id, command, label, restored = false) => ({
+    type: "Button",
+    id,
+    className: "desk-window-button",
+    attrs: { id, title: label, "aria-label": label, "data-restored": restored },
+    props: {
+      type: "button",
+      onClick: () => {
+        if (nativeWindow.peek()) webview.postMessage(JSON.stringify({ type: command }));
+      },
+    },
+  });
 
   const RAIL_ICONS = {
     code: [
@@ -982,7 +995,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                     type: "Text",
                     tag: "span",
                     className: "desk-version-tag",
-                    props: { text: "v1.4.2" },
+                    props: { text: "v1.5.0" },
                   },
                 ],
               },
@@ -1028,7 +1041,6 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
             type: "Stack",
             tag: "section",
             className: "desk-header-center desk-search-control",
-            attrs: { hidden: () => !commandSearchOpen.get() },
             children: [
               deskIcon(doc, "search", "desk-search-icon"),
               {
@@ -1038,7 +1050,6 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                 on: {
                   keydown: (ev) => {
                     if (ev?.key === "Escape") {
-                      commandSearchOpen.set(false);
                       focusSelector("#desk-action-shortcuts");
                     } else if (ev?.key === "Enter") {
                       if (typeof ev.preventDefault === "function") ev.preventDefault();
@@ -1051,10 +1062,17 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                   name: "desk-command-search",
                   label: "Command Search (Ctrl+K)",
                   type: "search",
-                  placeholder: "Search files, run SQL, or ask Groxy AI (Ctrl+K)...",
+                  placeholder: "Command Search",
                   value: store.commandSearch,
                   bare: true,
                 },
+              },
+              {
+                type: "Text",
+                tag: "span",
+                className: "desk-search-shortcut",
+                attrs: { "aria-hidden": "true" },
+                props: { text: "Ctrl+K" },
               },
             ],
           },
@@ -1062,13 +1080,12 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
             type: "Stack",
             tag: "section",
             className: "desk-header-actions",
-            attrs: { hidden: true, "aria-hidden": "true" },
             children: [
               {
                 type: "Text",
                 tag: "span",
                 id: "desk-workspace-badge",
-                attrs: { id: "desk-workspace-badge" },
+                attrs: { id: "desk-workspace-badge", hidden: true },
                 className: "desk-badge desk-mono",
                 props: {
                   text: () => `Workspace: ${store.activePath.get()}`,
@@ -1079,6 +1096,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                 attrs: {
                   id: "desk-host-status-badge",
                   class: "desk-badge",
+                  hidden: true,
                 },
                 children: [
                   {
@@ -1098,16 +1116,29 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
               {
                 type: "Button",
                 id: "desk-theme-toggle",
-                attrs: { id: "desk-theme-toggle" },
+                className: "desk-window-button",
+                attrs: {
+                  id: "desk-theme-toggle",
+                  "aria-label": () => store.themeMode.get() === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode",
+                  title: "Toggle Light or Dark Theme",
+                },
                 props: {
                   type: "button",
-                  label: "Toggle Light or Dark Theme",
-                  text: () =>
-                    store.themeMode.get() === "dark"
-                      ? "Switch to Light Mode"
-                      : "Switch to Dark Mode",
                   onClick: () => toggleTheme(),
                 },
+              },
+              {
+                type: "Stack",
+                tag: "section",
+                attrs: { role: "group", "aria-label": "Window controls", hidden: () => !nativeWindow.get() },
+                className: "desk-window-controls",
+                children: [
+                  windowButton("desk-win-min", "win_minimize", "Minimize"),
+                  windowButton("desk-win-max", "win_toggle_maximize",
+                    () => maximized.get() ? "Restore" : "Maximize",
+                    () => maximized.get() ? "true" : "false"),
+                  windowButton("desk-win-close", "win_close", "Close"),
+                ],
               },
             ],
           },
@@ -1396,7 +1427,7 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
                 attrs: { id: "desk-status-adr025c" },
                 className: "desk-status-item desk-mono",
                 props: {
-                  text: "Groxy Desk v1.4.2 | ADR-025c Exact Wire | Grex JS v1.0.0",
+                  text: "Groxy Desk v1.5.0 | ADR-025c Exact Wire | Grex JS v1.0.0",
                 },
               },
             ],
@@ -1469,10 +1500,6 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
 
   applyDeskTheme(store.themeMode.peek(), doc, null).catch(() => {});
 
-  const webview =
-    globalThis.window &&
-    globalThis.window.chrome &&
-    globalThis.window.chrome.webview;
   let onWebViewMsg = null;
   if (webview && typeof webview.addEventListener === "function") {
     onWebViewMsg = (event) => {
@@ -1490,11 +1517,18 @@ export function mountGroxyDeskWorkbench(rootEl, options = {}) {
           store.browserBrand.set(null);
         }
         store.browserStatus.set({ origin: msg.origin, message: msg.message });
+        const validWidth = Number.isInteger(msg.width) && msg.width >= 30 && msg.width <= 65;
+        if (!msg.origin || validWidth) {
+          rendered.element.style?.setProperty("--desk-research-width", msg.origin ? `${msg.width}%` : "0%");
+        }
       } else if (msg?.type === "groxy-browser-selection" &&
           msg.origin === store.browserStatus.peek().origin && typeof msg.text === "string") {
         store.browserSelection.set({ text: msg.text.slice(0, 4000), origin: msg.origin });
       } else if (msg?.type === "groxy-browser-brand") {
         store.browserBrand.set(msg);
+      } else if (msg?.type === "groxy-window-state" && typeof msg.maximized === "boolean") {
+        maximized.set(msg.maximized);
+        nativeWindow.set(typeof webview.postMessage === "function");
       } else if (msg?.type === "groxy-desk-session") {
         apiClient.setSession({
           baseUrl: msg.url || "",

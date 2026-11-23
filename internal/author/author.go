@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"groxy-desk/internal/auditor"
+	"groxy-desk/internal/deskexec"
 	"groxy-desk/internal/groxybridge"
 	"groxy-desk/internal/security"
 )
@@ -266,7 +267,7 @@ func (m *Manager) StartOllama(ctx context.Context, req OllamaStartRequest) (map[
 	}
 
 	u, _ := url.Parse(targetURL)
-	cmd := exec.Command(bin, args...)
+	cmd := deskexec.Command(bin, args...)
 	cmd.Env = append(os.Environ(), "OLLAMA_HOST="+u.Host)
 	if err := cmd.Start(); err != nil {
 		return nil, security.NewError(security.CodeDeskE503, 503, "failed starting local Ollama runtime", err)
